@@ -11,18 +11,18 @@
 module one_stage_fifo #(
    parameter G_DATA_SIZE = 8
    )(
-   input  wire logic                   clk_i,
-   input  wire logic                   rst_i,
-   input  wire logic                   s_valid_i,
-   output wire logic                   s_ready_o,
-   input  wire logic [G_DATA_SIZE-1:0] s_data_i,
-   output wire logic                   m_valid_o,
-   input  wire logic                   m_ready_i,
-   output wire logic [G_DATA_SIZE-1:0] m_data_o
+   input  wire                   clk_i,
+   input  wire                   rst_i,
+   input  wire                   s_valid_i,
+   output wire                   s_ready_o,
+   input  wire [G_DATA_SIZE-1:0] s_data_i,
+   output wire                   m_valid_o,
+   input  wire                   m_ready_i,
+   output wire [G_DATA_SIZE-1:0] m_data_o
 );
 
-   logic                   m_valid_r;
-   logic [G_DATA_SIZE-1:0] m_data_r;
+   reg                   m_valid_r;
+   reg [G_DATA_SIZE-1:0] m_data_r;
 
    assign s_ready_o = m_ready_i || !m_valid_r;
 
@@ -32,15 +32,15 @@ module one_stage_fifo #(
       if (m_ready_i)
       begin
          m_valid_r <= 0;
-      end;
+      end
 
       // Valid data on the input
       if (s_ready_o && s_valid_i)
       begin
          m_data_r  <= s_data_i;
          m_valid_r <= 1;
-      end;
-      
+      end
+
       // Reset
       if (rst_i)
       begin
@@ -50,7 +50,7 @@ module one_stage_fifo #(
 
    assign m_valid_o = m_valid_r;
    assign m_data_o  = m_data_r;
-   
+
 
 `ifdef FORMAL
 

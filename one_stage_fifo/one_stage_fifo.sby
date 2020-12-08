@@ -11,9 +11,9 @@ cover: mode cover
 smtbmc
 
 [script]
-read -formal one_stage_fifo.sv
+read -formal one_stage_fifo.v
 prep -top one_stage_fifo
 
 [files]
-one_stage_fifo.sv
+one_stage_fifo.v
 
