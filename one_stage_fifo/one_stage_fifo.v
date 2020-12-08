@@ -54,6 +54,12 @@ module one_stage_fifo #(
 
 `ifdef FORMAL
 
+`ifdef ONE_STAGE_FIFO
+`define ASSUME assume
+`else
+`define ASSUME assert
+`endif
+
 // This is necessary, because the $past() function returns uninitialized value on the first clock cycle.
    reg past_valid;
    initial past_valid = 0;
@@ -67,8 +73,8 @@ module one_stage_fifo #(
       begin
          if ($past(s_valid_i) && $past(!s_ready_o))
          begin
-            assume ($stable(s_valid_i));  // s_valid_i must the same as the last clock cycle
-            assume ($stable(s_data_i));   // s_data_i must the same as the last clock cycle
+            `ASSUME ($stable(s_valid_i));  // s_valid_i must the same as the last clock cycle
+            `ASSUME ($stable(s_data_i));   // s_data_i must the same as the last clock cycle
          end
       end
    end
