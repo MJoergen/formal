@@ -1,0 +1,19 @@
+[tasks]
+bmc
+cover
+
+[options]
+bmc: mode bmc
+bmc: depth 20
+cover: mode cover
+
+[engines]
+smtbmc
+
+[script]
+read -formal one_stage_fifo.sv
+prep -top one_stage_fifo
+
+[files]
+one_stage_fifo.sv
+
