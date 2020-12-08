@@ -26,13 +26,15 @@ FSM revolving around whether the contents have been read.
 
 ### The protocol (how the FIFO works)
 
-So there is a producer (or source) that feeds data into the FIFO, and there is
+There is a producer (or source) that feeds data into the FIFO, and there is
 a consumer (or sink) that reads data out of the FIFO.
 
-Both the producer and and the consumer interfaces are identical, with a DATA
-and VALID signal going downstream, and a READY signal going upstream. When both
+Both the producer and the consumer interfaces are identical, with a DATA and
+VALID signal going downstream, and a READY signal going upstream. When both
 VALID and READY are asserted simultaneously on a given interface (either
-producer or consumer) then the DATA is moved.
+producer or consumer) then the DATA is moved (either into or out of the
+register).  This is a simplified version of the protocol used in [AXI streaming
+interfaces](https://zipcpu.com/doc/axi-stream.pdf).
 
 Although not strictly necessary for the correct operation of this protocol,
 I've added an additional constraint: When the upstream has asserted VALID, and
@@ -41,24 +43,27 @@ unchanged, until the data transfer has completed.  In other words, the sender
 may not "change its mind" once it has announced that data is waiting.  This
 requirement is kind of "common sense", but it's not strictly necessary.
 
-One thing to note about this protocol is that the upstream READY (back to
-producer) is often combinatorial, whereas the downstrean VALID and DATA are
-registered. This combinatorial path on the READY signal may give timing
-problems, and indeed it can be alleviated, but requires a two-stage FIFO. This
-will be done later.
+One thing to note about this protocol is that the upstream READY signal (back
+towards the producer) is often combinatorial, whereas the downstrean VALID and
+DATA are registered. This combinatorial path on the READY signal may (or may
+not) give timing problems. This is just something to be aware of. This
+combinatorial path can be registered for improved timing, but requires a
+two-stage FIFO. More on that later.
 
 ### The implementation
 The FIFO implementation is found [here](one_stage_fifo/one_stage_fifo.sv).  The
 first half of the source file is the actual implementation, while the second
-half (surrounded by `ifdef FORMAL` and `endif`) contains the formal
+half (surrounded by ``ifdef FORMAL` and ``endif`) contains the formal
 verification.
 
 ### Formal verification
 Instead of writing a testbench manually generating stimuli, we have to write a
-bunch of rules (assertions) that must be obyed at all times.  This is a
-non-trivial step and takes practice.  The main keywords to use are `assume`
-(for validating input), `assert` (for validating output), and `cover` (for
-generating stimuli).
+bunch of rules (assertions) that must be obeyed at all times.  This is a
+non-trivial step and takes practice.  The main keywords to use are `assume()`
+(for validating input), `assert()` (for validating output), and `cover()` (for
+generating stimuli). This
+[link](http://zipcpu.com/blog/2017/10/19/formal-intro.html) has much more
+information on the syntax and keywords available.
 
 For now I'm only checking that the producer and consumer interfaces obey the
 extra "common sense" requirement. For the producer interface, it looks as follows:
@@ -86,7 +91,8 @@ begin
 end
 ```
 
-The following section verifies that the FIFO is empty immediately after de-asserting reset:
+The following section verifies that the FIFO is empty immediately after
+de-asserting reset:
 
 ```
 if (past_valid && $fell(rst_i))
@@ -95,7 +101,8 @@ begin
 end
 ```
 
-Finally, the `cover` statement is used to automatically generate stimuli. In code it looks as follows:
+Finally, the `cover()` statement is used to automatically generate stimuli. In
+code it looks as follows:
 
 ```
 for (i=0; i < 8; i++) begin: CVR
@@ -110,7 +117,14 @@ This forces the formal verification tool to check all combinations of
 `s_valid_i`, `m_ready_i`, and `m_valid_o`.
 
 ### Install SymbiYosys
-First you have to clone the SymbiYosys [repository](https://github.com/YosysHQ/SymbiYosys) and then run
+First you have to install `sphinx-build` as follows:
+
+```
+sudo apt install python3-sphinx
+```
+
+Then you have to clone the SymbiYosys
+[repository](https://github.com/YosysHQ/SymbiYosys) and then run
 
 ```
 sudo make install
@@ -124,17 +138,75 @@ make html
 
 The latter command generates the documentation in the subfolder
 `docs/build/html`. In particular, the file `install.html` contains instructions
-for installing the backend `yosys` tool.
+for installing the backend `yosys` and all its dependencies tool.
+
+One note though. One of the dependencies failed to install on one of my
+machines (running GCC 9.3), while it worked fine on another machine (running
+GCC 7.5). The problem is encountered in the Avy project with the following
+error:
+
+```
+extavy/avy/src/ItpMinisat.h:127:52: error: cannot convert ‘boost::logic::tribool’ to ‘bool’ in return
+  127 |     bool isSolved () { return m_Trivial || m_State || !m_State; }
+      |                               ~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~
+      |                                                    |
+      |                                                    boost::logic::tribool
+```
+
+I fixed this by applying the following patch:
+
+```
+extavy/avy ((0db110e...)) $ git diff
+diff --git a/src/ItpGlucose.h b/src/ItpGlucose.h
+index 657253d..4ffe55f 100644
+--- a/src/ItpGlucose.h
++++ b/src/ItpGlucose.h
+@@ -126,7 +126,7 @@ namespace avy
+     ::Glucose::Solver* get () { return m_pSat; }
+
+     /// true if the context is decided
+-    bool isSolved () { return m_Trivial || m_State || !m_State; }
++    bool isSolved () { return bool{m_Trivial || m_State || !m_State}; }
+
+     int core (int **out)
+     {
+@@ -182,7 +182,7 @@ namespace avy
+     bool getVarVal(int v)
+     {
+         ::Glucose::Var x = v;
+-        return tobool (m_pSat->modelValue(x));
++        return bool{tobool (m_pSat->modelValue(x))};
+     }
+   };
+
+diff --git a/src/ItpMinisat.h b/src/ItpMinisat.h
+index d145d7c..7514f31 100644
+--- a/src/ItpMinisat.h
++++ b/src/ItpMinisat.h
+@@ -124,7 +124,7 @@ namespace avy
+     ::Minisat::Solver* get () { return m_pSat.get (); }
+
+     /// true if the context is decided
+-    bool isSolved () { return m_Trivial || m_State || !m_State; }
++    bool isSolved () { return bool{m_Trivial || m_State || !m_State}; }
+
+     int core (int **out)
+     {
+```
+
+
 
 ### Running the formal verifier
-In order to run the formal verifier, we must create a small [script](one_stage_fifo/one_stage_fifo.sby).
+In order to run the formal verifier, we must create a small
+[script](one_stage_fifo/one_stage_fifo.sby).
 
 The we just run the verifier using the command
 ```
 sby one_stage_fifo.sby
 ```
 
-This generates a lot of output. Among the plethora of text you should see the lines
+This generates a lot of output. Among the plethora of text you should see the
+lines
 
 ```
 [one_stage_fifo_bmc] DONE (PASS, rc=0)
@@ -146,4 +218,5 @@ and
 [one_stage_fifo_cover] DONE (PASS, rc=0)
 ```
 
-This is it.
+This is it! We've now formally verified that the implementation of the one
+stage fifo satisfies all the formal requirements.
