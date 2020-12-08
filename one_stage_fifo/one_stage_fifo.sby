@@ -1,14 +1,17 @@
 [tasks]
 bmc
 cover
+prf
 
 [options]
 bmc: mode bmc
 bmc: depth 20
 cover: mode cover
+prf: mode prove
+prf: depth 4
 
 [engines]
-smtbmc
+smtbmc boolector
 
 [script]
 read -formal -D ONE_STAGE_FIFO one_stage_fifo.v

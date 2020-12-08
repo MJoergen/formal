@@ -60,11 +60,14 @@ module one_stage_fifo #(
 `define ASSUME assert
 `endif
 
+// Require reset at startup
+   initial assume(rst_i);
+
 // This is necessary, because the $past() function returns uninitialized value on the first clock cycle.
    reg past_valid;
-   initial past_valid = 0;
+   initial past_valid = 1'b0;
    always @(posedge clk_i)
-      past_valid <= 1;
+      past_valid <= 1'b1;
 
 // Validate input (using assume)
    always @(posedge clk_i)
