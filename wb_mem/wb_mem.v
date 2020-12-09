@@ -4,6 +4,15 @@
 // * When wb_ack_o is de-asserted, then wb_data_o is all zeros.
 // * The response always appears on the exact following clock cycle.
 // * We have no more than a single outstanding request at any given time.
+//
+// * STB must be low when CYC is low
+// * If CYC goes low mid-transaction, the transaction is aborted
+// * While STB and STALL are active, the request cannot change
+// * One request is made for every clock with STB and !STALL
+// * One ACK response per request
+// * No ACKs allowed when the bus is idle
+// * No way to stall the ACK line
+// * The bus result is in i DATA when i ACK is true
 
 module wb_mem #(
    parameter G_ADDR_SIZE = 8,
@@ -72,6 +81,31 @@ module wb_mem #(
    always @(posedge clk_i)
    if (!wb_ack_o)
       assert (wb_data_o == 0);
+
+   // Verify the memory itself
+   reg   f_past_valid;
+   initial  f_past_valid = 1'b0;
+   always @(posedge clk_i)
+      f_past_valid <= 1'b1;
+
+   (* anyconst *) wire [G_ADDR_SIZE-1:0] f_const_addr;
+   reg [G_DATA_SIZE-1:0] f_mem_value;
+
+   reg f_mem_valid;
+   initial f_mem_valid = 1'b0;
+
+   always @(posedge clk_i)
+   begin
+      if (wb_cyc_i && wb_stb_i && !wb_stall_o && wb_we_i && (wb_addr_i == f_const_addr))
+      begin
+         f_mem_value <= wb_data_i;
+         f_mem_valid <= 1;
+      end
+   end
+
+   always @(posedge clk_i)
+      if (f_past_valid && f_mem_valid && $past(wb_cyc_i) && $past(wb_stb_i) && $past(!wb_stall_o) && $past(!wb_we_i) && $past(wb_addr_i == f_const_addr))
+         assert(wb_data_o == f_mem_value);
 `endif
 
 endmodule : wb_mem

@@ -1,8 +1,8 @@
 [tasks]
-prove
+bmc
 
 [options]
-mode prove
+mode bmc
 depth 10
 
 [engines]
