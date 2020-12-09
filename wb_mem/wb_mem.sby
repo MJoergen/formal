@@ -1,0 +1,19 @@
+[tasks]
+prove
+
+[options]
+mode prove
+depth 10
+
+[engines]
+smtbmc
+
+[script]
+read -formal -D WB_MEM wb_mem.v
+read -formal -D WB_MEM fwb_slave.v
+prep -top wb_mem
+
+[files]
+wb_mem.v
+fwb_slave.v
+

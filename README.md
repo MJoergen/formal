@@ -220,3 +220,37 @@ and
 
 This is it! We've now formally verified that the implementation of the one
 stage fifo satisfies all the formal requirements.
+
+## Next Step : A simple memory with a Wishbone interface
+In order to gain more experience with formal verification I need to implement a
+simple module. I chose a small memory with a Wishbone interface, so as to learn
+about that bus protocol too.
+
+The actual implementation of the memory is in the file
+[wb_mem/wb_mem.v](wb_mem/wb_mem.v). There is a great introduction to the
+wishbone bus protocol
+[here](http://zipcpu.com/zipcpu/2017/05/29/simple-wishbone.html), and a
+discussion of how to formally verify it
+[here](http://zipcpu.com/zipcpu/2017/11/07/wb-formal.html).  The author
+provides a ready-to-use
+[file](https://github.com/ZipCPU/zipcpu/blob/master/rtl/ex/fwb_slave.v) to
+verify the wishbone protocol.
+
+With the above, it is a simple matter to instantiate the module `fwb_slave`
+within the file `wb_mem.v`.
+
+There was one obstacle that caused me some problems: The following section in `wb_mem.v`
+
+```
+   // We have no more than a single outstanding request at any given time
+   always @(posedge clk_i)
+   if (wb_ack_o && wb_cyc_i)
+      assert(f_outstanding == 1);
+   else
+      assert(f_outstanding == 0);
+```
+
+seems superfluous in that response always comes on the following clock cycle
+anyway. However, removing these asserts caused the formal verification to fail.
+I don't at the moment understand why this is the case.
+
