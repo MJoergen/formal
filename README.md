@@ -254,3 +254,9 @@ seems superfluous in that response always comes on the following clock cycle
 anyway. However, removing these asserts caused the formal verification to fail.
 I don't at the moment understand why this is the case.
 
+Reading [this document](http://zipcpu.com/tutorial/class-vhdl.pdf) tells me
+that using `mode prove` in the `wb_mem.sby` file works differently than `mode
+bmc`.  With `mode prove` the tool tries to perform induction steps, and uses
+`assert()` statements as prerequisites in the proof. Slides 94-96 in the
+before-mentioned document describes this.
+
