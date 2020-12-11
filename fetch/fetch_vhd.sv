@@ -20,7 +20,7 @@ module fetch_vhd(
    input  wire [15:0] dc_pc_i);
 
    // Instantiate the FETCH module
-   fetch DUT (.*);
+   fetch DUT (.*); // This only works as long as the port signal names are unchanged.
 
 `ifdef FETCH
 `define ASSUME assume
@@ -35,9 +35,9 @@ module fetch_vhd(
       past_valid <= 1'b1;
 
 
-   /***************
-    * ASSUMPTIONS
-    ***************/
+   /****************************
+    * ASSUMPTIONS ABOUT INPUTS
+    ****************************/
 
    // Require reset at startup
    initial `ASSUME(rst_i);
@@ -48,9 +48,9 @@ module fetch_vhd(
          `ASSUME(dc_valid_i);
 
 
-   /***************
-    * ASSERTIONS
-    ***************/
+   /****************************
+    * ASSERTIONS ABOUT OUTPUTS
+    ****************************/
 
    // The output to the DECODE stage should be stable until accepted
    always @(posedge clk_i)

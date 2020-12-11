@@ -262,10 +262,13 @@ before-mentioned document describes this.
 
 ## VHDL
 Getting formal verification to work in VHDL requires quite a lot of manual
-setup and install. It appears the tools are not quite as mature for VHDL.
+setup and install; it would seem the tools are not quite as mature for VHDL.
 Anyway, I managed to get it working in the end. The main components was [this
 document](http://pepijndevos.nl/2019/08/15/open-source-formal-verification-in-vhdl.html)
 describing how to install GHDL and related tools.
+
+The first step is to install Yosys and the related solvers, see [this
+link](https://symbiyosys.readthedocs.io/en/latest/install.html).
 
 To use formal verification with VHDL, the actual design file is unchanged, but
 the design must be instantiated in a Verilog file, where all the formal
@@ -278,5 +281,22 @@ discussion](http://zipcpu.com/zipcpu/2017/11/18/wb-prefetch.html) about how to
 write and formally verify such a module. The only difference is I'm writing the
 module itself in VHDL.
 
-So far I've made a simple implementation in [fetch/fetch.vhd](fetch/fetch.vhd)
+So far I've made a simple implementation in [fetch/fetch.vhd](fetch/fetch.vhd).
+This implementation is not optimized, but is purposefully kept simple, The
+formal verification is written in verilog in the file
+[fetch/fetch_vhd.sv](fetch/fetch_vhd.sv). This module just instantiates the
+VHDL implementation, and then the remainder of the file contains the ASSUME,
+ASSERT, and COVER statements that describe the properties used during formal
+verification.
+
+The last file to write is the yosys script file
+[fetch/fetch.sby](fetch/fetch.sby). Note the use of ghdl to parse the VHDL
+file, and that the "prep -top" line references the verilog module and not the
+VHDL entity.
+
+So far the formal verification only checks for one thing: The output to the
+DECODE stage must not change, until it has been accepted. This actually fails
+verification, which just shows that even such a simple statement is ambiguous.
+And this proves a more general point: Unit testing and (formal) verification of
+a module forces one to consider exactly how the interfaces are to work.
 
