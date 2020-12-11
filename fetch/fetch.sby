@@ -1,0 +1,16 @@
+[options]
+mode bmc
+depth 20
+
+[engines]
+smtbmc
+
+[script]
+ghdl fetch.vhd -e fetch
+read -formal -D FETCH fetch_vhd.sv
+prep -top fetch
+
+[files]
+fetch.vhd
+fetch_vhd.sv
+
