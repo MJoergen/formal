@@ -8,7 +8,7 @@ smtbmc
 [script]
 ghdl fetch.vhd -e fetch
 read -formal -D FETCH fetch_vhd.sv
-prep -top fetch
+prep -top fetch_vhd
 
 [files]
 fetch.vhd

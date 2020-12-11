@@ -24,21 +24,21 @@ module fetch_vhd(
 `define ASSUME assert
 `endif
 
-// Require reset at startup
-initial `ASSUME(rst_i);
+   // Require reset at startup
+   initial `ASSUME(rst_i);
 
-// This is necessary, because the $past() function returns uninitialized value on the first clock cycle.
-reg past_valid;
-initial past_valid = 1'b0;
-always @(posedge clk_i)
-   past_valid <= 1'b1;
+   // This is necessary, because the $past() function returns uninitialized value on the first clock cycle.
+   reg past_valid;
+   initial past_valid = 1'b0;
+   always @(posedge clk_i)
+      past_valid <= 1'b1;
 
-// The DECODE stage is expected to assert dc_valid_i after a reset.
-always @(posedge clk_i)
-   if (past_valid && $past(rst_i))
-      `ASSUME(dc_valid_i);
+   // The DECODE stage is expected to assert dc_valid_i after a reset.
+   always @(posedge clk_i)
+      if (past_valid && $past(rst_i))
+         `ASSUME(dc_valid_i);
 
-// The output to the DECODE stage should be stable until accepted
+   // The output to the DECODE stage should be stable until accepted
    always @(posedge clk_i)
    begin
       if (past_valid && $past(!rst_i))
