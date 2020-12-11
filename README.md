@@ -294,9 +294,19 @@ The last file to write is the yosys script file
 file, and that the "prep -top" line references the verilog module and not the
 VHDL entity.
 
+One more final thing to remember is how to actually run the formal
+verification.  When working with VHDL files, the `sby` command needs additional
+command line parameters. Therefore, it is easiest to write this command in a
+Makefile. So running the test is a simple as typing `make`.
+
 So far the formal verification only checks for one thing: The output to the
 DECODE stage must not change, until it has been accepted. This actually fails
 verification, which just shows that even such a simple statement is ambiguous.
 And this proves a more general point: Unit testing and (formal) verification of
 a module forces one to consider exactly how the interfaces are to work.
+
+To get a better picture of what is happening, we can type `make show` to start
+up `gtkwave` and display the waveform associated with the failure.  This shows
+that particular failure here is because `dc_valid_i` is asserted when the FETCH
+module is in `WAIT_RESP_ST` state.
 

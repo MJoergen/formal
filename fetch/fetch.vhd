@@ -65,8 +65,8 @@ begin
 
             when REQ_ST =>
                -- After a new PC has been received, send request
-               wb_stb  <= '1';
                wb_cyc  <= '1';
+               wb_stb  <= '1';
                state   <= WAIT_REQ_ST;
 
             when WAIT_REQ_ST =>
@@ -105,6 +105,7 @@ begin
          if dc_valid_i = '1' then
             wb_addr <= dc_pc_i;
             wb_cyc  <= '0';      -- Abort any existing WISHBONE request
+            wb_stb  <= '0';      -- Abort any existing WISHBONE request
             state   <= REQ_ST;
          end if;
 

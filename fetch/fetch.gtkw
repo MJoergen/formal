@@ -1,0 +1,60 @@
+[*]
+[*] GTKWave Analyzer v3.3.86 (w)1999-2017 BSI
+[*] Fri Dec 11 13:51:25 2020
+[*]
+[dumpfile] "/home/mike/git/MJoergen/formal/fetch/fetch/engine_0/trace.vcd"
+[dumpfile_mtime] "Fri Dec 11 13:39:41 2020"
+[dumpfile_size] 6353
+[savefile] "/home/mike/git/MJoergen/formal/fetch/fetch.gtkw"
+[timestart] 0
+[size] 1920 1011
+[pos] -451 -218
+*-5.012049 95 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] fetch_vhd.
+[sst_width] 249
+[signals_width] 263
+[sst_expanded] 1
+[sst_vpaned_height] 286
+@28
+fetch_vhd.DUT.rst_i
+fetch_vhd.DUT.clk_i
+@200
+-
+@28
+[color] 2
+fetch_vhd.DUT.dc_valid_i
+@22
+fetch_vhd.DUT.dc_pc_i[15:0]
+@200
+-
+@28
+[color] 2
+fetch_vhd.DUT.dc_valid_o
+[color] 7
+fetch_vhd.DUT.dc_ready_i
+@22
+fetch_vhd.DUT.dc_addr_o[15:0]
+fetch_vhd.DUT.dc_inst_o[15:0]
+@200
+-
+@28
+fetch_vhd.DUT.state[2:0]
+@200
+-
+@28
+fetch_vhd.DUT.wb_cyc_o
+[color] 2
+fetch_vhd.DUT.wb_stb_o
+[color] 7
+fetch_vhd.DUT.wb_stall_i
+@22
+fetch_vhd.DUT.wb_addr_o[15:0]
+@200
+-
+@28
+[color] 2
+fetch_vhd.DUT.wb_ack_i
+@22
+fetch_vhd.DUT.wb_data_i[15:0]
+[pattern_trace] 1
+[pattern_trace] 0
