@@ -37,10 +37,10 @@ module fetch_vhd(
 `endif
 
    // This is necessary, because the $past() function returns uninitialized value on the first clock cycle.
-   reg past_valid;
-   initial past_valid = 1'b0;
+   reg f_past_valid;
+   initial f_past_valid = 1'b0;
    always @(posedge clk_i)
-      past_valid <= 1'b1;
+      f_past_valid <= 1'b1;
 
 
    /****************************************
@@ -52,38 +52,40 @@ module fetch_vhd(
 
    // The DECODE stage is expected to assert dc_valid_i right after a reset.
    always @(posedge clk_i)
-      if (past_valid && $past(rst_i))
+      if (f_past_valid && $past(rst_i))
          `ASSUME(dc_valid_i);
 
    // The DECODE stage is expected to be ready right after a reset.
    always @(posedge clk_i)
-      if (past_valid && $past(rst_i))
+      if (f_past_valid && $past(rst_i))
          `ASSUME(dc_ready_i);
 
    // The DECODE stage is expected to stay ready when no output.
    always @(posedge clk_i)
-      if (past_valid && $past(dc_ready_i) && $past(!dc_valid_o))
+      if (f_past_valid && $past(dc_ready_i) && $past(!dc_valid_o))
          `ASSUME(dc_ready_i);
 
    // Count the number of clock cycles the DECODE stage is stalling.
-   reg f_cpu_delay;
+   reg f_decode_stall;
    always @(posedge clk_i)
-      if (rst_i || dc_ready_i || !dc_valid_o)
-         f_cpu_delay <= 0;
+   begin
+      if (dc_valid_o && !dc_ready_i)
+         f_decode_stall <= f_decode_stall + 1;
       else
-         f_cpu_delay <= f_cpu_delay + 1;
+         f_decode_stall <= 0;
+   end
 
    // Maximum number of clock cycles the DECODE stage may stall.
-   localparam F_CPU_DELAY = 4;
+   localparam F_DECODE_STALL_MAX = 4;
 
    // Make sure the DECODE stage does not stall for too long.
    always @(posedge clk_i)
-      assume(f_cpu_delay < F_CPU_DELAY);
+      assume (f_decode_stall < F_DECODE_STALL_MAX);
 
 
-   /****************************************
-    * ASSUMPTIONS ABOUT INPUTS FROM WISHBONE
-    ****************************************/
+   /**************************************
+    * VERIFICATION OF WISHBONE INTERFACE
+    **************************************/
 
    wire [3:0] f_nreqs;
    wire [3:0] f_nacks;
@@ -117,21 +119,62 @@ module fetch_vhd(
    ); // fwb_master
 
 
-   /****************************
-    * ASSERTIONS ABOUT OUTPUTS
-    ****************************/
+   /**************************************
+    * ASSERTIONS ABOUT OUTPUTS TO DECODE
+    **************************************/
 
-   // The output to the DECODE stage should be stable until accepted
+   // The output to the DECODE stage must be stopped when accepted.
+   // This essentially states that the DECODE stage will receive valid
+   // instructions at most every second clock cycle.
    always @(posedge clk_i)
    begin
-      if (past_valid && $past(!rst_i))
+      if (f_past_valid && $past(dc_valid_o) && $past(dc_ready_i))
       begin
-         if ($past(dc_valid_o) && $past(!dc_ready_i))
-         begin
-            assert ($stable(dc_valid_o));  // dc_valid_o must the same as the last clock cycle
-            assert ($stable(dc_addr_o));   // dc_addr_o  must the same as the last clock cycle
-            assert ($stable(dc_inst_o));   // dc_inst_o  must the same as the last clock cycle
-         end
+         assert (!dc_valid_o);
+      end
+   end
+
+   // The output to the DECODE stage should be stable while valid
+   always @(posedge clk_i)
+   begin
+      if (f_past_valid && $past(dc_valid_o) && dc_valid_o)
+      begin
+         assert ($stable(dc_addr_o));   // dc_addr_o must be the same as the last clock cycle
+         assert ($stable(dc_inst_o));   // dc_inst_o must be the same as the last clock cycle
+      end
+   end
+
+   // As long as we're not receiving a new PC, keep the output
+   // to the DECODE stage stable until accepted.
+   always @(posedge clk_i)
+   begin
+      if (f_past_valid && $past(!rst_i) && $past(!dc_valid_i) && $past(dc_valid_o) && $past(!dc_ready_i))
+      begin
+         assert ($stable(dc_valid_o));
+         assert ($stable(dc_addr_o));
+         assert ($stable(dc_inst_o));
+      end
+   end
+
+   // While reading from wishbone, no output to the DECODE stage is allowed.
+   // The reason is that data received from the WISHBONE has no where to be
+   // stored, while another instruction is already presented to the DECODE
+   // stage.
+   always @(posedge clk_i)
+   begin
+      if (wb_cyc_o)
+      begin
+         assert (!dc_valid_o);
+      end
+   end
+
+   // A valid instruction is presented to DECODE immediately after receiving
+   // from wishbone
+   always @(posedge clk_i)
+   begin
+      if (f_past_valid && $past(!rst_i) && $past(wb_cyc_o) && $past(wb_ack_i))
+      begin
+         assert (dc_valid_o);
       end
    end
 

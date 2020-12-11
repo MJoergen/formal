@@ -331,6 +331,16 @@ Should we even allow this? Well, it seems wrong to dis-allow it, since some
 WISHBONE slaves may indeed respond combinatorially.
 
 In other words, the formal verification quickly found a bug in my understanding
-of the requirements, and I need to change the implementation.
+of the requirements, and I therefore need to change the implementation. After
+some changes to the implementation I'm back at the first problem: The
+verification fails because the signal `dc_valid_o` transitions from 1 to 0,
+while `dc_ready_i` was 0. The problem here is I'm trying to abort an
+instruction to the DECODE stage, but the formal verification was not written
+correctly to reflect that fact.
+
+I've therefore removed this particular assertion, and then gone back to [the
+link from before]((http://zipcpu.com/zipcpu/2017/11/18/wb-prefetch.html) and
+using that as inspiration for writing the assertions. And fixing some more bugs
+at the same time.
 
 

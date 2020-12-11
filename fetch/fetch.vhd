@@ -83,7 +83,7 @@ begin
                   -- Handle case where slave responds combinatorially
                   if wb_ack_i = '1' then
                      -- Special case if DECODE is providing a new PC
-                     if dc_valid_i = '0' then
+                     if dc_valid_i = '0' or dc_ready_i = '1' or dc_valid = '0' then
                         dc_inst  <= wb_data_i;
                         dc_valid <= '1';
                         dc_addr  <= wb_addr;
@@ -123,8 +123,10 @@ begin
             wb_addr  <= dc_pc_i;
             wb_cyc   <= '0';      -- Abort any existing WISHBONE request
             wb_stb   <= '0';      -- Abort any existing WISHBONE request
-            dc_valid <= '0';      -- Abort any existing DECODE instruction
-            state    <= REQ_ST;
+            if not (wb_cyc = '1' and wb_ack_i = '1') then
+               dc_valid <= '0';   -- Abort any existing DECODE instruction
+               state    <= REQ_ST;
+            end if;
          end if;
 
          if rst_i = '1' then
