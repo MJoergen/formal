@@ -4,47 +4,38 @@ use ieee.numeric_std.all;
 
 -- A simple instruction fetch unit.
 -- This unit essentially has four interfaces:
--- 1. Sending read requests
--- 2. Receiving read responses
+-- 1. Sending read requests to WISHBONE
+-- 2. Receiving read responses from WISHBONE
 -- 3. Sending instruction to DECODE stage
--- 4. Receiving new PC
+-- 4. Receiving a new PC from DECODE
 -- Interfaces 1 and 3 support back-pressure, while interfaces 2 and 4 do not.
-
 
 -- This first version is implemented using a state machine. This way we
 -- can control when data is expected from the wishbone bus. However,
--- we must be ready to receive new PC at any time.
---
--- The FETCH module starts in the IDLE state waiting for the DECODE module.
--- When a new PC has been received from the DECODE module, this is fetched from
--- the bus and the received instruction sent to the DECODE module (along with
--- the associated address).
--- Once the instruction has been accepted by the DECODE module, the FSM will
--- start fetching the next instruction.
-
+-- we must be ready to receive a new PC at any time.
 
 entity fetch is
    port (
       clk_i      : in  std_logic;
       rst_i      : in  std_logic;
 
-      -- Send read request to wishbone bus
+      -- Send read request to WISHBONE
       wb_cyc_o   : out std_logic;
       wb_stb_o   : out std_logic;
       wb_stall_i : in  std_logic;
       wb_addr_o  : out std_logic_vector(15 downto 0);
 
-      -- Receive read response from wishbone bus
+      -- Receive read response from WISHBONE
       wb_ack_i   : in  std_logic;
       wb_data_i  : in  std_logic_vector(15 downto 0);
 
-      -- Send to decode stage
+      -- Send instruction to DECODE
       dc_valid_o : out std_logic;
       dc_ready_i : in  std_logic;
       dc_addr_o  : out std_logic_vector(15 downto 0);
       dc_inst_o  : out std_logic_vector(15 downto 0);
 
-      -- Receive from decode stage
+      -- Receive a new PC from DECODE
       dc_valid_i : in  std_logic;
       dc_pc_i    : in  std_logic_vector(15 downto 0)
    );
@@ -52,10 +43,10 @@ end entity fetch;
 
 architecture synthesis of fetch is
 
+   -- Registered output signals
    signal wb_cyc   : std_logic := '0';
    signal wb_stb   : std_logic := '0';
    signal wb_addr  : std_logic_vector(15 downto 0);
-
    signal dc_valid : std_logic := '0';
    signal dc_addr  : std_logic_vector(15 downto 0);
    signal dc_inst  : std_logic_vector(15 downto 0);
@@ -73,19 +64,20 @@ begin
                -- After reset, do nothing
 
             when REQ_ST =>
+               -- After a new PC has been received, send request
                wb_stb  <= '1';
                wb_cyc  <= '1';
                state   <= WAIT_REQ_ST;
 
             when WAIT_REQ_ST =>
-               -- Wait until wishbone bus has accepted request
+               -- Wait until WISHBONE has accepted request
                if wb_stall_i = '0' then
                   wb_stb <= '0';
                   state <= WAIT_RESP_ST;
                end if;
 
             when WAIT_RESP_ST =>
-               -- Wait until wishbone bus has provided response
+               -- Wait until WISHBONE has provided response
                if wb_ack_i = '1' then
                   dc_inst  <= wb_data_i;
                   dc_valid <= '1';
@@ -95,7 +87,7 @@ begin
                end if;
 
             when WAIT_DECODE_ST =>
-               -- Wait until CPU accepts instruction
+               -- Wait until DECODE accepts instruction
                if dc_ready_i = '1' then
                   dc_valid <= '0';
 
@@ -112,7 +104,7 @@ begin
          -- React to any new PC from the DECODE stage
          if dc_valid_i = '1' then
             wb_addr <= dc_pc_i;
-            wb_cyc  <= '0';      -- Abort any existing wishbone request
+            wb_cyc  <= '0';      -- Abort any existing WISHBONE request
             state   <= REQ_ST;
          end if;
 

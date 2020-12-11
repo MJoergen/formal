@@ -260,3 +260,23 @@ bmc`.  With `mode prove` the tool tries to perform induction steps, and uses
 `assert()` statements as prerequisites in the proof. Slides 94-96 in the
 before-mentioned document describes this.
 
+## VHDL
+Getting formal verification to work in VHDL requires quite a lot of manual
+setup and install. It appears the tools are not quite as mature for VHDL.
+Anyway, I managed to get it working in the end. The main components was [this
+document](http://pepijndevos.nl/2019/08/15/open-source-formal-verification-in-vhdl.html)
+describing how to install GHDL and related tools.
+
+To use formal verification with VHDL, the actual design file is unchanged, but
+the design must be instantiated in a Verilog file, where all the formal
+verification is defined. And the SymbiYosys tools must be started with some
+additional command line parameters.
+
+Since I plan to write a pipelined CPU and formally verify it, I've chosen to
+start with the instruction FETCH module. There is a [very detailed
+discussion](http://zipcpu.com/zipcpu/2017/11/18/wb-prefetch.html) about how to
+write and formally verify such a module. The only difference is I'm writing the
+module itself in VHDL.
+
+So far I've made a simple implementation in [fetch/fetch.vhd](fetch/fetch.vhd)
+
