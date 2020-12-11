@@ -275,6 +275,8 @@ the design must be instantiated in a Verilog file, where all the formal
 verification is defined. And the SymbiYosys tools must be started with some
 additional command line parameters.
 
+### FETCH module of a yet-to-be-made CPU
+
 Since I plan to write a pipelined CPU and formally verify it, I've chosen to
 start with the instruction FETCH module. There is a [very detailed
 discussion](http://zipcpu.com/zipcpu/2017/11/18/wb-prefetch.html) about how to
@@ -309,4 +311,26 @@ To get a better picture of what is happening, we can type `make show` to start
 up `gtkwave` and display the waveform associated with the failure.  This shows
 that particular failure here is because `dc_valid_i` is asserted when the FETCH
 module is in `WAIT_RESP_ST` state.
+
+Before we fix this particular issue, let's expand the formal verification file
+`fetch_vhd.sv` with more assumptions. I'm here following closely [this
+link](http://zipcpu.com/zipcpu/2017/11/18/wb-prefetch.html).
+
+So now I've added all the assumptions, including adding the [WISHBONE MASTER
+formal verification
+file](https://github.com/ZipCPU/zipcpu/blob/master/rtl/ex/fwb_master.v).
+
+Firing up again SymbiYosys (the formal verification tool) by typing `make`
+shows that the module fails because `wb_ack_i` is asserted in the same clock
+cycle that `wb_stb_o`.
+
+Once again, we're faced with unclear requirements. Simply stating that the
+FETCH module should only issue a signle transaction and should wait for a
+response does not specify how to handle response that arrives combinatorially.
+Should we even allow this? Well, it seems wrong to dis-allow it, since some
+WISHBONE slaves may indeed respond combinatorially.
+
+In other words, the formal verification quickly found a bug in my understanding
+of the requirements, and I need to change the implementation.
+
 

@@ -59,6 +59,11 @@ begin
    p_fsm : process (clk_i)
    begin
       if rising_edge(clk_i) then
+         if dc_ready_i = '1' then
+            -- DECODE stage has consumed output
+            dc_valid <= '0';
+         end if;
+
          case state is
             when IDLE_ST => null;
                -- After reset, do nothing
@@ -74,6 +79,18 @@ begin
                if wb_stall_i = '0' then
                   wb_stb <= '0';
                   state <= WAIT_RESP_ST;
+
+                  -- Handle case where slave responds combinatorially
+                  if wb_ack_i = '1' then
+                     -- Special case if DECODE is providing a new PC
+                     if dc_valid_i = '0' then
+                        dc_inst  <= wb_data_i;
+                        dc_valid <= '1';
+                        dc_addr  <= wb_addr;
+                     end if;
+                     wb_cyc   <= '0';
+                     state    <= WAIT_DECODE_ST;
+                  end if;
                end if;
 
             when WAIT_RESP_ST =>
@@ -103,10 +120,11 @@ begin
 
          -- React to any new PC from the DECODE stage
          if dc_valid_i = '1' then
-            wb_addr <= dc_pc_i;
-            wb_cyc  <= '0';      -- Abort any existing WISHBONE request
-            wb_stb  <= '0';      -- Abort any existing WISHBONE request
-            state   <= REQ_ST;
+            wb_addr  <= dc_pc_i;
+            wb_cyc   <= '0';      -- Abort any existing WISHBONE request
+            wb_stb   <= '0';      -- Abort any existing WISHBONE request
+            dc_valid <= '0';      -- Abort any existing DECODE instruction
+            state    <= REQ_ST;
          end if;
 
          if rst_i = '1' then
