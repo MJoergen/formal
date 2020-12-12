@@ -1,18 +1,18 @@
 [options]
 mode bmc
-depth 30
+depth 20
 
 [engines]
 smtbmc
 
 [script]
 ghdl fetch.vhd -e fetch
-read -formal -D FETCH fetch_vhd.sv
+read -formal -D FETCH fetch_formal.sv
 read -formal fwb_master.v
-prep -top fetch_vhd
+prep -top fetch_formal
 
 [files]
 fetch.vhd
-fetch_vhd.sv
+fetch_formal.sv
 fwb_master.v
 

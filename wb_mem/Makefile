@@ -1,10 +1,10 @@
-DUT = fetch
+DUT = wb_mem
 
 # This is the main command line to run the formal verification
 all:
 	sby --yosys "yosys -m ghdl" -f $(DUT).sby
 
-show_bmc:
+show:
 	gtkwave $(DUT)/engine_0/trace.vcd $(DUT).gtkw
 
 clean:

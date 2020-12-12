@@ -2,7 +2,7 @@
 
 `default_nettype none
 
-module fetch_vhd(
+module fetch_formal(
    // The interface must be identical to the VHDL module.
    input  wire        clk_i,
    input  wire        rst_i,
@@ -178,5 +178,5 @@ module fetch_vhd(
       end
    end
 
-endmodule
+endmodule : fetch_formal
 

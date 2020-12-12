@@ -14,9 +14,11 @@ prf: depth 4
 smtbmc boolector
 
 [script]
-read -formal -D ONE_STAGE_FIFO one_stage_fifo.v
-prep -top one_stage_fifo
+ghdl one_stage_fifo.vhd -e one_stage_fifo
+read -formal -D ONE_STAGE_FIFO one_stage_fifo_formal.sv
+prep -top one_stage_fifo_formal
 
 [files]
-one_stage_fifo.v
+one_stage_fifo.vhd
+one_stage_fifo_formal.sv
 

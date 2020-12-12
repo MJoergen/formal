@@ -1,6 +1,3 @@
-[tasks]
-bmc
-
 [options]
 mode bmc
 depth 10
@@ -9,11 +6,13 @@ depth 10
 smtbmc
 
 [script]
-read -formal -D WB_MEM wb_mem.v
-read -formal -D WB_MEM fwb_slave.v
-prep -top wb_mem
+ghdl wb_mem.vhd -e wb_mem
+read -formal -D WB_MEM wb_mem_formal.sv
+read -formal fwb_slave.v
+prep -top wb_mem_formal
 
 [files]
-wb_mem.v
+wb_mem.vhd
+wb_mem_formal.sv
 fwb_slave.v
 
