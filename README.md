@@ -2,7 +2,7 @@
 
 Others have gone here before me, and now it is my turn!
 
-[Formal verification](http://zipcpu.com/blog/2017/10/19/formal-intro.html) is a
+[Formal verification](http://zipcpu.com/formal/formal.html) is a
 tool for verifying the correctness of your implementation. Traditional
 verification strategies have relied on hand-crafted testbenches to provide
 stimuli to the DUT.  Formal verification aims to automate that process. In my
