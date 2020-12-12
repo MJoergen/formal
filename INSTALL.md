@@ -1,18 +1,27 @@
 # Installing tools for formal verification
 
 Getting formal verification to work in VHDL requires quite a lot of manual
-setup and install; it would seem the tools are not quite as mature for VHDL.
+setup and install; it would seem the tools are not quite mature yet.
 Anyway, I managed to get it working in the end.
 
-In order to use formal verification of VHDL, you need to install a bunch of tools:
+In order to use formal verification of VHDL, you need to install a bunch of tools, as explained below:
 * Yosys, SymbiYosys, and some SAT solvers
 * GNAT, GHDL, and the ghdl-yosys-plugin
 
 ## Install Yosys, SymbiYosys, and some SAT solvers
-This is described in detail in [this link](https://symbiyosys.readthedocs.io/en/latest/install.html).
+This is described in detail in [this link](https://symbiyosys.readthedocs.io/en/latest/install.html)
+and is actually pretty straight forward.
 
-Note that on my machine (running Linux Mint 19.3 with GCC 9.3) I ran into
-the following error when building the Avy project:
+However, I did run into two problems:
+
+The first problem is I needed to install an additional package:
+
+```
+sudo apt install python3-sphinx
+```
+
+The second problem is that on my machine (running Linux Mint 19.3 with GCC 9.3)
+I ran into the following error when building the Avy project:
 
 ```
 extavy/avy/src/ItpMinisat.h:127:52: error: cannot convert ‘boost::logic::tribool’ to ‘bool’ in return
@@ -63,8 +72,10 @@ index d145d7c..7514f31 100644
      {
 ```
 
+Everything else worked fine just be following the instructions in the above link.
 
 ## Install GNAT, GHDL, and the ghdl-yosys-plugin
 
-The details are described [here](https://github.com/ghdl/ghdl-yosys-plugin).
+The details are described [here](https://github.com/ghdl/ghdl-yosys-plugin) and is again
+pretty straight forward.
 

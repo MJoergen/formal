@@ -2,7 +2,7 @@
 For my first attempt at formal verification, I've decided to work on a
 one-stage FIFO.  This is basically a register with a write-enable, but with the
 added ability to provide back-pressure. So the implementation contains a small
-FSM revolving around whether the contents have been read.
+FSM revolving around whether or not the FIFO contains valid data.
 
 ## The protocol (how the FIFO works)
 There is a producer (or source) that feeds data into the FIFO, and there is
@@ -22,7 +22,7 @@ I've added an additional constraint: When the upstream has asserted VALID, and
 READY is not yet asserted, the signals DATA and VALID are required to remain
 unchanged, until the data transfer has completed.  In other words, the sender
 may not "change its mind" once it has announced that data is waiting.  This
-requirement is not strictly necesasry, but is kind of "common sense". However,
+requirement is not strictly necessary, but is kind of "common sense". However,
 it does mean the sender is not able to "abort" a transfer.
 
 One thing to note about this protocol is that the upstream READY signal (back
@@ -34,15 +34,15 @@ two-stage FIFO. More on that later.
 
 ## The implementation
 The FIFO implementation is found [here](one_stage_fifo.vhd). This file contains
-the actual implementation, an nothing more. The formal verification of the
+the actual implementation, and nothing more. The formal verification of the
 design goes into a [separate file](one_stage_fifo_formal.sv), written in System
 Verilog. Note that this latter file must have the same port declarations as the
 DUT.
 
 ## Formal verification
-Instead of writing a testbench manually generating stimuli, we instead write
-some rules (assertions) that must be obeyed at all times.  Note: This is a
-non-trivial step, and takes practice.
+Instead of writing a testbench that manually generates stimuli, we instead
+write some rules (assertions) that must be obeyed at all times.  Note: This is
+a non-trivial step, and takes considerable practice.
 
 The main keywords to use are `assume()` (for validating input), `assert()` (for
 validating output), and `cover()` (for ensuring reachability). This
@@ -142,6 +142,9 @@ This forces the formal verification tool to check all combinations of
 ## Running the formal verifier
 In order to run the formal verifier, we must create a small
 script [one_stage_fifo.sby](one_stage_fifo.sby).
+
+Note the use of ghdl to parse the VHDL file, and that the "prep -top" line
+references the verilog module and not the VHDL entity.
 
 Then we just run the verifier using the command
 ```

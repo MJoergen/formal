@@ -6,7 +6,7 @@ Others have gone here before me, and now it is my turn!
 verifying the correctness of your implementation. Traditional verification
 strategies have relied on hand-crafted testbenches to provide stimuli to the
 DUT.  Formal verification aims to automate that process. In my view the two
-approaches (testbench and formal) supplement each other, rather than replacing
+approaches (testbench and formal) supplement each other, rather than replace
 each other.
 
 ## Installing the tools
