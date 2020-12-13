@@ -72,7 +72,7 @@ index d145d7c..7514f31 100644
      {
 ```
 
-Everything else worked fine just be following the instructions in the above link.
+Everything else worked fine just by following the instructions in the above link.
 
 ## Install GNAT, GHDL, and the ghdl-yosys-plugin
 
