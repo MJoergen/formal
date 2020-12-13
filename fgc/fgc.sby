@@ -1,0 +1,16 @@
+[options]
+mode cover
+depth 20
+
+[engines]
+smtbmc
+
+[script]
+ghdl fgc.vhd -e fgc
+read -formal fgc_formal.sv
+prep -top fgc_formal
+
+[files]
+fgc.vhd
+fgc_formal.sv
+
