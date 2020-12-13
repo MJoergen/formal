@@ -8,5 +8,6 @@ show_bmc:
 	gtkwave $(DUT)/engine_0/trace.vcd $(DUT).gtkw
 
 clean:
-	rm -rf $(DUT)/
+	rm -rf $(DUT)_bmc/
+	rm -rf $(DUT)_cover/
 

@@ -178,5 +178,11 @@ module fetch_formal(
       end
    end
 
+   // Verify DECUDE stage can accept an instruction
+   always @(posedge clk_i)
+   begin
+      cover (f_past_valid && $past(!rst_i) && $past(dc_valid_o) && !dc_valid_o);
+   end
+
 endmodule : fetch_formal
 

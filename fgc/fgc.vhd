@@ -39,19 +39,25 @@ begin
                bank_m <= not bank_m;
 
             when "01" =>
-               -- Move MAN and FOX
-               bank_f <= not bank_f;
-               bank_m <= not bank_m;
+               if bank_f = bank_m then
+                  -- Move MAN and FOX
+                  bank_f <= not bank_f;
+                  bank_m <= not bank_m;
+               end if;
 
             when "10" =>
-               -- Move MAN and GOAT
-               bank_g <= not bank_g;
-               bank_m <= not bank_m;
+               if bank_g = bank_m then
+                  -- Move MAN and GOAT
+                  bank_g <= not bank_g;
+                  bank_m <= not bank_m;
+               end if;
 
             when "11" =>
-               -- Move MAN and CABBAGE
-               bank_c <= not bank_c;
-               bank_m <= not bank_m;
+               if bank_c = bank_m then
+                  -- Move MAN and CABBAGE
+                  bank_c <= not bank_c;
+                  bank_m <= not bank_m;
+               end if;
 
             when others =>
                null;
