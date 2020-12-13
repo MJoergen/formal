@@ -31,5 +31,5 @@ additional command line parameters. This is demonstrated in the below examples.
   examples.
 
 * [This video-series](https://www.youtube.com/watch?v=_5R35QFsXM4) gives a more
-  detailed tutorial for getting started with formaæl verification.
+  detailed tutorial for getting started with formal verification.
 
