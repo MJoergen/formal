@@ -1,0 +1,24 @@
+[tasks]
+bmc
+cover
+prf
+
+[options]
+bmc: mode bmc
+bmc: depth 20
+cover: mode cover
+prf: mode prove
+prf: depth 4
+
+[engines]
+smtbmc boolector
+
+[script]
+ghdl one_stage_buffer.vhd -e one_stage_buffer
+read -formal -D ONE_STAGE_BUFFER one_stage_buffer_formal.sv
+prep -top one_stage_buffer_formal
+
+[files]
+one_stage_buffer.vhd
+one_stage_buffer_formal.sv
+
