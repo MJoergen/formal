@@ -95,10 +95,10 @@ module fetch_formal(
       .AW                   (16),
       .DW                   (16),
       .F_LGDEPTH            (4),
-      .F_MAX_REQUESTS       (1),
+      .F_MAX_REQUESTS       (0),
       .F_OPT_SOURCE         (1),
       .F_OPT_RMW_BUS_OPTION (0),
-      .F_OPT_DISCONTINUOUS  (0)
+      .F_OPT_DISCONTINUOUS  (1)
    )
    f_wbm (
       .i_clk         (clk_i),
@@ -118,31 +118,16 @@ module fetch_formal(
       .f_outstanding (f_outstanding)
    ); // fwb_master
 
+   // We have no more than a single outstanding request at any given time
+   always @(posedge clk_i)
+   begin
+      assert(f_outstanding <= 1);
+   end
+
 
    /**************************************
     * ASSERTIONS ABOUT OUTPUTS TO DECODE
     **************************************/
-
-   // The output to the DECODE stage must be stopped when accepted.
-   // This essentially states that the DECODE stage will receive valid
-   // instructions at most every second clock cycle.
-   always @(posedge clk_i)
-   begin
-      if (f_past_valid && $past(dc_valid_o) && $past(dc_ready_i))
-      begin
-         assert (!dc_valid_o);
-      end
-   end
-
-   // The output to the DECODE stage should be stable while valid
-   always @(posedge clk_i)
-   begin
-      if (f_past_valid && $past(dc_valid_o) && dc_valid_o)
-      begin
-         assert ($stable(dc_addr_o));   // dc_addr_o must be the same as the last clock cycle
-         assert ($stable(dc_inst_o));   // dc_inst_o must be the same as the last clock cycle
-      end
-   end
 
    // As long as we're not receiving a new PC, keep the output
    // to the DECODE stage stable until accepted.
@@ -156,18 +141,6 @@ module fetch_formal(
       end
    end
 
-   // While reading from wishbone, no output to the DECODE stage is allowed.
-   // The reason is that data received from the WISHBONE has no where to be
-   // stored, while another instruction is already presented to the DECODE
-   // stage.
-   always @(posedge clk_i)
-   begin
-      if (wb_cyc_o)
-      begin
-         assert (!dc_valid_o);
-      end
-   end
-
    // A valid instruction is presented to DECODE immediately after receiving
    // from wishbone
    always @(posedge clk_i)
@@ -176,6 +149,16 @@ module fetch_formal(
       begin
          assert (dc_valid_o);
       end
+   end
+
+
+   /********************
+    * COVER STATEMENTS
+    ********************/
+
+   always @(posedge clk_i)
+   begin
+      cover (f_past_valid && $past(dc_valid_o) && !dc_valid_o);
    end
 
 endmodule : fetch_formal

@@ -10,9 +10,11 @@ use ieee.numeric_std.all;
 -- 4. Receiving a new PC from DECODE
 -- Interfaces 1 and 3 support back-pressure, while interfaces 2 and 4 do not.
 
--- This first version is implemented using a state machine. This way we
--- can control when data is expected from the wishbone bus. However,
--- we must be ready to receive a new PC at any time.
+-- The wishbone interface is running in pipeline mode. This means the STB
+-- signal is asserted for one clock cycle (or until STALL is low) for each
+-- request, whereas the CYC signal is held high until the corresponding ACKs
+-- are received.  In this implementation, only a single outstanding wishbone
+-- request is used.
 
 entity fetch is
    port (
@@ -51,92 +53,79 @@ architecture synthesis of fetch is
    signal dc_addr  : std_logic_vector(15 downto 0);
    signal dc_inst  : std_logic_vector(15 downto 0);
 
-   type state_t is (IDLE_ST, REQ_ST, WAIT_REQ_ST, WAIT_RESP_ST, WAIT_DECODE_ST);
-   signal state : state_t := IDLE_ST;
+   signal wb_wait  : std_logic;
+   signal dc_stall : std_logic;
 
 begin
 
-   p_fsm : process (clk_i)
+   wb_wait  <= wb_cyc and not wb_ack_i;
+   dc_stall <= dc_valid and not dc_ready_i;
+
+   -- Control the wishbone request interface
+   p_wishbone : process (clk_i)
    begin
       if rising_edge(clk_i) then
-         if dc_ready_i = '1' then
-            -- DECODE stage has consumed output
-            dc_valid <= '0';
+         -- Clear request when it has been accepted
+         if wb_stall_i = '0' then
+            wb_stb <= '0';
          end if;
 
-         case state is
-            when IDLE_ST => null;
-               -- After reset, do nothing
+         -- End cycle when response received
+         if wb_ack_i = '1' then
+            wb_cyc <= '0';
+            wb_stb <= '0';
+         end if;
 
-            when REQ_ST =>
-               -- After a new PC has been received, send request
-               wb_cyc  <= '1';
-               wb_stb  <= '1';
-               state   <= WAIT_REQ_ST;
+         -- Increment address when response received and ready to issue new request
+         if wb_wait = '0' and dc_stall = '0' then
+            wb_addr <= std_logic_vector(unsigned(wb_addr) + 1);
+            wb_cyc  <= '1';
+            wb_stb  <= '1';
+         end if;
 
-            when WAIT_REQ_ST =>
-               -- Wait until WISHBONE has accepted request
-               if wb_stall_i = '0' then
-                  wb_stb <= '0';
-                  state <= WAIT_RESP_ST;
-
-                  -- Handle case where slave responds combinatorially
-                  if wb_ack_i = '1' then
-                     -- Special case if DECODE is providing a new PC
-                     if dc_valid_i = '0' or dc_ready_i = '1' or dc_valid = '0' then
-                        dc_inst  <= wb_data_i;
-                        dc_valid <= '1';
-                        dc_addr  <= wb_addr;
-                     end if;
-                     wb_cyc   <= '0';
-                     state    <= WAIT_DECODE_ST;
-                  end if;
-               end if;
-
-            when WAIT_RESP_ST =>
-               -- Wait until WISHBONE has provided response
-               if wb_ack_i = '1' then
-                  dc_inst  <= wb_data_i;
-                  dc_valid <= '1';
-                  dc_addr  <= wb_addr;
-                  wb_cyc   <= '0';
-                  state    <= WAIT_DECODE_ST;
-               end if;
-
-            when WAIT_DECODE_ST =>
-               -- Wait until DECODE accepts instruction
-               if dc_ready_i = '1' then
-                  dc_valid <= '0';
-
-                  -- Fetch the next instruction
-                  wb_addr <= std_logic_vector(unsigned(wb_addr) + 1);
-                  wb_stb  <= '1';
-                  wb_cyc  <= '1';
-                  state   <= WAIT_REQ_ST;
-               end if;
-
-            when others => null;
-         end case;
-
-         -- React to any new PC from the DECODE stage
+         -- Abort current wishbone transaction
          if dc_valid_i = '1' then
-            wb_addr  <= dc_pc_i;
-            wb_cyc   <= '0';      -- Abort any existing WISHBONE request
-            wb_stb   <= '0';      -- Abort any existing WISHBONE request
-            if not (wb_cyc = '1' and wb_ack_i = '1') then
-               dc_valid <= '0';   -- Abort any existing DECODE instruction
-               state    <= REQ_ST;
-            end if;
+            wb_addr <= dc_pc_i;
+            wb_cyc <= '0';
+            wb_stb <= '0';
+         end if;
+
+         -- If no current transaction start new one immediately
+         if dc_valid_i = '1' and wb_cyc = '0' then
+            wb_cyc <= '1';
+            wb_stb <= '1';
          end if;
 
          if rst_i = '1' then
-            wb_cyc   <= '0';
-            wb_stb   <= '0';
-            dc_valid <= '0';
-            state    <= IDLE_ST;
+            wb_cyc <= '0';
+            wb_stb <= '0';
          end if;
       end if;
-   end process p_fsm;
+   end process p_wishbone;
+
+
+   -- Control the decode output signals
+   p_decode : process (clk_i)
+   begin
+      if rising_edge(clk_i) then
+         -- Clear output when it has been accepted
+         if dc_ready_i = '1' then
+            dc_valid <= '0';
+         end if;
+
+         -- Output data received from wishbone
+         if wb_cyc = '1' and wb_ack_i = '1' and dc_stall = '0' then
+            dc_addr  <= wb_addr;
+            dc_inst  <= wb_data_i;
+            dc_valid <= '1';
+         end if;
+
+         if rst_i = '1' then
+            dc_valid <= '0';
+         end if;
+      end if;
+   end process p_decode;
+
 
    -- Connect output signals
    wb_cyc_o   <= wb_cyc;

@@ -5,7 +5,10 @@ all:
 	sby --yosys "yosys -m ghdl" -f $(DUT).sby
 
 show_bmc:
-	gtkwave $(DUT)/engine_0/trace.vcd $(DUT).gtkw
+	gtkwave $(DUT)_bmc/engine_0/trace.vcd $(DUT).gtkw
+
+show_cover:
+	gtkwave $(DUT)_cover/engine_0/trace0.vcd $(DUT).gtkw
 
 clean:
 	rm -rf $(DUT)/
