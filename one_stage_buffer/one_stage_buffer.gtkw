@@ -1,14 +1,14 @@
 [*]
-[*] GTKWave Analyzer v3.3.86 (w)1999-2017 BSI
-[*] Mon Dec 14 07:58:44 2020
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Mon Dec 14 22:02:46 2020
 [*]
-[dumpfile] "/home/mike/git/MJoergen/formal/buffer/one_stage_buffer_bmc/engine_0/trace.vcd"
-[dumpfile_mtime] "Mon Dec 14 07:58:02 2020"
-[dumpfile_size] 1558
-[savefile] "/home/mike/git/MJoergen/formal/buffer/one_stage_buffer.gtkw"
+[dumpfile] "/home/mike/git/MJoergen/formal/one_stage_buffer/one_stage_buffer_bmc/engine_0/trace.vcd"
+[dumpfile_mtime] "Mon Dec 14 22:01:24 2020"
+[dumpfile_size] 2181
+[savefile] "/home/mike/git/MJoergen/formal/one_stage_buffer/one_stage_buffer.gtkw"
 [timestart] 0
 [size] 1920 1011
-[pos] -1 -1
+[pos] -1906 -11
 *-3.308034 26 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] one_stage_buffer_formal.
 [sst_width] 249
@@ -31,7 +31,14 @@ one_stage_buffer_formal.DUT.m_valid_o
 one_stage_buffer_formal.DUT.m_ready_i
 @22
 one_stage_buffer_formal.DUT.m_data_o[7:0]
-@29
+@200
+-
+@28
 one_stage_buffer_formal.DUT.s_valid_r
+@22
+one_stage_buffer_formal.DUT.s_data_r[7:0]
+one_stage_buffer_formal.f_last_value[7:0]
+@28
+one_stage_buffer_formal.f_count[1:0]
 [pattern_trace] 1
 [pattern_trace] 0

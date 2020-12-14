@@ -57,7 +57,7 @@ module one_stage_buffer_formal #(
     * ASSERTIONS ABOUT OUTPUTS
     ****************************/
 
-   // FIFO must be empty after reset
+   // Buffer must be empty after reset
    always @(posedge clk_i)
    begin
       if (f_past_valid && $past(rst_i) && !s_valid_i)
@@ -76,12 +76,57 @@ module one_stage_buffer_formal #(
       end
    end
 
-   // Output must be invalid when FIFO is empty
+//   // Output must be invalid when FIFO is empty
+//   always @(posedge clk_i)
+//   begin
+//      if (f_past_valid && $past(m_valid_o) && $past(m_ready_i) && !s_valid_i)
+//      begin
+//         assert (!m_valid_o);
+//      end
+//   end
+
+   reg [G_DATA_SIZE-1:0] f_last_value;
+   reg [1:0] f_count;
+   initial f_last_value = 0;
+   initial f_count = 2'b0;
    always @(posedge clk_i)
    begin
-      if (f_past_valid && $past(m_valid_o) && $past(m_ready_i) && !s_valid_i)
+      if (s_valid_i && s_ready_o)
       begin
-         assert (!m_valid_o);
+         f_last_value <= s_data_i;
+      end
+
+      if (s_valid_i && s_ready_o && !(m_valid_o && m_ready_i))
+      begin
+         f_count <= f_count + 1'b1;
+      end
+
+      if (m_valid_o && m_ready_i && !(s_valid_i && s_ready_o))
+      begin
+         f_count <= f_count - 1'b1;
+      end
+
+      if (rst_i)
+      begin
+         f_count <= 2'b0;
+      end
+   end
+
+   always @(posedge clk_i)
+   begin
+      if (s_valid_i && s_ready_o && m_valid_o && !m_ready_i)
+         assert (f_count == 0);
+      if (m_valid_o && m_ready_i && !s_valid_i && s_ready_o)
+         assert (f_count == 1);
+      assert (f_count <= 1);
+   end
+
+   always @(posedge clk_i)
+   begin
+      if (f_count && !rst_i)
+      begin
+         assert (m_data_o == f_last_value);
+         assert (m_valid_o);
       end
    end
 

@@ -34,18 +34,22 @@ begin
    p_buffer : process (clk_i)
    begin
       if rising_edge(clk_i) then
-         if m_ready_i = '1' then
+         if m_ready_i = '1' and s_valid_i = '0' then
             -- Receiver has consumed output
             s_valid_r <= '0';
          end if;
 
-         if s_valid_i = '1' and s_valid_r <= '0' and m_ready_i = '0' then
+         if s_valid_i = '1' and m_ready_i = '0' then
             s_valid_r <= '1';
+         end if;
+
+         if s_valid_i = '1' and s_ready_s = '1' then
             s_data_r  <= s_data_i;
          end if;
 
          if rst_i = '1' then
             s_valid_r <= '0';
+            s_data_r  <= (others => '0');
          end if;
       end if;
    end process p_buffer;
