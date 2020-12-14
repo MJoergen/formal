@@ -124,19 +124,14 @@ Finally, the `cover()` statement is used to automatically generate stimuli. In
 code it looks as follows:
 
 ```
-generate
-   genvar i;
-   for (i=0; i < 8; i++) begin: CVR
-      always @(posedge clk_i)
-      begin
-         cover (f_past_valid && $past(!rst_i) && {s_valid_i, m_ready_i, m_valid_o} == i);
-      end
-   end
-endgenerate
+always @(posedge clk_i)
+begin
+   cover (f_past_valid && $past(!rst_i) && $past(m_valid_o) && !m_valid_o);
+end
 ```
 
-This forces the formal verification tool to check all combinations of
-`s_valid_i`, `m_ready_i`, and `m_valid_o`.
+This forces the formal verification tool to reach a situation, where
+the FIFO transitions frmo full to empty.
 
 
 ## Running the formal verifier

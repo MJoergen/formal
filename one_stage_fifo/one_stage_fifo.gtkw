@@ -1,15 +1,15 @@
 [*]
-[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Sat Dec 12 14:37:06 2020
+[*] GTKWave Analyzer v3.3.86 (w)1999-2017 BSI
+[*] Sun Dec 13 10:52:53 2020
 [*]
-[dumpfile] "/home/mike/git/MJoergen/formal/one_stage_fifo/one_stage_fifo_bmc/engine_0/trace.vcd"
-[dumpfile_mtime] "Sat Dec 12 14:35:12 2020"
-[dumpfile_size] 1556
+[dumpfile] "/home/mike/git/MJoergen/formal/one_stage_fifo/one_stage_fifo_cover/engine_0/trace0.vcd"
+[dumpfile_mtime] "Sun Dec 13 10:52:35 2020"
+[dumpfile_size] 2006
 [savefile] "/home/mike/git/MJoergen/formal/one_stage_fifo/one_stage_fifo.gtkw"
 [timestart] 0
-[size] 1920 1172
-[pos] -451 -278
-*-2.174937 27 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[size] 1920 1011
+[pos] -1 -1
+*-2.893166 27 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] one_stage_fifo_formal.
 [sst_width] 249
 [signals_width] 251

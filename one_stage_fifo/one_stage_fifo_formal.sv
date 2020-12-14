@@ -90,16 +90,11 @@ module one_stage_fifo_formal #(
     * COVER STATEMENTS TO VERIFY REACHABILITY
     *******************************************/
 
-   // Make sure all states are exercised (using cover)
-   generate
-      genvar i;
-      for (i=0; i < 8; i++) begin: CVR
-         always @(posedge clk_i)
-         begin
-            cover (f_past_valid && $past(!rst_i) && {s_valid_i, m_ready_i, m_valid_o} == i);
-         end
-      end
-   endgenerate
+   // Make sure FIFO can transition from full to empty.
+   always @(posedge clk_i)
+   begin
+      cover (f_past_valid && $past(!rst_i) && $past(m_valid_o) && !m_valid_o);
+   end
 
 `endif // FORMAL
 
