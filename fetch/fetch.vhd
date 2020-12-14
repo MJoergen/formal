@@ -34,11 +34,11 @@ entity fetch is
       dc_valid_o : out std_logic;
       dc_ready_i : in  std_logic;
       dc_addr_o  : out std_logic_vector(15 downto 0);
-      dc_inst_o  : out std_logic_vector(15 downto 0);
+      dc_data_o  : out std_logic_vector(15 downto 0);
 
       -- Receive a new PC from DECODE
       dc_valid_i : in  std_logic;
-      dc_pc_i    : in  std_logic_vector(15 downto 0)
+      dc_addr_i  : in  std_logic_vector(15 downto 0)
    );
 end entity fetch;
 
@@ -50,7 +50,7 @@ architecture synthesis of fetch is
    signal wb_addr  : std_logic_vector(15 downto 0);
    signal dc_valid : std_logic := '0';
    signal dc_addr  : std_logic_vector(15 downto 0);
-   signal dc_inst  : std_logic_vector(15 downto 0);
+   signal dc_data  : std_logic_vector(15 downto 0);
 
    -- Combinatorial signals
    signal wb_wait  : std_logic;
@@ -71,7 +71,7 @@ begin
          end if;
 
          -- End cycle when response received
-         if wb_ack_i = '1' then
+         if wb_cyc = '1' and wb_ack_i = '1' then
             wb_cyc <= '0';
             wb_stb <= '0';
          end if;
@@ -85,7 +85,7 @@ begin
 
          -- Abort current wishbone transaction
          if dc_valid_i = '1' then
-            wb_addr <= dc_pc_i;
+            wb_addr <= dc_addr_i;
             wb_cyc <= '0';
             wb_stb <= '0';
          end if;
@@ -109,14 +109,14 @@ begin
    begin
       if rising_edge(clk_i) then
          -- Clear output when it has been accepted
-         if dc_ready_i = '1' then
+         if dc_ready_i = '1' or dc_valid_i = '1' then
             dc_valid <= '0';
          end if;
 
          -- Output data received from wishbone
-         if wb_cyc = '1' and wb_ack_i = '1' and dc_stall = '0' then
+         if wb_cyc = '1' and wb_ack_i = '1' and dc_valid_i = '0' and dc_stall = '0' then
             dc_addr  <= wb_addr;
-            dc_inst  <= wb_data_i;
+            dc_data  <= wb_data_i;
             dc_valid <= '1';
          end if;
 
@@ -133,7 +133,7 @@ begin
    wb_addr_o  <= wb_addr;
    dc_valid_o <= dc_valid;
    dc_addr_o  <= dc_addr;
-   dc_inst_o  <= dc_inst;
+   dc_data_o  <= dc_data;
 
 end architecture synthesis;
 

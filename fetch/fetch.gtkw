@@ -24,7 +24,7 @@ fetch_formal.DUT.rst_i
 [color] 2
 fetch_formal.DUT.dc_valid_i
 @22
-fetch_formal.DUT.dc_pc_i[15:0]
+fetch_formal.DUT.dc_addr_i[15:0]
 @200
 -
 @28
@@ -34,7 +34,7 @@ fetch_formal.DUT.dc_valid_o
 fetch_formal.DUT.dc_ready_i
 @22
 fetch_formal.DUT.dc_addr_o[15:0]
-fetch_formal.DUT.dc_inst_o[15:0]
+fetch_formal.DUT.dc_data_o[15:0]
 @200
 -
 @28

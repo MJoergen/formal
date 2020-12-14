@@ -21,11 +21,11 @@ module fetch_formal(
    output wire        dc_valid_o,
    input  wire        dc_ready_i,
    output wire [15:0] dc_addr_o,
-   output wire [15:0] dc_inst_o,
+   output wire [15:0] dc_data_o,
 
    // Receive a new PC from DECODE
    input  wire        dc_valid_i,
-   input  wire [15:0] dc_pc_i);
+   input  wire [15:0] dc_addr_i);
 
    // Instantiate the FETCH module
    fetch DUT (.*); // This only works as long as the port signal names are unchanged.
@@ -43,49 +43,10 @@ module fetch_formal(
       f_past_valid <= 1'b1;
 
 
-   /****************************************
-    * ASSUMPTIONS ABOUT INPUTS FROM DECODE
-    ****************************************/
-
-   // Require reset at startup
+   // Require reset at startup.
+   // This is to ensure BMC starts in a valid state.
    initial `ASSUME(rst_i);
 
-   // The DECODE stage is expected to assert dc_valid_i right after a reset.
-   always @(posedge clk_i)
-      if (f_past_valid && $past(rst_i))
-         `ASSUME(dc_valid_i);
-
-   // The DECODE stage is expected to be ready right after a reset.
-   always @(posedge clk_i)
-      if (f_past_valid && $past(rst_i))
-         `ASSUME(dc_ready_i);
-
-   // The DECODE stage is expected to stay ready when no output.
-   always @(posedge clk_i)
-      if (f_past_valid && $past(dc_ready_i) && $past(!dc_valid_o))
-         `ASSUME(dc_ready_i);
-
-   // Count the number of clock cycles the DECODE stage is stalling.
-   reg f_decode_stall;
-   always @(posedge clk_i)
-   begin
-      if (dc_valid_o && !dc_ready_i)
-         f_decode_stall <= f_decode_stall + 1;
-      else
-         f_decode_stall <= 0;
-   end
-
-   // Maximum number of clock cycles the DECODE stage may stall.
-   localparam F_DECODE_STALL_MAX = 4;
-
-   // Make sure the DECODE stage does not stall for too long.
-   always @(posedge clk_i)
-      assume (f_decode_stall < F_DECODE_STALL_MAX);
-
-   // Make sure wb_data_i is not held constant
-   always @(posedge clk_i)
-      if (f_past_valid)
-         assume ($past(wb_data_i) != wb_data_i);
 
    /**************************************
     * VERIFICATION OF WISHBONE INTERFACE
@@ -98,8 +59,7 @@ module fetch_formal(
    fwb_master #(
       .AW                   (16),
       .DW                   (16),
-      .F_LGDEPTH            (4),
-      .F_MAX_REQUESTS       (0),
+      .F_MAX_STALL          (4),
       .F_OPT_SOURCE         (1),
       .F_OPT_RMW_BUS_OPTION (0),
       .F_OPT_DISCONTINUOUS  (1)
@@ -122,9 +82,13 @@ module fetch_formal(
       .f_outstanding (f_outstanding)
    ); // fwb_master
 
-   // We have no more than a single outstanding request at any given time
+   // Here we re-state that we have no more than a single outstanding request
+   // at any given time.  The formal prover can verify the correctness of this
+   // assertion, and subsequenly use this is the induction step.
    always @(posedge clk_i)
    begin
+      if (f_past_valid && $past(wb_cyc_o) && $past(wb_ack_i))
+         assert (f_outstanding == 0);
       assert(f_outstanding <= 1);
    end
 
@@ -135,21 +99,30 @@ module fetch_formal(
 
    // As long as we're not receiving a new PC, keep the output
    // to the DECODE stage stable until accepted.
-   always @(posedge clk_i)
-   begin
+   always @(posedge clk_i) begin
       if (f_past_valid && $past(!rst_i) && $past(!dc_valid_i) && $past(dc_valid_o) && $past(!dc_ready_i))
       begin
          assert ($stable(dc_valid_o));
          assert ($stable(dc_addr_o));
-         assert ($stable(dc_inst_o));
+         assert ($stable(dc_data_o));
       end
    end
 
-   // A valid instruction is presented to DECODE immediately after receiving
+   // After a new address is received, data to the DECODE stage is
+   // invalidated.
+   always @(posedge clk_i)
+   begin
+      if (f_past_valid && $past(dc_valid_i))
+      begin
+         assert (!dc_valid_o);
+      end
+   end
+
+   // Valid data is presented to DECODE immediately after receiving
    // from wishbone
    always @(posedge clk_i)
    begin
-      if (f_past_valid && $past(!rst_i) && $past(wb_cyc_o) && $past(wb_ack_i))
+      if (f_past_valid && $past(!rst_i) && $past(wb_cyc_o) && $past(wb_ack_i) && $past(!dc_valid_i))
       begin
          assert (dc_valid_o);
       end
@@ -160,13 +133,13 @@ module fetch_formal(
     * COVER STATEMENTS
     ********************/
 
-   // DECODE stage accepts an instruction
+   // DECODE stage accepts data
    always @(posedge clk_i)
    begin
       cover (f_past_valid && $past(dc_valid_o) && !dc_valid_o);
    end
 
-   // DECODE stage receives two instrudtions back-to-back
+   // DECODE stage receives two data cycles back-to-back
    always @(posedge clk_i)
    begin
       cover (f_past_valid && $past(dc_valid_o) && $past(dc_ready_i) && dc_valid_o);

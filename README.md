@@ -20,9 +20,9 @@ verification is defined. And the SymbiYosys tools must be started with some
 additional command line parameters. This is demonstrated in the below examples.
 
 ## Example designs using formal verification
-* [Fox, Goat, and Cabbage](fgc). This uses formal verification to solve a well-known puzzle.
 * [One Stage Fifo](one_stage_fifo/). This is a kind of "hello world" of formal verification.
 * [One Stage Buffer](one_stage_buffer/). Another simple but useful module.
+* [Fox, Goat, and Cabbage](fgc). This uses formal verification to solve a well-known puzzle.
 * [Wishbone memory](wb_mem/). This is to learn about the wishbone bus protocol.
 * [Fetch](fetch/). The first "real" module. This is a simple instruction fetch module for a CPU.
 

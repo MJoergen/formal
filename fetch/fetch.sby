@@ -1,6 +1,7 @@
 [tasks]
 bmc
 cover
+prove
 
 [options]
 bmc: mode bmc
@@ -8,6 +9,8 @@ bmc: depth 20
 cover: mode cover
 cover: depth 20
 cover: append 4
+prove: mode prove
+prove: depth 20
 
 [engines]
 smtbmc
