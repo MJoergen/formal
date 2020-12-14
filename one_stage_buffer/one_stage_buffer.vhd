@@ -35,6 +35,7 @@ begin
    begin
       if rising_edge(clk_i) then
          if m_ready_i = '1' then
+            -- Receiver has consumed output
             s_valid_r <= '0';
          end if;
 

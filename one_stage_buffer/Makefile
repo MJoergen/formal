@@ -10,5 +10,5 @@ show_bmc:
 clean:
 	rm -rf $(DUT)_bmc/
 	rm -rf $(DUT)_cover/
-	rm -rf $(DUT)_prf/
+	rm -rf $(DUT)_prove/
 
