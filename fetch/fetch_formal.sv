@@ -82,6 +82,10 @@ module fetch_formal(
    always @(posedge clk_i)
       assume (f_decode_stall < F_DECODE_STALL_MAX);
 
+   // Make sure wb_data_i is not held constant
+   always @(posedge clk_i)
+      if (f_past_valid)
+         assume ($past(wb_data_i) != wb_data_i);
 
    /**************************************
     * VERIFICATION OF WISHBONE INTERFACE
@@ -156,9 +160,21 @@ module fetch_formal(
     * COVER STATEMENTS
     ********************/
 
+   // DECODE stage accepts an instruction
    always @(posedge clk_i)
    begin
       cover (f_past_valid && $past(dc_valid_o) && !dc_valid_o);
+   end
+
+   // DECODE stage receives two instrudtions back-to-back
+   always @(posedge clk_i)
+   begin
+      cover (f_past_valid && $past(dc_valid_o) && $past(dc_ready_i) && dc_valid_o);
+   end
+
+   always @(posedge clk_i)
+   begin
+      cover (f_past_valid && $past(dc_valid_o) && $past(!dc_ready_i) && $past(wb_cyc_o) && $past(wb_ack_i) && dc_ready_i);
    end
 
 endmodule : fetch_formal

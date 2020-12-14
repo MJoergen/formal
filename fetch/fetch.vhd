@@ -3,12 +3,11 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 -- A simple instruction fetch unit.
--- This unit essentially has four interfaces:
--- 1. Sending read requests to WISHBONE
+-- This unit has four interfaces:
+-- 1. Sending read requests to WISHBONE (with possible backpressure)
 -- 2. Receiving read responses from WISHBONE
--- 3. Sending instruction to DECODE stage
+-- 3. Sending instructions to DECODE stage (with possible backpressure)
 -- 4. Receiving a new PC from DECODE
--- Interfaces 1 and 3 support back-pressure, while interfaces 2 and 4 do not.
 
 -- The wishbone interface is running in pipeline mode. This means the STB
 -- signal is asserted for one clock cycle (or until STALL is low) for each
@@ -53,6 +52,7 @@ architecture synthesis of fetch is
    signal dc_addr  : std_logic_vector(15 downto 0);
    signal dc_inst  : std_logic_vector(15 downto 0);
 
+   -- Combinatorial signals
    signal wb_wait  : std_logic;
    signal dc_stall : std_logic;
 

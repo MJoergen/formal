@@ -33,6 +33,7 @@ module wb_mem_formal #(
    always @(posedge clk_i)
       f_past_valid <= 1'b1;
 
+
    /****************************
     * ASSUMPTIONS ABOUT INPUTS
     ****************************/
@@ -40,7 +41,14 @@ module wb_mem_formal #(
    // Require reset at startup
    initial `ASSUME(rst_i);
 
-   wire [3:0] f_nreqs, f_nacks, f_outstanding;
+
+   /**************************************
+    * VERIFICATION OF WISHBONE INTERFACE
+    **************************************/
+
+   wire [3:0] f_nreqs;
+   wire [3:0] f_nacks;
+   wire [3:0] f_outstanding;
 
    // Formally verify the wishbone protocol
    fwb_slave #(
