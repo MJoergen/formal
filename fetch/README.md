@@ -28,10 +28,10 @@ separate interfaces:
    - `dc_valid_o : out std_logic;`
    - `dc_ready_i : in  std_logic;`
    - `dc_addr_o  : out std_logic_vector(15 downto 0);`
-   - `dc_inst_o  : out std_logic_vector(15 downto 0);`
+   - `dc_data_o  : out std_logic_vector(15 downto 0);`
 * Receiving a new PC from DECODE
    - `dc_valid_i : in  std_logic;`
-   - `dc_pc_i    : in  std_logic_vector(15 downto 0)`
+   - `dc_addr_i  : in  std_logic_vector(15 downto 0)`
 
 The main point here is that there are two independent data streams into the
 FETCH module (data read from WISHBONE and new PC value from the DECODE), and
@@ -97,56 +97,52 @@ begin
    begin
       assert ($stable(dc_valid_o));
       assert ($stable(dc_addr_o));
-      assert ($stable(dc_inst_o));
+      assert ($stable(dc_data_o));
    end
 end
 ```
 
+The above verifies the control signals, but we're not done yet. We need to
+verify that the correct address and data signals are forwarded to the DECODE.
+The main property is that the forward address increments by one every time,
+until a new PC is received from the DECODE stage. So we add some lines
+to keep track of the last valid address sent to the DECODE stage:
 
-So far I've made a simple implementation in [fetch.vhd](fetch.vhd).  This
-implementation is not optimized, but is purposefully kept simple.
+```
+reg f_last_pc_valid;
+reg [15:0] f_last_pc;
+initial f_last_pc_valid = 1'b0;
+initial f_last_pc = 16'h0000;
+always @(posedge clk_i)
+begin
+   if (dc_valid_o)
+   begin
+      f_last_pc_valid <= 1'b1;
+      f_last_pc <= dc_addr_o;
+   end
+   if (rst_i || dc_valid_i)
+   begin
+      f_last_pc_valid <= 1'b0;
+   end
+end
+```
 
-In the first iteration the formal verification only checks for one thing: The
-output to the DECODE stage must not change, until it has been accepted. This
-actually fails verification, which just shows that even such a simple statement
-is ambiguous.  And this proves a more general point: Unit testing and (formal)
-verification of a module forces one to consider exactly how the interfaces are
-to work.
+Then we can check whether addresses increment as expected:
 
-To get a better picture of what is happening, we can type `make show` to start
-up `gtkwave` and display the waveform associated with the failure.  This shows
-that particular failure here is because `dc_valid_i` is asserted when the FETCH
-module is in `WAIT_RESP_ST` state.
+```
+always @(posedge clk_i)
+begin
+   if (f_past_valid && dc_valid_o && f_last_pc_valid && $past(dc_ready_i))
+   begin
+      assert (dc_addr_o == f_last_pc + 1'b1);
+   end
+end
+```
 
-Before we fix this particular issue, let's expand the formal verification file
-`fetch_vhd.sv` with more assumptions. I'm here following closely [this
-link](http://zipcpu.com/zipcpu/2017/11/18/wb-prefetch.html).
-
-So now I've added all the assumptions, including adding the [WISHBONE MASTER
-formal verification
-file](https://github.com/ZipCPU/zipcpu/blob/master/rtl/ex/fwb_master.v).
-
-Firing up again SymbiYosys (the formal verification tool) by typing `make`
-shows that the module fails because `wb_ack_i` is asserted in the same clock
-cycle that `wb_stb_o`.
-
-Once again, we're faced with unclear requirements. Simply stating that the
-FETCH module should only issue a single transaction and should wait for a
-response does not specify how to handle responses that arrive combinatorially.
-Should we even allow this? Well, it seems wrong to dis-allow it, since some
-WISHBONE slaves may indeed respond combinatorially.
-
-In other words, the formal verification quickly found a bug in my understanding
-of the requirements, and I therefore need to change the implementation. After
-some changes to the implementation I'm back at the first problem: The
-verification fails because the signal `dc_valid_o` transitions from 1 to 0,
-while `dc_ready_i` was 0. The problem here is I'm trying to abort an
-instruction to the DECODE stage, but the formal verification was not written
-correctly to reflect that fact.
-
-I've therefore removed this particular assertion, and then gone back to [the
-link from before](http://zipcpu.com/zipcpu/2017/11/18/wb-prefetch.html) and
-using that as inspiration for writing the assertions. And fixing some more bugs
-at the same time.
+Oops! Adding this check uncovered a bug in the implementation so far. I fixed this bug by
+making use of the `one_stage_buffer` module. However, that still did not work, because
+there was an error in the `one_stage_buffer module`, **despite its formal verification**!
+So I first had to extend the formal verification of that module to verify the bug, and
+then fix the bug, and re-run formal verification. Then I could return to this module.
 
 

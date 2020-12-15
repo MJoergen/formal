@@ -47,6 +47,11 @@ module fetch_formal(
    // This is to ensure BMC starts in a valid state.
    initial `ASSUME(rst_i);
 
+   always @(posedge clk_i)
+   begin
+      if (f_past_valid)
+         assume (!rst_i);
+   end
 
    /**************************************
     * VERIFICATION OF WISHBONE INTERFACE
@@ -100,7 +105,7 @@ module fetch_formal(
    // As long as we're not receiving a new PC, keep the output
    // to the DECODE stage stable until accepted.
    always @(posedge clk_i) begin
-      if (f_past_valid && $past(!rst_i) && $past(!dc_valid_i) && $past(dc_valid_o) && $past(!dc_ready_i))
+      if (f_past_valid && $past(!rst_i) && $past(!dc_valid_i) && $past(dc_valid_o) && $past(!dc_ready_i) && !dc_valid_i)
       begin
          assert ($stable(dc_valid_o));
          assert ($stable(dc_addr_o));
@@ -108,23 +113,31 @@ module fetch_formal(
       end
    end
 
-   // After a new address is received, data to the DECODE stage is
-   // invalidated.
+   // Record the last valid address sent to the DECODE stage
+   reg f_last_pc_valid;
+   reg [15:0] f_last_pc;
+   initial f_last_pc_valid = 1'b0;
+   initial f_last_pc = 16'h0000;
    always @(posedge clk_i)
    begin
-      if (f_past_valid && $past(dc_valid_i))
+      if (dc_valid_o)
       begin
-         assert (!dc_valid_o);
+         f_last_pc_valid <= 1'b1;
+         f_last_pc <= dc_addr_o;
+      end
+      if (rst_i || dc_valid_i)
+      begin
+         f_last_pc_valid <= 1'b0;
       end
    end
 
-   // Valid data is presented to DECODE immediately after receiving
-   // from wishbone
+   // Validate that the address forwarded to the DECODE stage continuously
+   // increments by one.
    always @(posedge clk_i)
    begin
-      if (f_past_valid && $past(!rst_i) && $past(wb_cyc_o) && $past(wb_ack_i) && $past(!dc_valid_i))
+      if (f_past_valid && dc_valid_o && f_last_pc_valid && $past(dc_ready_i))
       begin
-         assert (dc_valid_o);
+         assert (dc_addr_o == f_last_pc + 1'b1);
       end
    end
 

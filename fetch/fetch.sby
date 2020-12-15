@@ -5,18 +5,18 @@ prove
 
 [options]
 bmc: mode bmc
-bmc: depth 20
+bmc: depth 10
 cover: mode cover
-cover: depth 20
+cover: depth 10
 cover: append 4
 prove: mode prove
-prove: depth 20
+prove: depth 10
 
 [engines]
 smtbmc
 
 [script]
-ghdl fetch.vhd -e fetch
+ghdl fetch.vhd one_stage_buffer.vhd -e fetch
 read -formal -D FETCH fetch_formal.sv
 read -formal fwb_master.v
 prep -top fetch_formal
@@ -25,4 +25,5 @@ prep -top fetch_formal
 fetch.vhd
 fetch_formal.sv
 fwb_master.v
+../one_stage_buffer/one_stage_buffer.vhd
 

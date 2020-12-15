@@ -56,6 +56,18 @@ architecture synthesis of fetch is
    signal wb_wait  : std_logic;
    signal dc_stall : std_logic;
 
+   -- Connected to one_stage_buffer
+   signal osb_rst       : std_logic;
+   signal osb_in_valid  : std_logic;
+   signal osb_in_ready  : std_logic;
+   signal osb_in_data   : std_logic_vector(31 downto 0);
+   signal osb_out_valid : std_logic;
+   signal osb_out_ready : std_logic;
+   signal osb_out_data  : std_logic_vector(31 downto 0);
+
+   subtype R_ADDR is natural range 31 downto 16;
+   subtype R_DATA is natural range 15 downto  0;
+
 begin
 
    wb_wait  <= wb_cyc and not wb_ack_i;
@@ -109,22 +121,44 @@ begin
    begin
       if rising_edge(clk_i) then
          -- Clear output when it has been accepted
-         if dc_ready_i = '1' or dc_valid_i = '1' then
-            dc_valid <= '0';
+         if osb_in_ready = '1' or dc_valid_i = '1' then
+            osb_in_valid <= '0';
          end if;
 
          -- Output data received from wishbone
-         if wb_cyc = '1' and wb_ack_i = '1' and dc_valid_i = '0' and dc_stall = '0' then
-            dc_addr  <= wb_addr;
-            dc_data  <= wb_data_i;
-            dc_valid <= '1';
+         if wb_cyc = '1' and wb_ack_i = '1' and dc_valid_i = '0' then
+            osb_in_data(R_ADDR) <= wb_addr;
+            osb_in_data(R_DATA) <= wb_data_i;
+            osb_in_valid <= '1';
          end if;
 
          if rst_i = '1' then
-            dc_valid <= '0';
+            osb_in_valid <= '0';
          end if;
       end if;
    end process p_decode;
+
+   osb_rst <= rst_i or dc_valid_i;
+
+   i_one_stage_buffer : entity work.one_stage_buffer
+      generic map (
+         G_DATA_SIZE => 32
+      )
+      port map (
+         clk_i     => clk_i,
+         rst_i     => osb_rst,
+         s_valid_i => osb_in_valid,
+         s_ready_o => osb_in_ready,
+         s_data_i  => osb_in_data,
+         m_valid_o => osb_out_valid,
+         m_ready_i => osb_out_ready,
+         m_data_o  => osb_out_data
+      ); -- i_one_stage_buffer
+
+   dc_addr  <= osb_out_data(R_ADDR);
+   dc_data  <= osb_out_data(R_DATA);
+   dc_valid <= osb_out_valid;
+   osb_out_ready <= dc_ready_i;
 
 
    -- Connect output signals
