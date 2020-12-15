@@ -4,34 +4,43 @@ Since I plan to write a pipelined CPU and formally verify it, I've chosen to
 start with the instruction FETCH module. There is a [very detailed
 discussion](http://zipcpu.com/zipcpu/2017/11/18/wb-prefetch.html) about how to
 write and formally verify such a module. The only difference is I'm writing the
-module itself in VHDL, and the requirements are slightly different. In particular,
-this module is expected to have higher throughput.
+module itself in VHDL, and the requirements are slightly different. In
+particular, this module is expected to have higher throughput, i.e. potentially
+able to deliver a new instruction on every clock cycle.
 
 ## The interface
-The idea is that this module has a wishbone interface to memory and another
-interface towards the DECODE stage of the CPU. The DECODE stage accepts pairs
-of (address, instruction) values, where the address increases by 1 every time.
-Occasionally, the DECODE stage will request a new starting point, e.g. after a
+The idea is that this module has a WISHBONE interface to e.g. a memory and
+another interface towards the DECODE stage of the CPU. The DECODE stage accepts
+pairs of (address, data) values, where the address increases by 1 every time.
+Additionally, the DECODE stage may request a new starting point, e.g.  after a
 branch instruction.
 
-Going into more detail, the interface of this module can be broken into four
+Being more specific, the interface of this module can be broken into four
 separate interfaces:
 * Sending read requests to WISHBONE (with possible back-pressure)
-   - `wb_cyc_o   : out std_logic;`
-   - `wb_stb_o   : out std_logic;`
-   - `wb_stall_i : in  std_logic;`
-   - `wb_addr_o  : out std_logic_vector(15 downto 0);`
+```
+      wb_cyc_o   : out std_logic;
+      wb_stb_o   : out std_logic;
+      wb_stall_i : in  std_logic;
+      wb_addr_o  : out std_logic_vector(15 downto 0);
+```
 * Receiving read responses from WISHBONE
-   - `wb_ack_i   : in  std_logic;`
-   - `wb_data_i  : in  std_logic_vector(15 downto 0);`
+```
+      wb_ack_i   : in  std_logic;
+      wb_data_i  : in  std_logic_vector(15 downto 0);
+```
 * Sending instructions to DECODE stage (with possible back-pressure)
-   - `dc_valid_o : out std_logic;`
-   - `dc_ready_i : in  std_logic;`
-   - `dc_addr_o  : out std_logic_vector(15 downto 0);`
-   - `dc_data_o  : out std_logic_vector(15 downto 0);`
+```
+      dc_valid_o : out std_logic;
+      dc_ready_i : in  std_logic;
+      dc_addr_o  : out std_logic_vector(15 downto 0);
+      dc_data_o  : out std_logic_vector(15 downto 0);
+```
 * Receiving a new PC from DECODE
-   - `dc_valid_i : in  std_logic;`
-   - `dc_addr_i  : in  std_logic_vector(15 downto 0)`
+```
+      dc_valid_i : in  std_logic;
+      dc_addr_i  : in  std_logic_vector(15 downto 0);
+```
 
 The main point here is that there are two independent data streams into the
 FETCH module (data read from WISHBONE and new PC value from the DECODE), and
@@ -43,7 +52,7 @@ Furthermore, the two outgoing interfaces both support back-pressure. The main
 complication here is that we may receive data from the WISHBONE but not be able
 to send the data to the DECODE stage. The [simple
 version](http://zipcpu.com/zipcpu/2017/11/18/wb-prefetch.html) solved this
-problem but not issuing any new WISHBONE request until the DECODE stage had
+problem by not issuing any new WISHBONE request until the DECODE stage had
 accepted the current data. This simplifies the design, at the cose of
 performance, so I will try to do it better.
 
