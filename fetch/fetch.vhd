@@ -45,16 +45,15 @@ end entity fetch;
 architecture synthesis of fetch is
 
    -- Registered output signals
-   signal wb_cyc   : std_logic := '0';
-   signal wb_stb   : std_logic := '0';
-   signal wb_addr  : std_logic_vector(15 downto 0);
-   signal dc_valid : std_logic := '0';
-   signal dc_addr  : std_logic_vector(15 downto 0);
-   signal dc_data  : std_logic_vector(15 downto 0);
+   signal wb_cyc    : std_logic := '0';
+   signal wb_stb    : std_logic := '0';
+   signal wb_addr   : std_logic_vector(15 downto 0);
+   signal dc_valid  : std_logic := '0';
+   signal dc_addr   : std_logic_vector(15 downto 0);
+   signal dc_data   : std_logic_vector(15 downto 0);
 
    -- Combinatorial signals
-   signal wb_wait  : std_logic;
-   signal dc_stall : std_logic;
+   signal wb_wait   : std_logic;
 
    -- Connected to one_stage_buffer
    signal osb_rst       : std_logic;
@@ -71,7 +70,6 @@ architecture synthesis of fetch is
 begin
 
    wb_wait  <= wb_cyc and not wb_ack_i;
-   dc_stall <= dc_valid and not dc_ready_i;
 
    -- Control the wishbone request interface
    p_wishbone : process (clk_i)
@@ -88,9 +86,13 @@ begin
             wb_stb <= '0';
          end if;
 
-         -- Increment address when response received and ready to issue new request
-         if wb_wait = '0' and dc_stall = '0' then
+         -- Increment address when response received
+         if wb_cyc = '1' and wb_ack_i = '1' then
             wb_addr <= std_logic_vector(unsigned(wb_addr) + 1);
+         end if;
+
+         -- Start new transaction when response received and ready to issue new request
+         if wb_wait = '0' and (osb_out_valid = '0' or (osb_in_valid = '0' and osb_out_ready = '1')) then
             wb_cyc  <= '1';
             wb_stb  <= '1';
          end if;

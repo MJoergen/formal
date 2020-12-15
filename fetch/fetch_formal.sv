@@ -47,11 +47,13 @@ module fetch_formal(
    // This is to ensure BMC starts in a valid state.
    initial `ASSUME(rst_i);
 
+   // Assume DECODE starts by sending a new PC right after reset.
    always @(posedge clk_i)
    begin
-      if (f_past_valid)
-         assume (!rst_i);
+      if (f_past_valid && $past(rst_i))
+         assume (dc_valid_i);
    end
+
 
    /**************************************
     * VERIFICATION OF WISHBONE INTERFACE
@@ -65,6 +67,7 @@ module fetch_formal(
       .AW                   (16),
       .DW                   (16),
       .F_MAX_STALL          (4),
+      .F_MAX_ACK_DELAY      (2),
       .F_OPT_SOURCE         (1),
       .F_OPT_RMW_BUS_OPTION (0),
       .F_OPT_DISCONTINUOUS  (1)
@@ -105,13 +108,39 @@ module fetch_formal(
    // As long as we're not receiving a new PC, keep the output
    // to the DECODE stage stable until accepted.
    always @(posedge clk_i) begin
-      if (f_past_valid && $past(!rst_i) && $past(!dc_valid_i) && $past(dc_valid_o) && $past(!dc_ready_i) && !dc_valid_i)
+      if (f_past_valid && $past(!rst_i) && !rst_i && $past(!dc_valid_i) && $past(dc_valid_o) && $past(!dc_ready_i) && !dc_valid_i)
       begin
          assert ($stable(dc_valid_o));
          assert ($stable(dc_addr_o));
          assert ($stable(dc_data_o));
       end
    end
+
+
+   // Keep track of addresses expected to be requested on the WISHBONE bus
+   reg [15:0] f_req_addr;
+   initial f_req_addr = 16'h0000;
+   always @(posedge clk_i)
+   begin
+      if (dc_valid_i)
+      begin
+         f_req_addr <= dc_addr_i;
+      end
+      else if (wb_cyc_o && wb_ack_i)
+      begin
+         f_req_addr <= f_req_addr + 1'b1;
+      end
+   end
+
+   // Verify address requested on WISHBONE bus is as expected
+   always @(posedge clk_i)
+   begin
+      if (wb_cyc_o && wb_stb_o)
+      begin
+         assert (f_req_addr == wb_addr_o);
+      end
+   end
+
 
    // Record the last valid address sent to the DECODE stage
    reg f_last_pc_valid;
@@ -142,6 +171,28 @@ module fetch_formal(
    end
 
 
+   // We want to make sure that the DECODE stage receives the correct data.
+   // We do this by artifically constraining the data received on the WISHBONE
+   // interface.
+   always @(*)
+   begin
+      if (wb_cyc_o && wb_ack_i)
+      begin
+         assume (wb_data_i == ~wb_addr_o);
+      end
+   end
+
+   // Verify data sent to DECODE satisfies the same artifical constraint as
+   // the WISHONE interface.
+   always @(posedge clk_i)
+   begin
+      if (dc_valid_o)
+      begin
+         assert (dc_data_o == ~dc_addr_o);
+      end
+   end
+
+
    /********************
     * COVER STATEMENTS
     ********************/
@@ -149,7 +200,7 @@ module fetch_formal(
    // DECODE stage accepts data
    always @(posedge clk_i)
    begin
-      cover (f_past_valid && $past(dc_valid_o) && !dc_valid_o);
+      cover (f_past_valid && !rst_i && $past(dc_valid_o) && !dc_valid_o);
    end
 
    // DECODE stage receives two data cycles back-to-back

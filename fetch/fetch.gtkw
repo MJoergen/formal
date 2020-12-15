@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Mon Dec 14 21:12:31 2020
+[*] Tue Dec 15 15:56:26 2020
 [*]
-[dumpfile] "/home/mike/git/MJoergen/formal/fetch/fetch_bmc/engine_0/trace.vcd"
-[dumpfile_mtime] "Mon Dec 14 21:09:28 2020"
-[dumpfile_size] 7669
+[dumpfile] "/home/mike/git/MJoergen/formal/fetch/fetch_prove/engine_0/trace_induct.vcd"
+[dumpfile_mtime] "Tue Dec 15 15:50:11 2020"
+[dumpfile_size] 14268
 [savefile] "/home/mike/git/MJoergen/formal/fetch/fetch.gtkw"
 [timestart] 0
 [size] 1873 1013
 [pos] 18 0
-*-3.484127 34 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-4.128796 96 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] fetch_formal.
 [treeopen] fetch_formal.DUT.
 [sst_width] 249
@@ -28,15 +28,6 @@ fetch_formal.DUT.dc_valid_i
 fetch_formal.DUT.dc_addr_i[15:0]
 @200
 -
-@28
-[color] 2
-fetch_formal.DUT.dc_valid_o
-[color] 7
-fetch_formal.DUT.dc_ready_i
-@22
-fetch_formal.DUT.dc_addr_o[15:0]
-fetch_formal.DUT.dc_data_o[15:0]
-@200
 -
 @28
 [color] 2
@@ -54,13 +45,6 @@ fetch_formal.DUT.wb_addr_o[15:0]
 fetch_formal.DUT.wb_ack_i
 @22
 fetch_formal.DUT.wb_data_i[15:0]
-@200
--
-@28
-fetch_formal.f_last_pc_valid
-@22
-fetch_formal.f_last_pc[15:0]
-fetch_formal.f_outstanding[3:0]
 @200
 -
 @800200
@@ -84,5 +68,26 @@ fetch_formal.DUT.i_one_stage_buffer.s_data_r[31:0]
 fetch_formal.DUT.i_one_stage_buffer.s_valid_r
 @1000200
 -one_stage_buffer
+@200
+-
+@22
+fetch_formal.f_req_addr[15:0]
+fetch_formal.f_outstanding[3:0]
+@200
+-
+@28
+[color] 2
+fetch_formal.DUT.dc_valid_o
+[color] 7
+fetch_formal.DUT.dc_ready_i
+@22
+fetch_formal.DUT.dc_addr_o[15:0]
+fetch_formal.DUT.dc_data_o[15:0]
+@200
+-
+@22
+fetch_formal.f_last_pc[15:0]
+@28
+fetch_formal.f_last_pc_valid
 [pattern_trace] 1
 [pattern_trace] 0

@@ -23,4 +23,14 @@ clean:
 	rm -rf $(DUT)_bmc/
 	rm -rf $(DUT)_cover/
 	rm -rf $(DUT)_prove/
+	rm -rf work-obj93.cf
+
+# Synthesis
+
+work-obj93.cf: ../one_stage_buffer/one_stage_buffer.vhd $(DUT).vhd
+	ghdl -a $^
+
+synth: work-obj93.cf
+	yosys -m ghdl -p 'ghdl $(DUT); synth_xilinx -top $(DUT) -edif $(DUT).edif' > yosys.log
+
 
