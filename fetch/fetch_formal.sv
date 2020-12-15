@@ -100,23 +100,6 @@ module fetch_formal(
       assert(f_outstanding <= 1);
    end
 
-
-   /**************************************
-    * ASSERTIONS ABOUT OUTPUTS TO DECODE
-    **************************************/
-
-   // As long as we're not receiving a new PC, keep the output
-   // to the DECODE stage stable until accepted.
-   always @(posedge clk_i) begin
-      if (f_past_valid && $past(!rst_i) && !rst_i && $past(!dc_valid_i) && $past(dc_valid_o) && $past(!dc_ready_i) && !dc_valid_i)
-      begin
-         assert ($stable(dc_valid_o));
-         assert ($stable(dc_addr_o));
-         assert ($stable(dc_data_o));
-      end
-   end
-
-
    // Keep track of addresses expected to be requested on the WISHBONE bus
    reg [15:0] f_req_addr;
    initial f_req_addr = 16'h0000;
@@ -140,6 +123,46 @@ module fetch_formal(
          assert (f_req_addr == wb_addr_o);
       end
    end
+
+
+   /**************************************
+    * ASSERTIONS ABOUT OUTPUTS TO DECODE
+    **************************************/
+
+   // As long as we're not receiving a new PC, keep the output
+   // to the DECODE stage stable until accepted.
+   always @(posedge clk_i) begin
+      if (f_past_valid && $past(!rst_i) && !rst_i && $past(!dc_valid_i) && !dc_valid_i &&
+         $past(dc_valid_o) && $past(!dc_ready_i))
+      begin
+         assert ($stable(dc_valid_o));
+         assert ($stable(dc_addr_o));
+         assert ($stable(dc_data_o));
+      end
+   end
+
+   // Count the number of cycles we are waiting for DECODE stage to accept
+   reg [1:0] f_dc_wait_count;
+   initial f_dc_wait_count = 2'b0;
+   always @(posedge clk_i)
+   begin
+      if (dc_valid_o && ~dc_ready_i)
+         f_dc_wait_count <= f_dc_wait_count + 2'b1;
+      else
+         f_dc_wait_count <= 2'b0;
+
+      if (rst_i)
+      begin
+         f_dc_wait_count <= 2'b0;
+      end
+   end
+
+   // Artifically constrain the maximum amount of time the DECODE may stall
+   always @(posedge clk_i)
+   begin
+      assume (f_dc_wait_count < 3);
+   end
+
 
 
    // Record the last valid address sent to the DECODE stage
@@ -167,6 +190,14 @@ module fetch_formal(
       if (f_past_valid && dc_valid_o && f_last_pc_valid && $past(dc_ready_i))
       begin
          assert (dc_addr_o == f_last_pc + 1'b1);
+      end
+   end
+
+   always @(posedge clk_i)
+   begin
+      if (f_past_valid && dc_valid_o && $past(dc_ready_i))
+      begin
+         assert (f_req_addr == dc_addr_o + 1'b1);
       end
    end
 

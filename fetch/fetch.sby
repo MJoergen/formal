@@ -10,7 +10,7 @@ cover: mode cover
 cover: depth 10
 cover: append 4
 prove: mode prove
-prove: depth 10
+prove: depth 12
 
 [engines]
 smtbmc

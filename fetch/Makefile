@@ -24,6 +24,8 @@ clean:
 	rm -rf $(DUT)_cover/
 	rm -rf $(DUT)_prove/
 	rm -rf work-obj93.cf
+	rm -rf yosys.log
+	rm -rf $(DUT).edif
 
 # Synthesis
 
