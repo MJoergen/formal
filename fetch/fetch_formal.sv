@@ -43,18 +43,6 @@ module fetch_formal(
       f_past_valid <= 1'b1;
 
 
-   // Require reset at startup.
-   // This is to ensure BMC starts in a valid state.
-   initial `ASSUME(rst_i);
-
-   // Assume DECODE starts by sending a new PC right after reset.
-   always @(posedge clk_i)
-   begin
-      if (f_past_valid && $past(rst_i))
-         assume (dc_valid_i);
-   end
-
-
    /**************************************
     * VERIFICATION OF WISHBONE INTERFACE
     **************************************/
@@ -66,8 +54,8 @@ module fetch_formal(
    fwb_master #(
       .AW                   (16),
       .DW                   (16),
-      .F_MAX_STALL          (4),
-      .F_MAX_ACK_DELAY      (2),
+      .F_MAX_STALL          (3),
+      .F_MAX_ACK_DELAY      (3),
       .F_OPT_SOURCE         (1),
       .F_OPT_RMW_BUS_OPTION (0),
       .F_OPT_DISCONTINUOUS  (1)
@@ -97,7 +85,72 @@ module fetch_formal(
    begin
       if (f_past_valid && $past(wb_cyc_o) && $past(wb_ack_i))
          assert (f_outstanding == 0);
-      assert(f_outstanding <= 1);
+      assert (f_outstanding <= 1);
+   end
+
+
+   /****************************
+    * ASSUMPTIONS ABOUT INPUTS
+    ****************************/
+
+   // Require reset at startup.
+   // This is to ensure BMC starts in a valid state.
+   initial `ASSUME(rst_i);
+
+   // Assume DECODE starts by sending a new PC right after reset.
+   // This is to ensure BMC starts in a valid state.
+   always @(posedge clk_i)
+   begin
+      if (f_past_valid && $past(rst_i))
+         assume (dc_valid_i);
+   end
+
+   // Count the number of cycles we are waiting for DECODE stage to accept
+   reg [1:0] f_dc_wait_count;
+   initial f_dc_wait_count = 2'b0;
+   always @(posedge clk_i)
+   begin
+      if (dc_valid_o && ~dc_ready_i)
+         f_dc_wait_count <= f_dc_wait_count + 2'b1;
+      else
+         f_dc_wait_count <= 2'b0;
+
+      if (rst_i)
+      begin
+         f_dc_wait_count <= 2'b0;
+      end
+   end
+
+   // Artifically constrain the maximum amount of time the DECODE may stall
+   always @(posedge clk_i)
+   begin
+      assume (f_dc_wait_count < 3);
+   end
+
+   // We want to make sure that the DECODE stage receives the correct data.
+   // We do this by artifically constraining the data received on the WISHBONE
+   // interface.
+   always @(posedge clk_i)
+   begin
+      if (wb_cyc_o && wb_ack_i)
+      begin
+         assume (wb_data_i == ~wb_addr_o);
+      end
+   end
+
+
+   /****************************
+    * ASSERTIONS ABOUT OUTPUTS
+    ****************************/
+
+   // Verify data sent to DECODE satisfies the same artifical constraint as
+   // the WISHONE interface.
+   always @(posedge clk_i)
+   begin
+      if (dc_valid_o)
+      begin
+         assert (dc_data_o == ~dc_addr_o);
+      end
    end
 
    // Keep track of addresses expected to be requested on the WISHBONE bus
@@ -124,62 +177,21 @@ module fetch_formal(
       end
    end
 
-
-   /**************************************
-    * ASSERTIONS ABOUT OUTPUTS TO DECODE
-    **************************************/
-
-   // As long as we're not receiving a new PC, keep the output
-   // to the DECODE stage stable until accepted.
-   always @(posedge clk_i) begin
-      if (f_past_valid && $past(!rst_i) && !rst_i && $past(!dc_valid_i) && !dc_valid_i &&
-         $past(dc_valid_o) && $past(!dc_ready_i))
-      begin
-         assert ($stable(dc_valid_o));
-         assert ($stable(dc_addr_o));
-         assert ($stable(dc_data_o));
-      end
-   end
-
-   // Count the number of cycles we are waiting for DECODE stage to accept
-   reg [1:0] f_dc_wait_count;
-   initial f_dc_wait_count = 2'b0;
-   always @(posedge clk_i)
-   begin
-      if (dc_valid_o && ~dc_ready_i)
-         f_dc_wait_count <= f_dc_wait_count + 2'b1;
-      else
-         f_dc_wait_count <= 2'b0;
-
-      if (rst_i)
-      begin
-         f_dc_wait_count <= 2'b0;
-      end
-   end
-
-   // Artifically constrain the maximum amount of time the DECODE may stall
-   always @(posedge clk_i)
-   begin
-      assume (f_dc_wait_count < 3);
-   end
-
-
-
    // Record the last valid address sent to the DECODE stage
-   reg f_last_pc_valid;
-   reg [15:0] f_last_pc;
-   initial f_last_pc_valid = 1'b0;
-   initial f_last_pc = 16'h0000;
+   reg f_last_addr_valid;
+   reg [15:0] f_last_addr;
+   initial f_last_addr_valid = 1'b0;
+   initial f_last_addr = 16'h0000;
    always @(posedge clk_i)
    begin
       if (dc_valid_o)
       begin
-         f_last_pc_valid <= 1'b1;
-         f_last_pc <= dc_addr_o;
+         f_last_addr_valid <= 1'b1;
+         f_last_addr <= dc_addr_o;
       end
       if (rst_i || dc_valid_i)
       begin
-         f_last_pc_valid <= 1'b0;
+         f_last_addr_valid <= 1'b0;
       end
    end
 
@@ -187,9 +199,9 @@ module fetch_formal(
    // increments by one.
    always @(posedge clk_i)
    begin
-      if (f_past_valid && dc_valid_o && f_last_pc_valid && $past(dc_ready_i))
+      if (f_past_valid && dc_valid_o && f_last_addr_valid && $past(dc_ready_i))
       begin
-         assert (dc_addr_o == f_last_pc + 1'b1);
+         assert (dc_addr_o == f_last_addr + 1'b1);
       end
    end
 
@@ -201,25 +213,15 @@ module fetch_formal(
       end
    end
 
-
-   // We want to make sure that the DECODE stage receives the correct data.
-   // We do this by artifically constraining the data received on the WISHBONE
-   // interface.
-   always @(*)
-   begin
-      if (wb_cyc_o && wb_ack_i)
+   // As long as we're not receiving a new PC, keep the output
+   // to the DECODE stage stable until accepted.
+   always @(posedge clk_i) begin
+      if (f_past_valid && $past(!rst_i) && !rst_i && $past(!dc_valid_i) && !dc_valid_i &&
+         $past(dc_valid_o) && $past(!dc_ready_i))
       begin
-         assume (wb_data_i == ~wb_addr_o);
-      end
-   end
-
-   // Verify data sent to DECODE satisfies the same artifical constraint as
-   // the WISHONE interface.
-   always @(posedge clk_i)
-   begin
-      if (dc_valid_o)
-      begin
-         assert (dc_data_o == ~dc_addr_o);
+         assert ($stable(dc_valid_o));
+         assert ($stable(dc_addr_o));
+         assert ($stable(dc_data_o));
       end
    end
 
@@ -238,11 +240,6 @@ module fetch_formal(
    always @(posedge clk_i)
    begin
       cover (f_past_valid && $past(dc_valid_o) && $past(dc_ready_i) && dc_valid_o);
-   end
-
-   always @(posedge clk_i)
-   begin
-      cover (f_past_valid && $past(dc_valid_o) && $past(!dc_ready_i) && $past(wb_cyc_o) && $past(wb_ack_i) && dc_ready_i);
    end
 
 endmodule : fetch_formal
