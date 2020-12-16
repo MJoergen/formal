@@ -230,13 +230,13 @@ module fetch_formal(
     * COVER STATEMENTS
     ********************/
 
-   // DECODE stage accepts data
+   // DECODE stage accepts data (trace 1)
    always @(posedge clk_i)
    begin
-      cover (f_past_valid && !rst_i && $past(dc_valid_o) && !dc_valid_o);
+      cover (f_past_valid && $past(dc_valid_o) && !dc_valid_o);
    end
 
-   // DECODE stage receives two data cycles back-to-back
+   // DECODE stage receives two data cycles back-to-back (trace 0)
    always @(posedge clk_i)
    begin
       cover (f_past_valid && $past(dc_valid_o) && $past(dc_ready_i) && dc_valid_o);
