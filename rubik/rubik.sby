@@ -1,0 +1,17 @@
+[options]
+mode cover
+depth 20
+append 4
+
+[engines]
+smtbmc
+
+[script]
+ghdl rubik.vhd -e rubik
+read -formal rubik_formal.sv
+prep -top rubik_formal
+
+[files]
+rubik.vhd
+rubik_formal.sv
+
