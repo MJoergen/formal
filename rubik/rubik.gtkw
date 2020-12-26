@@ -1,0 +1,56 @@
+[*]
+[*] GTKWave Analyzer v3.3.86 (w)1999-2017 BSI
+[*] Sat Dec 26 16:31:37 2020
+[*]
+[dumpfile] "/home/mike/git/MJoergen/formal/rubik/rubik_bmc/engine_0/trace.vcd"
+[dumpfile_mtime] "Sat Dec 26 16:29:51 2020"
+[dumpfile_size] 6656
+[savefile] "/home/mike/git/MJoergen/formal/rubik/rubik.gtkw"
+[timestart] 0
+[size] 1920 1011
+[pos] -1 -1
+*-2.746155 5 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] rubik_formal.
+[sst_width] 249
+[signals_width] 328
+[sst_expanded] 1
+[sst_vpaned_height] 286
+@28
+rubik_formal.DUT.clk_i
+rubik_formal.DUT.rst_i
+rubik_formal.DUT.cmd_i[3:0]
+rubik_formal.DUT.done_o
+rubik_formal.DUT.u0_o[2:0]
+rubik_formal.DUT.u1_o[2:0]
+rubik_formal.DUT.u2_o[2:0]
+rubik_formal.DUT.u3_o[2:0]
+rubik_formal.DUT.f0_o[2:0]
+rubik_formal.DUT.f1_o[2:0]
+rubik_formal.DUT.f2_o[2:0]
+rubik_formal.DUT.f3_o[2:0]
+rubik_formal.DUT.r0_o[2:0]
+rubik_formal.DUT.r1_o[2:0]
+rubik_formal.DUT.r2_o[2:0]
+rubik_formal.DUT.r3_o[2:0]
+rubik_formal.DUT.d0_o[2:0]
+rubik_formal.DUT.d1_o[2:0]
+rubik_formal.DUT.d2_o[2:0]
+rubik_formal.DUT.d3_o[2:0]
+rubik_formal.DUT.b0_o[2:0]
+rubik_formal.DUT.b1_o[2:0]
+rubik_formal.DUT.b2_o[2:0]
+rubik_formal.DUT.b3_o[2:0]
+rubik_formal.DUT.l0_o[2:0]
+rubik_formal.DUT.l1_o[2:0]
+rubik_formal.DUT.l2_o[2:0]
+rubik_formal.DUT.l3_o[2:0]
+@22
+rubik_formal.num_colors<0>[31:0]
+rubik_formal.num_colors<1>[31:0]
+rubik_formal.num_colors<2>[31:0]
+rubik_formal.num_colors<3>[31:0]
+rubik_formal.num_colors<4>[31:0]
+@23
+rubik_formal.num_colors<5>[31:0]
+[pattern_trace] 1
+[pattern_trace] 0
