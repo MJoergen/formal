@@ -1,44 +1,44 @@
 [*]
-[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Mon Dec 14 22:02:46 2020
+[*] GTKWave Analyzer v3.3.86 (w)1999-2017 BSI
+[*] Sun Dec 27 16:30:21 2020
 [*]
-[dumpfile] "/home/mike/git/MJoergen/formal/one_stage_buffer/one_stage_buffer_bmc/engine_0/trace.vcd"
-[dumpfile_mtime] "Mon Dec 14 22:01:24 2020"
-[dumpfile_size] 2181
+[dumpfile] "/home/mike/git/MJoergen/formal/one_stage_buffer/one_stage_buffer_cover/engine_0/trace2.vcd"
+[dumpfile_mtime] "Sun Dec 27 16:28:48 2020"
+[dumpfile_size] 949
 [savefile] "/home/mike/git/MJoergen/formal/one_stage_buffer/one_stage_buffer.gtkw"
 [timestart] 0
 [size] 1920 1011
-[pos] -1906 -11
+[pos] -1 -1
 *-3.308034 26 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-[treeopen] one_stage_buffer_formal.
 [sst_width] 249
 [signals_width] 266
 [sst_expanded] 1
 [sst_vpaned_height] 286
 @28
-one_stage_buffer_formal.DUT.clk_i
-one_stage_buffer_formal.DUT.rst_i
+one_stage_buffer.clk_i
+one_stage_buffer.rst_i
 [color] 2
-one_stage_buffer_formal.DUT.s_valid_i
+one_stage_buffer.s_valid_i
 [color] 7
-one_stage_buffer_formal.DUT.s_ready_o
+one_stage_buffer.s_ready_o
 @22
-one_stage_buffer_formal.DUT.s_data_i[7:0]
+one_stage_buffer.s_data_i[7:0]
 @28
 [color] 2
-one_stage_buffer_formal.DUT.m_valid_o
+one_stage_buffer.m_valid_o
 [color] 7
-one_stage_buffer_formal.DUT.m_ready_i
+one_stage_buffer.m_ready_i
 @22
-one_stage_buffer_formal.DUT.m_data_o[7:0]
+one_stage_buffer.m_data_o[7:0]
 @200
 -
 @28
-one_stage_buffer_formal.DUT.s_valid_r
+one_stage_buffer.s_valid_r
 @22
-one_stage_buffer_formal.DUT.s_data_r[7:0]
-one_stage_buffer_formal.f_last_value[7:0]
+one_stage_buffer.s_data_r[7:0]
 @28
-one_stage_buffer_formal.f_count[1:0]
+one_stage_buffer.f_count[1:0]
+@23
+one_stage_buffer.f_last_value[7:0]
 [pattern_trace] 1
 [pattern_trace] 0
