@@ -19,6 +19,9 @@ show_cover1:
 show_cover2:
 	gtkwave $(DUT)_cover/engine_0/trace2.vcd $(DUT).gtkw
 
+show_cover5:
+	gtkwave $(DUT)_cover/engine_0/trace5.vcd $(DUT).gtkw
+
 clean:
 	rm -rf $(DUT)_bmc/
 	rm -rf $(DUT)_cover/

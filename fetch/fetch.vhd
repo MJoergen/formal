@@ -16,6 +16,9 @@ use ieee.numeric_std.all;
 -- request is used.
 
 entity fetch is
+   generic (
+      G_FORMAL : boolean := false
+   );
    port (
       clk_i      : in  std_logic;
       rst_i      : in  std_logic;
@@ -66,6 +69,13 @@ architecture synthesis of fetch is
 
    subtype R_ADDR is natural range 31 downto 16;
    subtype R_DATA is natural range 15 downto  0;
+
+   -- Formal verification
+   signal f_rst             : std_logic := '1';
+   signal f_req_addr        : std_logic_vector(15 downto 0) := (others => '0');
+   signal f_dc_wait_count   : integer range 0 to 3;
+   signal f_last_addr_valid : std_logic := '0';
+   signal f_last_addr       : std_logic_vector(15 downto 0) := (others => '0');
 
 begin
 
@@ -170,6 +180,129 @@ begin
    dc_valid_o <= dc_valid;
    dc_addr_o  <= dc_addr;
    dc_data_o  <= dc_data;
+
+
+   ------------------------
+   -- Formal verification
+   ------------------------
+
+   formal_gen : if G_FORMAL generate
+
+      -- set all declarations to run on clk
+      default clock is rising_edge(clk_i);
+
+      -----------------------------
+      -- ASSUMPTIONS ABOUT INPUTS
+      -----------------------------
+
+      process (clk_i)
+      begin
+         if rising_edge(clk_i) then
+            f_rst <= '0';
+         end if;
+      end process;
+
+      -- Require reset at startup.
+      -- This is to ensure BMC starts in a valid state.
+      f_reset : assume always {rst_i = f_rst};
+
+      -- Assume DECODE starts by sending a new PC right after reset.
+      -- This is to ensure BMC starts in a valid state.
+      f_decode_after_reset : assume always {rst_i} |=> dc_valid_i;
+
+      -- Count the number of cycles we are waiting for DECODE stage to accept
+      process (clk_i)
+      begin
+         if rising_edge(clk_i) then
+            if dc_valid_o and not dc_ready_i then
+               f_dc_wait_count <= f_dc_wait_count + 1;
+            else
+               f_dc_wait_count <= 0;
+            end if;
+
+            if rst_i then
+               f_dc_wait_count <= 0;
+            end if;
+         end if;
+      end process;
+
+      -- Artifically constrain the maximum amount of time the DECODE may stall
+      f_decode_wait : assume always {f_dc_wait_count < 3};
+
+      -- We want to make sure that the DECODE stage receives the correct data.
+      -- We do this by artifically constraining the data received on the WISHBONE
+      -- interface.
+      f_wishbone_data : assume always {wb_cyc_o and wb_ack_i} |->
+         wb_data_i = not wb_addr_o;
+
+
+      -----------------------------
+      -- ASSERTIONS ABOUT OUTPUTS
+      -----------------------------
+
+      -- Verify data sent to DECODE satisfies the same artifical constraint as
+      -- the WISHBONE interface.
+      f_decode_data : assert always {dc_valid_o} |->
+         dc_data_o = not dc_addr_o;
+
+      -- Keep track of addresses expected to be requested on the WISHBONE bus
+      process (clk_i)
+      begin
+         if rising_edge(clk_i) then
+            if wb_cyc_o and wb_ack_i then
+               f_req_addr <= std_logic_vector(unsigned(f_req_addr) + 1);
+            end if;
+
+            if dc_valid_i then
+               f_req_addr <= dc_addr_i;
+            end if;
+         end if;
+      end process;
+
+      -- Verify address requested on WISHBONE bus is as expected
+      f_wishbone_addr : assert always {wb_cyc_o and wb_stb_o} |->
+         wb_addr_o = f_req_addr;
+
+      -- Record the last valid address sent to the DECODE stage
+      process (clk_i)
+      begin
+         if rising_edge(clk_i) then
+            if dc_valid_o then
+               f_last_addr_valid <= '1';
+               f_last_addr <= dc_addr_o;
+            end if;
+
+            if rst_i or dc_valid_i then
+               f_last_addr_valid <= '0';
+            end if;
+         end if;
+      end process;
+
+      -- Validate that the address forwarded to the DECODE stage continuously
+      -- increments by one.
+      f_decode_addr : assert always {dc_ready_i; f_last_addr_valid and dc_valid_o} |->
+         {dc_addr_o = std_logic_vector(unsigned(f_last_addr) + 1)};
+
+      f_decode_request : assert always {dc_ready_i; dc_valid_o} |->
+         f_req_addr = std_logic_vector(unsigned(dc_addr_o) + 1);
+
+      f_decode_stable : assert always {dc_valid_o and not dc_ready_i} |=>
+         {dc_valid_o = prev(dc_valid_o) and
+          dc_addr_o  = prev(dc_addr_o) and
+          dc_data_o  = prev(dc_data_o)} abort rst_i or dc_valid_i;
+
+
+      --------------------------------------------
+      -- COVER STATEMENTS TO VERIFY REACHABILITY
+      --------------------------------------------
+
+      -- DECODE stage accepts data
+      f_decode_accept : cover {dc_valid_o; not dc_valid_o};
+
+      -- DECODE stage receives two data cycles back-to-back
+      f_decode_back2back : cover {dc_valid_o and dc_ready_i; dc_valid_o};
+
+   end generate formal_gen;
 
 end architecture synthesis;
 

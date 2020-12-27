@@ -16,14 +16,10 @@ prove: depth 12
 smtbmc
 
 [script]
-ghdl fetch.vhd one_stage_buffer.vhd -e fetch
-read -formal -D FETCH fetch_formal.sv
-read -formal fwb_master.v
-prep -top fetch_formal
+ghdl -fpsl --std=08 -gG_FORMAL=true fetch.vhd one_stage_buffer.vhd -e fetch
+prep -top fetch
 
 [files]
 fetch.vhd
-fetch_formal.sv
-fwb_master.v
 ../one_stage_buffer/one_stage_buffer.vhd
 

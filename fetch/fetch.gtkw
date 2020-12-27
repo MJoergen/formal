@@ -1,93 +1,91 @@
 [*]
-[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Tue Dec 15 15:56:26 2020
+[*] GTKWave Analyzer v3.3.86 (w)1999-2017 BSI
+[*] Sun Dec 27 17:16:06 2020
 [*]
-[dumpfile] "/home/mike/git/MJoergen/formal/fetch/fetch_prove/engine_0/trace_induct.vcd"
-[dumpfile_mtime] "Tue Dec 15 15:50:11 2020"
-[dumpfile_size] 14268
+[dumpfile] "/home/mike/git/MJoergen/formal/fetch/fetch_bmc/engine_0/trace.vcd"
+[dumpfile_mtime] "Sun Dec 27 17:15:13 2020"
+[dumpfile_size] 3886
 [savefile] "/home/mike/git/MJoergen/formal/fetch/fetch.gtkw"
 [timestart] 0
-[size] 1873 1013
+[size] 1873 1011
 [pos] 18 0
-*-4.128796 96 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-[treeopen] fetch_formal.
-[treeopen] fetch_formal.DUT.
+*-4.128796 38 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] fetch.
 [sst_width] 249
 [signals_width] 308
 [sst_expanded] 1
 [sst_vpaned_height] 286
 @28
-fetch_formal.DUT.clk_i
-fetch_formal.DUT.rst_i
+fetch.clk_i
+fetch.rst_i
 @200
 -
 @28
 [color] 2
-fetch_formal.DUT.dc_valid_i
+fetch.dc_valid_i
 @22
-fetch_formal.DUT.dc_addr_i[15:0]
+fetch.dc_addr_i[15:0]
 @200
--
 -
 @28
 [color] 2
-fetch_formal.DUT.wb_cyc_o
+fetch.wb_cyc_o
 [color] 2
-fetch_formal.DUT.wb_stb_o
+fetch.wb_stb_o
 [color] 7
-fetch_formal.DUT.wb_stall_i
+fetch.wb_stall_i
 @22
-fetch_formal.DUT.wb_addr_o[15:0]
+fetch.wb_addr_o[15:0]
 @200
 -
 @28
 [color] 2
-fetch_formal.DUT.wb_ack_i
+fetch.wb_ack_i
 @22
-fetch_formal.DUT.wb_data_i[15:0]
+fetch.wb_data_i[15:0]
 @200
 -
 @800200
 -one_stage_buffer
 @28
 [color] 2
-fetch_formal.DUT.i_one_stage_buffer.s_valid_i
+fetch.i_one_stage_buffer.s_valid_i
 [color] 7
-fetch_formal.DUT.i_one_stage_buffer.s_ready_o
+fetch.i_one_stage_buffer.s_ready_o
 @22
-fetch_formal.DUT.i_one_stage_buffer.s_data_i[31:0]
+fetch.i_one_stage_buffer.s_data_i[31:0]
 @28
 [color] 2
-fetch_formal.DUT.i_one_stage_buffer.m_valid_o
+fetch.i_one_stage_buffer.m_valid_o
 [color] 7
-fetch_formal.DUT.i_one_stage_buffer.m_ready_i
+fetch.i_one_stage_buffer.m_ready_i
 @22
-fetch_formal.DUT.i_one_stage_buffer.m_data_o[31:0]
-fetch_formal.DUT.i_one_stage_buffer.s_data_r[31:0]
+fetch.i_one_stage_buffer.m_data_o[31:0]
+fetch.i_one_stage_buffer.s_data_r[31:0]
 @28
-fetch_formal.DUT.i_one_stage_buffer.s_valid_r
+fetch.i_one_stage_buffer.s_valid_r
 @1000200
 -one_stage_buffer
 @200
 -
-@22
-fetch_formal.f_req_addr[15:0]
-fetch_formal.f_outstanding[3:0]
-@200
--
 @28
 [color] 2
-fetch_formal.DUT.dc_valid_o
+fetch.dc_valid_o
 [color] 7
-fetch_formal.DUT.dc_ready_i
+fetch.dc_ready_i
 @22
-fetch_formal.DUT.dc_addr_o[15:0]
-fetch_formal.DUT.dc_data_o[15:0]
+fetch.dc_addr_o[15:0]
+fetch.dc_data_o[15:0]
 @200
 -
-@22
-fetch_formal.f_last_pc[15:0]
 @28
-fetch_formal.f_last_pc_valid
+fetch.f_rst
+fetch.f_dc_wait_count[1:0]
+@23
+fetch.f_last_addr[15:0]
+@22
+fetch.f_req_addr[15:0]
+@200
+-
 [pattern_trace] 1
 [pattern_trace] 0

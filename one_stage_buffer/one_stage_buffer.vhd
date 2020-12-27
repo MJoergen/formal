@@ -144,7 +144,7 @@ begin
       --------------------------------------------
 
       -- Make sure FIFO can transition from full to empty.
-      cover {m_valid_o; not m_valid_o};
+      f_full_to_empty : cover {m_valid_o; not m_valid_o};
 
    end generate formal_gen;
 
