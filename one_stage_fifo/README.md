@@ -15,7 +15,7 @@ producer or consumer) then the DATA is moved (either into or out of the
 register).  This is a simplified version of the protocol used in [AXI streaming
 interfaces](https://zipcpu.com/doc/axi-stream.pdf). It is possible to
 simultaneously (i.e. in the same clock cycle) move data into the FIFO and out
-of the FIFO.
+of the FIFO, regardless of whether the FIFO is empty or full.
 
 Although not strictly necessary for the correct operation of this protocol,
 I've added an additional constraint: When the upstream has asserted VALID, and
@@ -34,112 +34,151 @@ two-stage FIFO. More on that later.
 
 ## The implementation
 The FIFO implementation is found [here](one_stage_fifo.vhd). This file contains
-the actual implementation, and nothing more. The formal verification of the
-design goes into a [separate file](one_stage_fifo_formal.sv), written in System
-Verilog. Note that this latter file must have the same port declarations as the
-DUT.
+both the actual implementation and the additional commands for formal verification.
 
 ## Formal verification
 Instead of writing a testbench that manually generates stimuli, we instead
 write some rules (assertions) that must be obeyed at all times.  Note: This is
 a non-trivial step, and takes considerable practice.
 
-The main keywords to use are `assume()` (for validating input), `assert()` (for
-validating output), and `cover()` (for ensuring reachability). This
-[link](http://zipcpu.com/blog/2017/10/19/formal-intro.html) has much more
-information on the syntax and keywords available.
+The main keywords to use are `assume` (for validating input), `assert` (for
+validating output), and `cover` (for ensuring reachability).
 
-### Assumption on inputs
-
-We'll start out with a standard assumption: Everything begins in a reset state.
-
-```
-initial `ASSUME(rst_i);
-```
-
-Moving on, we require the input to obey the extra "common sense" requirement,
-i.e. not to allow aborts of inputs.
+Sometime additional logic is needed for formal verification. For that reason,
+I add the generic `G_FORMAL : boolean := false` to the design. Furthermore,
+I wrap the entire section of formal verification inside a `generate` statement
+as follows:
 
 ```
-always @(posedge clk_i)
-begin
-   if (f_past_valid && !rst_i && $past(s_valid_i) && $past(!s_ready_o))
-   begin
-      `ASSUME ($stable(s_valid_i));
-      `ASSUME ($stable(s_data_i));
-   end
-end
+formal_gen : if G_FORMAL generate
+end generate formal_gen;
 ```
 
-So if the last clock cycle saw the sender trying to send data (asserting
-`s_valid_i`) but the DUT not accepting it yet (de-asserting `s_ready_o`) then
-the current clock cycle should see no change in the signals into the DUT.
+That way, any logic related to formal verification will not be included during
+normal synthesis.
 
-And that is all for the inputs.
+One final general thing about formal verification is that it is synchronous,
+and therefore requires specifying a clock. Since most entities use only
+a single clock, this can be selected efficiently by this single line:
+
+```
+default clock is rising_edge(clk_i);
+```
 
 ### Assertions on outputs
+We're now ready to start expressing the properties of the FIFO as assertions on
+the outputs.
 
-Similarly, we place assertions on the expected behaviour of the DUT.
+The first simple requirement is that after a reset the FIFO must be empty. This
+is described by this command:
 
-First of all, we expect the FIFO to be empty right after reset.
 ```
-always @(posedge clk_i)
+f_after_reset : assert always {rst_i} |=>
+   not m_valid_o;
+```
+
+The word `f_after_reset` is just a label. I like to use the naming convention
+of having every label related to formal verification begin with `f_`.
+
+The symbol `|=>` means "assert on the next clock cycle". So if `rst_i` is
+asserted at some time, then on the very next clock cycle `m_valid_o` must be
+false.
+
+Next we may assert that after a write, the FIFO should be full.
+```
+f_fifo_full : assert always {s_valid_i and s_ready_o and not rst_i} |=>
+   m_valid_o;
+```
+The write is indicated by the combination `s_valid_i and s_ready_o`.  Notice
+here, we also need a condition on the reset signal.
+
+Thirdly we may want to assert that after a read with no write, the FIFO is again
+empty.
+```
+f_fifo_empty : assert always {m_valid_o and m_ready_i and not s_valid_i} |=>
+   not m_valid_o;
+```
+The combination `m_valid_o and m_ready_i` indicates the FIFO is being read, and
+the `not s_valid_i` states there is no write taking place. On the next clock
+cycle, the FIFO should then be empty.
+
+Finally, we assert the additional property that the output remains stable until
+read.
+```
+f_output_stable : assert always {m_valid_o and not m_ready_i and not rst_i} |=>
+   {m_valid_o = prev(m_valid_o) and
+    m_data_o  = prev(m_data_o)};
+```
+Here the combination `m_valid_o and not m_ready_i` indicates the FIFO is full,
+but the data is not read yet. Then on the next clock cycle, the outputs from
+the FIFO should be unchanged.
+
+### Assumptions about inputs
+Sometimes we have to impose restrictions on the inputs.  We use the `assume`
+keyword to restrict the allowed inputs.
+
+For instance, one such requirement is that we start of in a reset condition.
+This can be written as follows:
+```
+f_reset : assume always {rst_i or not f_rst};
+```
+
+Here we're referencing a new signal `f_rst` only used by formal verification.
+This signals starts out as true, and transitions to false on the very next
+clock cycle.
+
+Note here we do not require `rst_i` and `f_rst` to be equal. This is because
+we leave open the possibility of `rst_i` being asserted again at a later
+time. The only hard requirement we impose is that the very first clock
+cycle has `rst_i` asserted.
+
+The generation of the `f_rst` signal is done simply by:
+```
+process (clk_i)
 begin
-   if (f_past_valid && $past(rst_i))
-   begin
-      assert (m_valid_o == 0);
-   end
-end
+   if rising_edge(clk_i) then
+      f_rst <= '0';
+   end if;
+end process;
 ```
-
-The next is to assert that the DUT does not abort.
+and with an appropriate initial value:
 
 ```
-always @(posedge clk_i)
-begin
-   if (f_past_valid && $past(!rst_i) && $past(m_valid_o) && $past(!m_ready_i))
-   begin
-      assert ($stable(m_valid_o));
-      assert ($stable(m_data_o));
-   end
-end
+signal f_rst : std_logic := '1';
 ```
-
-And finally, we want to assert that the FIFO can be emptied:
-
-```
-always @(posedge clk_i)
-begin
-   if (f_past_valid && $past(m_valid_o) && $past(m_ready_i) && $past(!s_valid_i))
-   begin
-      assert (!m_valid_o);
-   end
-end
-```
-
 
 ### Cover statements to verify reachability
 
-Finally, the `cover()` statement is used to automatically generate stimuli. In
-code it looks as follows:
+Finally, the `cover` statement is used to automatically generate stimuli.
+
+For this simple FIFO I've chosen to detect the situation where the FIFO
+transitions from full to empty.
 
 ```
-always @(posedge clk_i)
-begin
-   cover (f_past_valid && $past(!rst_i) && $past(m_valid_o) && !m_valid_o);
-end
+f_full_to_empty : cover {m_valid_o and not rst_i; not m_valid_o};
 ```
 
-This forces the formal verification tool to reach a situation, where
-the FIFO transitions frmo full to empty.
+Note here the use of `;` inside the `{}`. The symbol `;` indicates the passage
+of one clock cycle. So the expression `{m_valid_o and not rst_i; not
+m_valid_o}` states that on one clock cycle the FIFO should be full and with no
+reset, and then on the **next** clock cycle the FIFO should be empty. So this
+is a two-clock-cycle sequence of signals.
 
+By writing `cover` statements the formal verification tool will automatically
+try to generate the stimuli necessary to satisfy the condition. On other words,
+the tool writes the testbench for you!
 
 ## Running the formal verifier
 In order to run the formal verifier, we must create a small
 script [one_stage_fifo.sby](one_stage_fifo.sby).
 
-Note the use of ghdl to parse the VHDL file, and that the "prep -top" line
-references the verilog module and not the VHDL entity.
+The tricky line in the script is the following:
+```
+ghdl -fpsl --std=08 -gG_FORMAL=true one_stage_fifo.vhd -e one_stage_fifo
+```
+The command line parameters `-fpsl --std=08` are necessary to enable the PSL
+verification language. The parameter `-gG_FORMAL=true` sets the value
+of the generic `G_FORMAL` we added,
 
 Then we just run the verifier using the command
 ```

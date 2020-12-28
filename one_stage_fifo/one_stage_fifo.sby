@@ -1,24 +1,22 @@
 [tasks]
 bmc
 cover
-prf
+prove
 
 [options]
 bmc: mode bmc
-bmc: depth 20
+bmc: depth 10
 cover: mode cover
-prf: mode prove
-prf: depth 4
+prove: mode prove
+prove: depth 4
 
 [engines]
 smtbmc boolector
 
 [script]
-ghdl one_stage_fifo.vhd -e one_stage_fifo
-read -formal -D ONE_STAGE_FIFO one_stage_fifo_formal.sv
-prep -top one_stage_fifo_formal
+ghdl -fpsl --std=08 -gG_FORMAL=true one_stage_fifo.vhd -e one_stage_fifo
+prep -top one_stage_fifo
 
 [files]
 one_stage_fifo.vhd
-one_stage_fifo_formal.sv
 

@@ -7,8 +7,11 @@ all:
 show_bmc:
 	gtkwave $(DUT)_bmc/engine_0/trace.vcd $(DUT).gtkw
 
+show_cover:
+	gtkwave $(DUT)_cover/engine_0/trace4.vcd $(DUT).gtkw
+
 clean:
 	rm -rf $(DUT)_bmc/
 	rm -rf $(DUT)_cover/
-	rm -rf $(DUT)_prf/
+	rm -rf $(DUT)_prove/
 

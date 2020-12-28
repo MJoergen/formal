@@ -14,10 +14,11 @@ I've written a [separate document](INSTALL.md) with a guide on how to install
 all the necessary tools.
 
 ## Doing formal verification in VHDL
-To use formal verification with VHDL, the actual design file can be left unchanged, but
-the design must be instantiated inside a Verilog file, where all the formal
-verification is defined. And the SymbiYosys tools must be started with some
-additional command line parameters. This is demonstrated in the below examples.
+To use formal verification with VHDL, we need to learn [a new language
+PSL](http://www.project-veripage.com/psl_tutorial_1.php). The VHDL file is
+augmented with verification commands like `assert`, `assume`, and `cover`.
+Furthermore, the SymbiYosys tools must be started with some additional command
+line parameters.  This is demonstrated in the below examples.
 
 ## Example designs using formal verification
 * [One Stage Fifo](one_stage_fifo/). This is a kind of "hello world" of formal verification.
