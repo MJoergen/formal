@@ -4,19 +4,17 @@ cover
 
 [options]
 bmc: mode bmc
-bmc: depth 6
+bmc: depth 4
 cover: mode cover
-cover: depth 13
+cover: depth 11
 
 [engines]
 smtbmc
 
 [script]
-ghdl rubik.vhd -e rubik
-read -formal rubik_formal.sv
-prep -top rubik_formal
+ghdl -fpsl -fsynopsys --std=08 -gG_FORMAL=true rubik.vhd -e rubik
+prep -top rubik
 
 [files]
 rubik.vhd
-rubik_formal.sv
 

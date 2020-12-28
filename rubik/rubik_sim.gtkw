@@ -1,0 +1,55 @@
+[*]
+[*] GTKWave Analyzer v3.3.86 (w)1999-2017 BSI
+[*] Mon Dec 28 11:27:01 2020
+[*]
+[dumpfile] "/home/mike/git/MJoergen/formal/rubik/rubik.ghw"
+[dumpfile_mtime] "Mon Dec 28 11:24:50 2020"
+[dumpfile_size] 47493
+[savefile] "/home/mike/git/MJoergen/formal/rubik/rubik_sim.gtkw"
+[timestart] 0
+[size] 1920 1011
+[pos] -1 -1
+*-29.143534 20000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[treeopen] top.rubik_tb.
+[treeopen] top.rubik_tb.i_rubik.
+[sst_width] 249
+[signals_width] 275
+[sst_expanded] 1
+[sst_vpaned_height] 286
+@28
+top.rubik_tb.i_rubik.clk_i
+top.rubik_tb.i_rubik.rst_i
+@29
+#{top.rubik_tb.i_rubik.cmd_i[3:0]} top.rubik_tb.i_rubik.cmd_i[3] top.rubik_tb.i_rubik.cmd_i[2] top.rubik_tb.i_rubik.cmd_i[1] top.rubik_tb.i_rubik.cmd_i[0]
+@28
+top.rubik_tb.i_rubik.done_o
+#{top.rubik_tb.i_rubik.u0[2:0]} top.rubik_tb.i_rubik.u0[2] top.rubik_tb.i_rubik.u0[1] top.rubik_tb.i_rubik.u0[0]
+#{top.rubik_tb.i_rubik.u1[2:0]} top.rubik_tb.i_rubik.u1[2] top.rubik_tb.i_rubik.u1[1] top.rubik_tb.i_rubik.u1[0]
+#{top.rubik_tb.i_rubik.u2[2:0]} top.rubik_tb.i_rubik.u2[2] top.rubik_tb.i_rubik.u2[1] top.rubik_tb.i_rubik.u2[0]
+#{top.rubik_tb.i_rubik.u3[2:0]} top.rubik_tb.i_rubik.u3[2] top.rubik_tb.i_rubik.u3[1] top.rubik_tb.i_rubik.u3[0]
+#{top.rubik_tb.i_rubik.f0[2:0]} top.rubik_tb.i_rubik.f0[2] top.rubik_tb.i_rubik.f0[1] top.rubik_tb.i_rubik.f0[0]
+#{top.rubik_tb.i_rubik.f1[2:0]} top.rubik_tb.i_rubik.f1[2] top.rubik_tb.i_rubik.f1[1] top.rubik_tb.i_rubik.f1[0]
+#{top.rubik_tb.i_rubik.f2[2:0]} top.rubik_tb.i_rubik.f2[2] top.rubik_tb.i_rubik.f2[1] top.rubik_tb.i_rubik.f2[0]
+#{top.rubik_tb.i_rubik.f3[2:0]} top.rubik_tb.i_rubik.f3[2] top.rubik_tb.i_rubik.f3[1] top.rubik_tb.i_rubik.f3[0]
+#{top.rubik_tb.i_rubik.r0[2:0]} top.rubik_tb.i_rubik.r0[2] top.rubik_tb.i_rubik.r0[1] top.rubik_tb.i_rubik.r0[0]
+#{top.rubik_tb.i_rubik.r1[2:0]} top.rubik_tb.i_rubik.r1[2] top.rubik_tb.i_rubik.r1[1] top.rubik_tb.i_rubik.r1[0]
+#{top.rubik_tb.i_rubik.r2[2:0]} top.rubik_tb.i_rubik.r2[2] top.rubik_tb.i_rubik.r2[1] top.rubik_tb.i_rubik.r2[0]
+#{top.rubik_tb.i_rubik.r3[2:0]} top.rubik_tb.i_rubik.r3[2] top.rubik_tb.i_rubik.r3[1] top.rubik_tb.i_rubik.r3[0]
+#{top.rubik_tb.i_rubik.d0[2:0]} top.rubik_tb.i_rubik.d0[2] top.rubik_tb.i_rubik.d0[1] top.rubik_tb.i_rubik.d0[0]
+#{top.rubik_tb.i_rubik.d1[2:0]} top.rubik_tb.i_rubik.d1[2] top.rubik_tb.i_rubik.d1[1] top.rubik_tb.i_rubik.d1[0]
+#{top.rubik_tb.i_rubik.d2[2:0]} top.rubik_tb.i_rubik.d2[2] top.rubik_tb.i_rubik.d2[1] top.rubik_tb.i_rubik.d2[0]
+#{top.rubik_tb.i_rubik.d3[2:0]} top.rubik_tb.i_rubik.d3[2] top.rubik_tb.i_rubik.d3[1] top.rubik_tb.i_rubik.d3[0]
+#{top.rubik_tb.i_rubik.b0[2:0]} top.rubik_tb.i_rubik.b0[2] top.rubik_tb.i_rubik.b0[1] top.rubik_tb.i_rubik.b0[0]
+#{top.rubik_tb.i_rubik.b1[2:0]} top.rubik_tb.i_rubik.b1[2] top.rubik_tb.i_rubik.b1[1] top.rubik_tb.i_rubik.b1[0]
+#{top.rubik_tb.i_rubik.b2[2:0]} top.rubik_tb.i_rubik.b2[2] top.rubik_tb.i_rubik.b2[1] top.rubik_tb.i_rubik.b2[0]
+#{top.rubik_tb.i_rubik.b3[2:0]} top.rubik_tb.i_rubik.b3[2] top.rubik_tb.i_rubik.b3[1] top.rubik_tb.i_rubik.b3[0]
+#{top.rubik_tb.i_rubik.l0[2:0]} top.rubik_tb.i_rubik.l0[2] top.rubik_tb.i_rubik.l0[1] top.rubik_tb.i_rubik.l0[0]
+#{top.rubik_tb.i_rubik.l1[2:0]} top.rubik_tb.i_rubik.l1[2] top.rubik_tb.i_rubik.l1[1] top.rubik_tb.i_rubik.l1[0]
+#{top.rubik_tb.i_rubik.l2[2:0]} top.rubik_tb.i_rubik.l2[2] top.rubik_tb.i_rubik.l2[1] top.rubik_tb.i_rubik.l2[0]
+#{top.rubik_tb.i_rubik.l3[2:0]} top.rubik_tb.i_rubik.l3[2] top.rubik_tb.i_rubik.l3[1] top.rubik_tb.i_rubik.l3[0]
+top.rubik_tb.i_rubik.f_rst
+@22
+#{top.rubik_tb.i_rubik.f_num_colors[0:7]} top.rubik_tb.i_rubik.f_num_colors[0] top.rubik_tb.i_rubik.f_num_colors[1] top.rubik_tb.i_rubik.f_num_colors[2] top.rubik_tb.i_rubik.f_num_colors[3] top.rubik_tb.i_rubik.f_num_colors[4] top.rubik_tb.i_rubik.f_num_colors[5] top.rubik_tb.i_rubik.f_num_colors[6] top.rubik_tb.i_rubik.f_num_colors[7]
+[pattern_trace] 1
+[pattern_trace] 0

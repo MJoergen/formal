@@ -1,6 +1,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
+use ieee.std_logic_unsigned.all;
 
 -- This attempts to solve the 2x2x2 Rubik's cube using formal methods.
 --
@@ -48,37 +48,13 @@ use ieee.numeric_std.all;
 -- Lx = x+5 mod 6
 
 entity rubik is
+   generic (
+      G_FORMAL : boolean := false
+   );
    port (
       clk_i  : in  std_logic;
       rst_i  : in  std_logic;
-
       cmd_i  : in  std_logic_vector(3 downto 0);
-
-      u0_o   : out std_logic_vector(2 downto 0);
-      u1_o   : out std_logic_vector(2 downto 0);
-      u2_o   : out std_logic_vector(2 downto 0);
-      u3_o   : out std_logic_vector(2 downto 0);
-      f0_o   : out std_logic_vector(2 downto 0);
-      f1_o   : out std_logic_vector(2 downto 0);
-      f2_o   : out std_logic_vector(2 downto 0);
-      f3_o   : out std_logic_vector(2 downto 0);
-      r0_o   : out std_logic_vector(2 downto 0);
-      r1_o   : out std_logic_vector(2 downto 0);
-      r2_o   : out std_logic_vector(2 downto 0);
-      r3_o   : out std_logic_vector(2 downto 0);
-      d0_o   : out std_logic_vector(2 downto 0);
-      d1_o   : out std_logic_vector(2 downto 0);
-      d2_o   : out std_logic_vector(2 downto 0);
-      d3_o   : out std_logic_vector(2 downto 0);
-      b0_o   : out std_logic_vector(2 downto 0);
-      b1_o   : out std_logic_vector(2 downto 0);
-      b2_o   : out std_logic_vector(2 downto 0);
-      b3_o   : out std_logic_vector(2 downto 0);
-      l0_o   : out std_logic_vector(2 downto 0);
-      l1_o   : out std_logic_vector(2 downto 0);
-      l2_o   : out std_logic_vector(2 downto 0);
-      l3_o   : out std_logic_vector(2 downto 0);
-
       done_o : out std_logic
    );
 end entity rubik;
@@ -114,6 +90,10 @@ architecture synthesis of rubik is
    signal l1 : std_logic_vector(2 downto 0) := (others => '0');
    signal l2 : std_logic_vector(2 downto 0) := (others => '0');
    signal l3 : std_logic_vector(2 downto 0) := (others => '0');
+
+   -- Formal verification
+   signal f_rst        : std_logic := '1';
+   signal f_num_colors : integer_vector(0 to 7);
 
 begin
 
@@ -291,20 +271,20 @@ begin
          end case;
 
          if rst_i = '1' then
-            u0 <= "001";
-            u1 <= "001";
-            u2 <= "001";
-            u3 <= "001";
+            u0 <= "000";
+            u1 <= "000";
+            u2 <= "000";
+            u3 <= "000";
 
-            f0 <= "010";
-            f1 <= "010";
-            f2 <= "010";
-            f3 <= "010";
+            f0 <= "001";
+            f1 <= "001";
+            f2 <= "001";
+            f3 <= "001";
 
-            r0 <= "000";
-            r1 <= "000";
-            r2 <= "000";
-            r3 <= "000";
+            r0 <= "010";
+            r1 <= "010";
+            r2 <= "010";
+            r3 <= "010";
 
             d0 <= "011";
             d1 <= "011";
@@ -332,30 +312,128 @@ begin
              b0 = "100" and b1 = "100" and b2 = "100" and b3 = "100" and
              l0 = "101" and l1 = "101" and l2 = "101" and l3 = "101" else '0';
 
-   u0_o <= u0;
-   u1_o <= u1;
-   u2_o <= u2;
-   u3_o <= u3;
-   f0_o <= f0;
-   f1_o <= f1;
-   f2_o <= f2;
-   f3_o <= f3;
-   r0_o <= r0;
-   r1_o <= r1;
-   r2_o <= r2;
-   r3_o <= r3;
-   d0_o <= d0;
-   d1_o <= d1;
-   d2_o <= d2;
-   d3_o <= d3;
-   b0_o <= b0;
-   b1_o <= b1;
-   b2_o <= b2;
-   b3_o <= b3;
-   l0_o <= l0;
-   l1_o <= l1;
-   l2_o <= l2;
-   l3_o <= l3;
+
+   ------------------------
+   -- Formal verification
+   ------------------------
+
+   formal_gen : if G_FORMAL generate
+
+      -- set all declarations to run on clk_i
+      default clock is rising_edge(clk_i);
+
+
+      -----------------------------
+      -- ASSUMPTIONS ABOUT INPUTS
+      -----------------------------
+
+      process (clk_i)
+      begin
+         if rising_edge(clk_i) then
+            f_rst <= '0';
+         end if;
+      end process;
+
+      -- Require reset at startup.
+      -- This is to ensure BMC starts in a valid state.
+      f_reset : assume always {rst_i or not f_rst};
+
+
+      -----------------------------
+      -- ASSERTIONS ABOUT OUTPUTS
+      -----------------------------
+
+      f_edge_u2_f0 : assert always {u2 /= f0} abort rst_i;
+      f_edge_u3_f1 : assert always {u3 /= f1} abort rst_i;
+      f_edge_l1_f0 : assert always {l1 /= f0} abort rst_i;
+      f_edge_l3_f2 : assert always {l3 /= f2} abort rst_i;
+      f_edge_d0_f2 : assert always {d0 /= f2} abort rst_i;
+      f_edge_d1_f3 : assert always {d1 /= f3} abort rst_i;
+      f_edge_r2_f3 : assert always {r2 /= f3} abort rst_i;
+      f_edge_r0_f1 : assert always {r0 /= f1} abort rst_i;
+      f_edge_u2_l1 : assert always {u2 /= l1} abort rst_i;
+      f_edge_u0_l0 : assert always {u0 /= l0} abort rst_i;
+      f_edge_l3_d0 : assert always {l3 /= d0} abort rst_i;
+      f_edge_l2_d2 : assert always {l2 /= d2} abort rst_i;
+      f_edge_d1_r2 : assert always {d1 /= r2} abort rst_i;
+      f_edge_d3_r3 : assert always {d3 /= r3} abort rst_i;
+      f_edge_r0_u3 : assert always {r0 /= u3} abort rst_i;
+      f_edge_r1_u1 : assert always {r1 /= u1} abort rst_i;
+      f_edge_r1_b0 : assert always {r1 /= b0} abort rst_i;
+      f_edge_r3_b2 : assert always {r3 /= b2} abort rst_i;
+      f_edge_d3_b2 : assert always {d3 /= b2} abort rst_i;
+      f_edge_d2_b3 : assert always {d2 /= b3} abort rst_i;
+      f_edge_u0_b1 : assert always {u0 /= b1} abort rst_i;
+      f_edge_u1_b0 : assert always {u1 /= b0} abort rst_i;
+      f_edge_b1_l0 : assert always {b1 /= l0} abort rst_i;
+      f_edge_b3_l2 : assert always {b3 /= l2} abort rst_i;
+
+      process (all)
+         variable num_colors : integer_vector(0 to 7);
+      begin
+         num_colors := (others => 0);
+         num_colors(conv_integer(u0)) := num_colors(conv_integer(u0)) + 1;
+         num_colors(conv_integer(u1)) := num_colors(conv_integer(u1)) + 1;
+         num_colors(conv_integer(u2)) := num_colors(conv_integer(u2)) + 1;
+         num_colors(conv_integer(u3)) := num_colors(conv_integer(u3)) + 1;
+         num_colors(conv_integer(f0)) := num_colors(conv_integer(f0)) + 1;
+         num_colors(conv_integer(f1)) := num_colors(conv_integer(f1)) + 1;
+         num_colors(conv_integer(f2)) := num_colors(conv_integer(f2)) + 1;
+         num_colors(conv_integer(f3)) := num_colors(conv_integer(f3)) + 1;
+         num_colors(conv_integer(r0)) := num_colors(conv_integer(r0)) + 1;
+         num_colors(conv_integer(r1)) := num_colors(conv_integer(r1)) + 1;
+         num_colors(conv_integer(r2)) := num_colors(conv_integer(r2)) + 1;
+         num_colors(conv_integer(r3)) := num_colors(conv_integer(r3)) + 1;
+         num_colors(conv_integer(d0)) := num_colors(conv_integer(d0)) + 1;
+         num_colors(conv_integer(d1)) := num_colors(conv_integer(d1)) + 1;
+         num_colors(conv_integer(d2)) := num_colors(conv_integer(d2)) + 1;
+         num_colors(conv_integer(d3)) := num_colors(conv_integer(d3)) + 1;
+         num_colors(conv_integer(b0)) := num_colors(conv_integer(b0)) + 1;
+         num_colors(conv_integer(b1)) := num_colors(conv_integer(b1)) + 1;
+         num_colors(conv_integer(b2)) := num_colors(conv_integer(b2)) + 1;
+         num_colors(conv_integer(b3)) := num_colors(conv_integer(b3)) + 1;
+         num_colors(conv_integer(l0)) := num_colors(conv_integer(l0)) + 1;
+         num_colors(conv_integer(l1)) := num_colors(conv_integer(l1)) + 1;
+         num_colors(conv_integer(l2)) := num_colors(conv_integer(l2)) + 1;
+         num_colors(conv_integer(l3)) := num_colors(conv_integer(l3)) + 1;
+         f_num_colors <= num_colors;
+      end process;
+
+      f_colors : assert always {f_num_colors = (0 to 5 => 4, 6 to 7 => 0)} abort rst_i;
+
+      --------------------------------------------
+      -- COVER STATEMENTS TO VERIFY REACHABILITY
+      --------------------------------------------
+
+      f_done : cover {not done_o and not rst_i; done_o};
+
+      f_pattern : cover {
+         u0 = "101" and
+         u1 = "100" and
+         u2 = "000" and
+         u3 = "001" and
+         f0 = "100" and
+         f1 = "010" and
+         f2 = "101" and
+         f3 = "011" and
+         r0 = "000" and
+         r1 = "101" and
+         r2 = "001" and
+         r3 = "011" and
+         d0 = "000" and
+         d1 = "010" and
+         d2 = "011" and
+         d3 = "100" and
+         b0 = "000" and
+         b1 = "011" and
+         b2 = "010" and
+         b3 = "100" and
+         l0 = "001" and
+         l1 = "010" and
+         l2 = "101" and
+         l3 = "001"};
+
+   end generate formal_gen;
 
 end architecture synthesis;
 
