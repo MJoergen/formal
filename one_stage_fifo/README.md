@@ -162,9 +162,6 @@ Note the use of `abort rst_i` in the last two assertions. This syntax creates
 an exception to the assertion, instructing the tool to ignore the assertion in
 case of reset.
 
-
-
-
 ### Assumptions about inputs
 Sometimes we have to impose restrictions on the inputs.  We use the `assume`
 keyword to restrict the allowed inputs.
