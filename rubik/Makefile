@@ -19,14 +19,15 @@ clean:
 	rm -rf work-obj08.cf
 	rm -rf yosys.log
 	rm -rf $(DUT).edif
+	rm -rf $(DUT).ghw
 
 # Synthesis
 
-work-obj93.cf: $(DUT).vhd
-	ghdl -a $^
+work-obj08.cf: $(DUT).vhd
+	ghdl -a -fpsl -fsynopsys --std=08 $^
 
-synth: work-obj93.cf
-	yosys -m ghdl -p 'ghdl $(DUT); synth_xilinx -top $(DUT) -edif $(DUT).edif' > yosys.log
+synth: work-obj08.cf
+	yosys -m ghdl -p 'ghdl -fpsl -fsynopsys --std=08 $(DUT); synth_xilinx -top $(DUT) -edif $(DUT).edif' > yosys.log
 
 # Simulation
 
