@@ -39,18 +39,22 @@ both the actual implementation and the additional commands for formal verificati
 ## Formal verification
 Instead of writing a testbench that manually generates stimuli, we instead
 write some rules (assertions) that must be obeyed at all times.  Note: This is
-a non-trivial step, and takes considerable practice.
+a non-trivial step, and takes some practice.
 
 The main keywords to use are `assume` (for validating input), `assert` (for
 validating output), and `cover` (for ensuring reachability).
 
-Sometime additional logic is needed for formal verification. For that reason,
-I add the generic `G_FORMAL : boolean := false` to the design. Furthermore,
-I wrap the entire section of formal verification inside a `generate` statement
-as follows:
+Sometimes additional logic is needed for formal verification. For that reason,
+I add the generic
+```
+G_FORMAL : boolean := false
+```
+to the design. Furthermore, I wrap the entire section of formal verification
+inside a `generate` statement as follows:
 
 ```
 formal_gen : if G_FORMAL generate
+...
 end generate formal_gen;
 ```
 
@@ -78,7 +82,8 @@ f_after_reset : assert always {rst_i} |=>
 ```
 
 The word `f_after_reset` is just a label. I like to use the naming convention
-of having every label related to formal verification begin with `f_`.
+of having every label and signal related to formal verification begin with
+`f_`.
 
 The symbol `|=>` means "assert on the next clock cycle". So if `rst_i` is
 asserted at some time, then on the very next clock cycle `m_valid_o` must be
@@ -124,7 +129,7 @@ f_reset : assume always {rst_i or not f_rst};
 ```
 
 Here we're referencing a new signal `f_rst` only used by formal verification.
-This signals starts out as true, and transitions to false on the very next
+This signal starts out as true, and transitions to false on the very next
 clock cycle.
 
 Note here we do not require `rst_i` and `f_rst` to be equal. This is because
@@ -165,7 +170,7 @@ reset, and then on the **next** clock cycle the FIFO should be empty. So this
 is a two-clock-cycle sequence of signals.
 
 By writing `cover` statements the formal verification tool will automatically
-try to generate the stimuli necessary to satisfy the condition. On other words,
+try to generate the stimuli necessary to satisfy the condition. In other words,
 the tool writes the testbench for you!
 
 ## Running the formal verifier
