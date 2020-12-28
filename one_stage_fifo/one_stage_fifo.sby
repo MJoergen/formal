@@ -11,7 +11,7 @@ prove: mode prove
 prove: depth 4
 
 [engines]
-smtbmc boolector
+smtbmc
 
 [script]
 ghdl -fpsl --std=08 -gG_FORMAL=true one_stage_fifo.vhd -e one_stage_fifo

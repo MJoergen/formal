@@ -41,7 +41,7 @@ Instead of writing a testbench that manually generates stimuli, we instead
 write some rules (assertions) that must be obeyed at all times.  Note: This is
 a non-trivial step, and takes some practice.
 
-The main keywords to use are `assume` (for validating input), `assert` (for
+The main keywords to use are `assume` (for constraining input), `assert` (for
 validating output), and `cover` (for ensuring reachability).
 
 Sometimes additional logic is needed for formal verification. For that reason,
@@ -89,34 +89,81 @@ The symbol `|=>` means "assert on the next clock cycle". So if `rst_i` is
 asserted at some time, then on the very next clock cycle `m_valid_o` must be
 false.
 
-Next we may assert that after a write, the FIFO should be full.
-```
-f_fifo_full : assert always {s_valid_i and s_ready_o and not rst_i} |=>
-   m_valid_o;
-```
-The write is indicated by the combination `s_valid_i and s_ready_o`.  Notice
-here, we also need a condition on the reset signal.
-
-Thirdly we may want to assert that after a read with no write, the FIFO is again
-empty.
-```
-f_fifo_empty : assert always {m_valid_o and m_ready_i and not s_valid_i} |=>
-   not m_valid_o;
-```
-The combination `m_valid_o and m_ready_i` indicates the FIFO is being read, and
-the `not s_valid_i` states there is no write taking place. On the next clock
-cycle, the FIFO should then be empty.
-
-Finally, we assert the additional property that the output remains stable until
-read.
+Next we assert the property that any valid output remains stable until read.
 ```
 f_output_stable : assert always {m_valid_o and not m_ready_i and not rst_i} |=>
    {m_valid_o = prev(m_valid_o) and
     m_data_o  = prev(m_data_o)};
 ```
-Here the combination `m_valid_o and not m_ready_i` indicates the FIFO is full,
-but the data is not read yet. Then on the next clock cycle, the outputs from
-the FIFO should be unchanged.
+Here the combination `m_valid_o and not m_ready_i` indicates the FIFO outputs
+data, but the data is not read yet. Then on the next clock cycle, the outputs
+from the FIFO should be unchanged.
+
+The next few properties rely on keeping track of the amont of data flowing into
+and out of the FIFO. So we introduce a new signal `f_count` that contains the
+current number of items in the FIFO, based on the input and output signals only.
+
+This is done using the following simple code:
+```
+p_count : process (clk_i)
+begin
+   if rising_edge(clk_i) then
+      -- Data flowing in, but not out.
+      if s_valid_i and s_ready_o and not (m_valid_o and m_ready_i) then
+         f_count <= f_count + 1;
+      end if;
+
+      -- Data flowing out, but not in.
+      if m_valid_o and m_ready_i and not (s_valid_i and s_ready_o) then
+         f_count <= f_count - 1;
+      end if;
+
+      if rst_i then
+         f_count <= 0;
+      end if;
+   end if;
+end process p_count;
+```
+
+Additionally, we want to keep track of the last data written into
+the FIFO, below written into yet another signal `f_last_value`:
+```
+p_last_value : process (clk_i)
+begin
+   if rising_edge(clk_i) then
+      -- Remember last value written into FIFO
+      if s_valid_i and s_ready_o then
+         f_last_value <= s_data_i;
+      end if;
+   end if;
+end process p_last_value;
+```
+
+We can now formulate our FIFO properties in terms of this count.
+
+First of all, the size is constrained to the interval `[0, 1]`:
+```
+f_size : assert always {0 <= f_count and f_count <= 1};
+```
+
+If the FIFO is full, then it must present valid data on the output
+```
+f_count_1 : assert always {f_count = 1} |->
+   {m_valid_o = '1' and
+    m_data_o  = f_last_value} abort rst_i;
+```
+
+Similarly, if the FIFO is empty, then no valid data must be output
+```
+f_count_0 : assert always {f_count = 0} |->
+   {m_valid_o = '0'} abort rst_i;
+```
+Note the use of `abort rst_i` in the last two assertions. This syntax creates
+an exception to the assertion, instructing the tool to ignore the assertion in
+case of reset.
+
+
+
 
 ### Assumptions about inputs
 Sometimes we have to impose restrictions on the inputs.  We use the `assume`
