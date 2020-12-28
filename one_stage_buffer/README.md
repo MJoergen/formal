@@ -1,5 +1,5 @@
 # Another simple module : One Stage Buffer
-This module is very similar to the [../one_stage_fifo](one_stage_fifo) we just
+This module is very similar to the [one_stage_fifo](../one_stage_fifo) we just
 completed.  In particular, the port signals are the same as for
 `one_stage_fifo`, but the functionality is slightly different.
 
