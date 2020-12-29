@@ -16,19 +16,19 @@
 [sst_expanded] 1
 [sst_vpaned_height] 286
 @28
-fgc_formal.DUT.clk_i
-fgc_formal.DUT.rst_i
+fgc.clk_i
+fgc.rst_i
 @800029
-fgc_formal.DUT.item_i[1:0]
+fgc.item_i[1:0]
 @29
-(0)fgc_formal.DUT.item_i[1:0]
-(1)fgc_formal.DUT.item_i[1:0]
+(0)fgc.item_i[1:0]
+(1)fgc.item_i[1:0]
 @1001201
 -group_end
 @28
-fgc_formal.DUT.bank_c_o
-fgc_formal.DUT.bank_f_o
-fgc_formal.DUT.bank_g_o
-fgc_formal.DUT.bank_m_o
+fgc.bank_c_o
+fgc.bank_f_o
+fgc.bank_g_o
+fgc.bank_m_o
 [pattern_trace] 1
 [pattern_trace] 0

@@ -14,6 +14,9 @@ To show the solution, type
 make show
 ```
 
+![Waveform](waveform.png)
+
+
 To clean up, type
 
 ```
