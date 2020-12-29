@@ -11,7 +11,6 @@ use ieee.numeric_std.all;
 
 entity one_stage_fifo is
    generic (
-      G_FORMAL    : boolean := false;
       G_DATA_SIZE : integer := 8
    );
    port (
@@ -77,91 +76,82 @@ begin
    -- Formal verification
    ------------------------
 
-   formal_gen : if G_FORMAL generate
-
-      -- set all declarations to run on clk_i
-      default clock is rising_edge(clk_i);
+   -- set all declarations to run on clk_i
+   -- psl default clock is rising_edge(clk_i);
 
 
-      -----------------------------
-      -- ASSUMPTIONS ABOUT INPUTS
-      -----------------------------
+   -----------------------------
+   -- ASSERTIONS ABOUT OUTPUTS
+   -----------------------------
 
-      process (clk_i)
-      begin
-         if rising_edge(clk_i) then
-            f_rst <= '0';
+   -- FIFO must be empty after reset
+   -- psl f_after_reset : assert always {rst_i} |=> not m_valid_o;
+
+   -- Output must be stable until accepted
+   -- psl f_output_stable : assert always {m_valid_o and not m_ready_i and not rst_i} |=> {stable(m_valid_o) and stable(m_data_o)};
+
+   -- Keep track of amount of data flowing into and out of the FIFO
+   p_count : process (clk_i)
+   begin
+      if rising_edge(clk_i) then
+         -- Data flowing in, but not out.
+         if s_valid_i and s_ready_o and not (m_valid_o and m_ready_i) then
+            f_count <= f_count + 1;
          end if;
-      end process;
 
-      -- Require reset at startup.
-      f_reset : assume always {rst_i or not f_rst};
-
-
-      -----------------------------
-      -- ASSERTIONS ABOUT OUTPUTS
-      -----------------------------
-
-      -- FIFO must be empty after reset
-      f_after_reset : assert always {rst_i} |=>
-         not m_valid_o;
-
-      -- Output must be stable until accepted
-      f_output_stable : assert always {m_valid_o and not m_ready_i and not rst_i} |=>
-         {m_valid_o = prev(m_valid_o) and
-          m_data_o  = prev(m_data_o)};
-
-      -- Keep track of amount of data flowing into and out of the FIFO
-      p_count : process (clk_i)
-      begin
-         if rising_edge(clk_i) then
-            -- Data flowing in, but not out.
-            if s_valid_i and s_ready_o and not (m_valid_o and m_ready_i) then
-               f_count <= f_count + 1;
-            end if;
-
-            -- Data flowing out, but not in.
-            if m_valid_o and m_ready_i and not (s_valid_i and s_ready_o) then
-               f_count <= f_count - 1;
-            end if;
-
-            if rst_i then
-               f_count <= 0;
-            end if;
+         -- Data flowing out, but not in.
+         if m_valid_o and m_ready_i and not (s_valid_i and s_ready_o) then
+            f_count <= f_count - 1;
          end if;
-      end process p_count;
 
-      -- The FIFO size is limited to 1.
-      f_size : assert always {0 <= f_count and f_count <= 1};
-
-      -- Keep track of data flowing into and out of the FIFO
-      p_last_value : process (clk_i)
-      begin
-         if rising_edge(clk_i) then
-            -- Remember last value written into FIFO
-            if s_valid_i and s_ready_o then
-               f_last_value <= s_data_i;
-            end if;
+         if rst_i then
+            f_count <= 0;
          end if;
-      end process p_last_value;
+      end if;
+   end process p_count;
 
-      -- If FIFO is full, it must always present valid data on output
-      f_count_1 : assert always {f_count = 1} |->
-         {m_valid_o = '1' and
-          m_data_o  = f_last_value} abort rst_i;
+   -- Keep track of data flowing into and out of the FIFO
+   p_last_value : process (clk_i)
+   begin
+      if rising_edge(clk_i) then
+         -- Remember last value written into FIFO
+         if s_valid_i and s_ready_o then
+            f_last_value <= s_data_i;
+         end if;
+      end if;
+   end process p_last_value;
 
-      -- If FIFO is empty, no data present on output
-      f_count_0 : assert always {f_count = 0} |->
-         {m_valid_o = '0'} abort rst_i;
+   -- The FIFO size is limited to 1.
+   -- psl f_size : assert always {0 <= f_count and f_count <= 1};
+
+   -- If FIFO is full, it must always present valid data on output
+   -- psl f_count_1 : assert always {f_count = 1} |-> {m_valid_o = '1' and m_data_o  = f_last_value} abort rst_i;
+
+   -- If FIFO is empty, no data present on output
+   -- psl f_count_0 : assert always {f_count = 0} |-> {m_valid_o = '0'} abort rst_i;
 
 
-      --------------------------------------------
-      -- COVER STATEMENTS TO VERIFY REACHABILITY
-      --------------------------------------------
+   -----------------------------
+   -- ASSUMPTIONS ABOUT INPUTS
+   -----------------------------
 
-      -- Make sure FIFO can transition from full to empty.
-      f_full_to_empty : cover {m_valid_o and not rst_i; not m_valid_o};
+   process (clk_i)
+   begin
+      if rising_edge(clk_i) then
+         f_rst <= '0';
+      end if;
+   end process;
 
-   end generate formal_gen;
+   -- Require reset at startup.
+   -- psl f_reset : assume always {rst_i or not f_rst};
+
+
+   --------------------------------------------
+   -- COVER STATEMENTS TO VERIFY REACHABILITY
+   --------------------------------------------
+
+   -- Make sure FIFO can transition from full to empty.
+   -- psl f_full_to_empty : cover {m_valid_o and not rst_i; not m_valid_o};
+
 end architecture synthesis;
 

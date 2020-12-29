@@ -37,37 +37,46 @@ The FIFO implementation is found [here](one_stage_fifo.vhd). This file contains
 both the actual implementation and the additional commands for formal verification.
 
 ## Formal verification
-Instead of writing a testbench that manually generates stimuli, we instead
-write some rules (assertions) that must be obeyed at all times.  Note: This is
-a non-trivial step, and takes some practice.
+Instead of writing a testbench that manually generates stimuli, we envision the
+FIFO requirements as a "contract", and we aim to describe this contract
+programmatically. Specifically, we will be using the language
+[PSL](http://www.project-veripage.com/psl_tutorial_1.php) (Property
+Specification Language). The formal verification tool will then automatically
+search for sequences of inputs that lead to violations of this contract. If the
+tool is successfull, it will generate a testbench and waveform showing the
+contract failure.
+
+To be more concrete we will be formulate the requirements of the contract using
+assertions. The assertions in PSL are more powerful (i.e. allow more complex
+constructions) than regular VHDL. The process of writing these `assert` commands
+is non-trivial, and takes some practice. I will describe in detail how this is
+done for this one-stage FIFO.
 
 The main keywords to use are `assume` (for constraining input), `assert` (for
 validating output), and `cover` (for ensuring reachability).
 
-Sometimes additional logic is needed for formal verification. For that reason,
-I add the generic
+One complication regarding formal verification is to get adequate tool support.
+For once thing, Xilinx Vivado does not support PSL statements at all. The solution
+therefore is to embed PSL statements into comments of the form
 ```
-G_FORMAL : boolean := false
+-- psl
 ```
-to the design. Furthermore, I wrap the entire section of formal verification
-inside a `generate` statement as follows:
+The GHDL plugin to Yosys supports this particular syntax. This way we can use
+the same source file for both formal verification using Yosys and for synthesis
+using Vivado. Note, the GHDL plugin does support multiline PSL statements, but
+for the sake of consistent syntax highlighting we will only use single-line
+statements in the source file.
 
-```
-formal_gen : if G_FORMAL generate
-...
-end generate formal_gen;
-```
-
-That way, any logic related to formal verification will not be included during
-normal synthesis.
-
-One final general thing about formal verification is that it is synchronous,
-and therefore requires specifying a clock. Since most entities use only
-a single clock, this can be selected efficiently by this single line:
+One general thing about formal verification is that it is synchronous, and
+therefore requires specifying a clock. Since most entities use only a single
+clock, this can be selected efficiently by this single line:
 
 ```
 default clock is rising_edge(clk_i);
 ```
+
+Note, as mentioned above this line must be preceeded by `-- psl` in the source
+file.
 
 ### Assertions on outputs
 We're now ready to start expressing the properties of the FIFO as assertions on
@@ -77,8 +86,7 @@ The first simple requirement is that after a reset the FIFO must be empty. This
 is described by this command:
 
 ```
-f_after_reset : assert always {rst_i} |=>
-   not m_valid_o;
+f_after_reset : assert always {rst_i} |=> not m_valid_o;
 ```
 
 The word `f_after_reset` is just a label. I like to use the naming convention
@@ -91,9 +99,7 @@ false.
 
 Next we assert the property that any valid output remains stable until read.
 ```
-f_output_stable : assert always {m_valid_o and not m_ready_i and not rst_i} |=>
-   {m_valid_o = prev(m_valid_o) and
-    m_data_o  = prev(m_data_o)};
+f_output_stable : assert always {m_valid_o and not m_ready_i and not rst_i} |=> {stable(m_valid_o) and stable(m_data_o)};
 ```
 Here the combination `m_valid_o and not m_ready_i` indicates the FIFO outputs
 data, but the data is not read yet. Then on the next clock cycle, the outputs
@@ -148,15 +154,12 @@ f_size : assert always {0 <= f_count and f_count <= 1};
 
 If the FIFO is full, then it must present valid data on the output
 ```
-f_count_1 : assert always {f_count = 1} |->
-   {m_valid_o = '1' and
-    m_data_o  = f_last_value} abort rst_i;
+f_count_1 : assert always {f_count = 1} |-> {m_valid_o = '1' and m_data_o  = f_last_value} abort rst_i;
 ```
 
 Similarly, if the FIFO is empty, then no valid data must be output
 ```
-f_count_0 : assert always {f_count = 0} |->
-   {m_valid_o = '0'} abort rst_i;
+f_count_0 : assert always {f_count = 0} |-> {m_valid_o = '0'} abort rst_i;
 ```
 Note the use of `abort rst_i` in the last two assertions. This syntax creates
 an exception to the assertion, instructing the tool to ignore the assertion in
@@ -223,11 +226,10 @@ script [one_stage_fifo.sby](one_stage_fifo.sby).
 
 The tricky line in the script is the following:
 ```
-ghdl -fpsl --std=08 -gG_FORMAL=true one_stage_fifo.vhd -e one_stage_fifo
+ghdl -fpsl --std=08 one_stage_fifo.vhd -e one_stage_fifo
 ```
 The command line parameters `-fpsl --std=08` are necessary to enable the PSL
-verification language. The parameter `-gG_FORMAL=true` sets the value
-of the generic `G_FORMAL` we added,
+verification language.
 
 Then we just run the verifier using the command
 ```
