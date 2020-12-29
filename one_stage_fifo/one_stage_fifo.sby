@@ -14,7 +14,7 @@ prove: depth 4
 smtbmc
 
 [script]
-ghdl -fpsl --std=08 one_stage_fifo.vhd -e one_stage_fifo
+ghdl -fpsl --std=08 -gG_FORMAL=true one_stage_fifo.vhd -e one_stage_fifo
 prep -top one_stage_fifo
 
 [files]

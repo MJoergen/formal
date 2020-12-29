@@ -220,16 +220,22 @@ By writing `cover` statements the formal verification tool will automatically
 try to generate the stimuli necessary to satisfy the condition. In other words,
 the tool writes the testbench for you!
 
+Finally, I wrap the entire section of formal verification inside a `generate`
+block using a generic `G_FORMAL` with a default value of `false`. This is
+good practice and instructs the synthesis tool not to generate logic for
+formal verification.
+
 ## Running the formal verifier
 In order to run the formal verifier, we must create a small
 script [one_stage_fifo.sby](one_stage_fifo.sby).
 
 The tricky line in the script is the following:
 ```
-ghdl -fpsl --std=08 one_stage_fifo.vhd -e one_stage_fifo
+ghdl -fpsl --std=08 -gG_FORMAL=true one_stage_fifo.vhd -e one_stage_fifo
 ```
-The command line parameters `-fpsl --std=08` are necessary to enable the PSL
-statements inside comments.
+The command line options `-fpsl --std=08` are necessary to enable the PSL
+statements inside comments. The option `-gG_FORMAL=true` instructs GHDL
+to include the extra code for formal verification.
 
 Then we just run the verifier using the command
 ```
@@ -282,35 +288,21 @@ make synth
 
 The end of the generated log file `yosys.log` contains a summary of the synthesis:
 ```
-Number of wires:                 58
-Number of wire bits:           2247
-Number of public wires:          18
-Number of public wire bits:    2155
+Number of wires:                 18
+Number of wire bits:             48
+Number of public wires:          11
+Number of public wire bits:      32
 Number of memories:               0
 Number of memory bits:            0
 Number of processes:              0
-Number of cells:                100
-  $assert                         5
-  $assume                         1
-  $cover                          5
+Number of cells:                 35
   BUFG                            1
-  FDRE                           32
+  FDRE                            9
   IBUF                           12
-  INV                             1
-  LUT2                           10
+  LUT2                            1
   LUT3                            2
-  LUT4                            1
-  LUT5                            4
-  LUT6                           10
-  MUXF7                           4
-  MUXF8                           2
   OBUF                           10
 
-Estimated number of LCs:         21
+Estimated number of LCs:          2
 ```
-Here we see that the additional registers needed for formal verification are
-included.  This is probably not desired, and this can be mitigated by wrapping
-the formal verification inside a `generate` statement, using a boolean generic
-with a default value. However, since I will be using Vivado for synthesis, I
-have skipped this part, in order to keep the source file as simple as possible.
 
