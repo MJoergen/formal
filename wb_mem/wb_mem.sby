@@ -1,18 +1,22 @@
+[tasks]
+bmc
+cover
+prove
+
 [options]
-mode bmc
-depth 10
+bmc: mode bmc
+bmc: depth 10
+cover: mode cover
+prove: mode prove
+prove: depth 4
 
 [engines]
 smtbmc
 
 [script]
-ghdl wb_mem.vhd -e wb_mem
-read -formal -D WB_MEM wb_mem_formal.sv
-read -formal fwb_slave.v
-prep -top wb_mem_formal
+ghdl -fpsl --std=08 -gG_FORMAL=true wb_mem.vhd -e wb_mem
+prep -top wb_mem
 
 [files]
 wb_mem.vhd
-wb_mem_formal.sv
-fwb_slave.v
 
