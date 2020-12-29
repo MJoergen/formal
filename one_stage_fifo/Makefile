@@ -17,4 +17,16 @@ clean:
 	rm -rf $(DUT)_bmc/
 	rm -rf $(DUT)_cover/
 	rm -rf $(DUT)_prove/
+	rm -rf work-obj08.cf
+	rm -rf yosys.log
+	rm -rf $(DUT).edif
+
+# Synthesis
+
+work-obj08.cf: $(DUT).vhd
+	ghdl -a -fpsl --std=08 $^
+
+synth: work-obj08.cf
+	yosys -m ghdl -p 'ghdl -fpsl --std=08 $(DUT); synth_xilinx -top $(DUT) -family xc7 -edif $(DUT).edif' > yosys.log
+
 

@@ -6,6 +6,8 @@ use ieee.numeric_std.all;
 -- It has its use in elastic pipelines, where the data flow has back-pressure.
 -- It places registers on the valid and data signals in the downstream direction,
 -- but the ready signal in the upstream direction is still combinatorial.
+-- The FIFO supports simultaneous read and write, both when the FIFO is full
+-- and when it is empty.
 
 entity one_stage_fifo is
    generic (
@@ -30,7 +32,7 @@ architecture synthesis of one_stage_fifo is
    signal m_valid_r : std_logic;
    signal m_data_r  : std_logic_vector(G_DATA_SIZE-1 downto 0);
 
-   -- Formal verification
+   -- Additional signals used during formal verification
    signal f_rst        : std_logic := '1';
    signal f_last_value : std_logic_vector(G_DATA_SIZE-1 downto 0) := (others => '0');
    signal f_count      : integer range 0 to 3 := 0;
