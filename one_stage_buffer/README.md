@@ -10,77 +10,29 @@ module will store the data for later.
 This module is useful e.g. in situations where the sender does not support
 back-pressure.
 
-## A bugfix
-Even though this module appears simple, I found a bug in it, while verifying
-the FETCH module! So let's first explain the bug. The problem is that sometimes
-data would get lost. I.e. the `m_valid_o` signal was not asserted. This could
-happen if the first data input got registered internally, and when this value
-was sent out a new value simultaneously was received. This new value was never
-forwarded.
+The differences between the two modules are very small and subtle, and I've
+tried to keep the implementations as close as possible.
 
-Before solving this bug we clearly have a problem in our formal verification,
-so let's fix that first. Because so far, we have only verified the handshake,
-not the actual data forwarded. To do this, we need to keep a count of amount
-of data received and sent, as well as the last data received.
+The result of the cover statement is seen below:
+![Waveform](cover_statement.png)
 
-This is all done in the following lines:
-
+And the result of synthesis is shown here:
 ```
-reg [G_DATA_SIZE-1:0] f_last_value;
-reg [1:0] f_count;
-initial f_last_value = 0;
-initial f_count = 2'b0;
-always @(posedge clk_i)
-begin
-   if (s_valid_i && s_ready_o)
-   begin
-      f_last_value <= s_data_i;
-   end
+Number of wires:                 34
+Number of wire bits:             74
+Number of public wires:          11
+Number of public wire bits:      32
+Number of memories:               0
+Number of memory bits:            0
+Number of processes:              0
+Number of cells:                 44
+  BUFG                            1
+  FDRE                            9
+  IBUF                           12
+  LUT2                            1
+  LUT3                           11
+  OBUF                           10
 
-   if (s_valid_i && s_ready_o && !(m_valid_o && m_ready_i))
-   begin
-      f_count <= f_count + 1'b1;
-   end
-
-   if (m_valid_o && m_ready_i && !(s_valid_i && s_ready_o))
-   begin
-      f_count <= f_count - 1'b1;
-   end
-
-   if (rst_i)
-   begin
-      f_count <= 2'b0;
-   end
-end
+Estimated number of LCs:         11
 ```
-
-Now it's time for some assertions. First we constrain the count of outstanding
-data:
-
-```
-always @(posedge clk_i)
-begin
-   if (s_valid_i && s_ready_o && m_valid_o && !m_ready_i)
-      assert (f_count == 0);
-   if (m_valid_o && m_ready_i && !s_valid_i && s_ready_o)
-      assert (f_count == 1);
-   assert (f_count <= 1);
-end
-```
-
-Finally we can assert that the last data receive is also the data forwarded:
-
-```
-always @(posedge clk_i)
-begin
-   if (f_count && !rst_i)
-   begin
-      assert (m_data_o == f_last_value);
-      assert (m_valid_o);
-   end
-end
-```
-
-With these changes, the formal verification now correctly identifies the
-problem, and we can proceed to fix the bug.
 
