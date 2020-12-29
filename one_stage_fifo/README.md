@@ -41,27 +41,28 @@ Instead of writing a testbench that manually generates stimuli, we envision the
 FIFO requirements as a "contract", and we aim to describe this contract
 programmatically. Specifically, we will be using the language
 [PSL](http://www.project-veripage.com/psl_tutorial_1.php) (Property
-Specification Language). The formal verification tool will then automatically
-search for sequences of inputs that lead to violations of this contract. If the
-tool is successfull, it will generate a testbench and waveform showing the
-contract failure.
+Specification Language). The formal verification tool ([SymbiYosys and GHDL](../INSTALL.md))
+will then exhaustively search for sequences of inputs that lead to violations
+of this contract. If the tool is successful, it will generate a testbench and
+waveform showing the exact failure.
 
 To be more concrete we will be formulate the requirements of the contract using
-assertions. The assertions in PSL are more powerful (i.e. allow more complex
-constructions) than regular VHDL. The process of writing these `assert` commands
+[PSL assertions](http://www.project-veripage.com/psl_tutorial_1.php). The
+assertions in PSL are more powerful (i.e. allow more complex
+constructions) than regular VHDL assertions. The process of writing these `assert` commands
 is non-trivial, and takes some practice. I will describe in detail how this is
 done for this one-stage FIFO.
 
 The main keywords to use are `assume` (for constraining input), `assert` (for
 validating output), and `cover` (for ensuring reachability).
 
-One complication regarding formal verification is to get adequate tool support.
-For once thing, Xilinx Vivado does not support PSL statements at all. The solution
-therefore is to embed PSL statements into comments of the form
+One complication regarding formal verification in VHDL is to get adequate tool support.
+For one thing, Xilinx Vivado does not support PSL statements at all. The solution
+therefore is to embed PSL statements into comments by preceding each statement with:
 ```
 -- psl
 ```
-The GHDL plugin to Yosys supports this particular syntax. This way we can use
+The [GHDL plugin to Yosys](../INSTALL.md) supports this particular syntax. This way we can use
 the same source file for both formal verification using Yosys and for synthesis
 using Vivado. Note, the GHDL plugin does support multiline PSL statements, but
 for the sake of consistent syntax highlighting we will only use single-line
@@ -154,7 +155,7 @@ f_size : assert always {0 <= f_count and f_count <= 1};
 
 If the FIFO is full, then it must present valid data on the output
 ```
-f_count_1 : assert always {f_count = 1} |-> {m_valid_o = '1' and m_data_o  = f_last_value} abort rst_i;
+f_count_1 : assert always {f_count = 1} |-> {m_valid_o = '1' and m_data_o = f_last_value} abort rst_i;
 ```
 
 Similarly, if the FIFO is empty, then no valid data must be output
@@ -175,9 +176,8 @@ This can be written as follows:
 f_reset : assume always {rst_i or not f_rst};
 ```
 
-Here we're referencing a new signal `f_rst` only used by formal verification.
-This signal starts out as true, and transitions to false on the very next
-clock cycle.
+Here the signal `f_rst` must start out as true, and transition to false on the
+very next clock cycle.
 
 Note here we do not require `rst_i` and `f_rst` to be equal. This is because
 we leave open the possibility of `rst_i` being asserted again at a later
@@ -229,7 +229,7 @@ The tricky line in the script is the following:
 ghdl -fpsl --std=08 one_stage_fifo.vhd -e one_stage_fifo
 ```
 The command line parameters `-fpsl --std=08` are necessary to enable the PSL
-verification language.
+statements inside comments.
 
 Then we just run the verifier using the command
 ```
@@ -252,10 +252,65 @@ lines
 ...
 [one_stage_fifo_cover] DONE (PASS, rc=0)
 ...
-[one_stage_fifo_prf] DONE (PASS, rc=0)
+[one_stage_fifo_prove] DONE (PASS, rc=0)
 ...
 ```
 
+To see the result of the `cover` statemet, just type
+```
+make show_cover
+```
+This will bring up the waveform showing the successful completion of the cover statement.
+![Waveform](cover_statement.png)
+The diagram shows how data enters the FIFO and then leaves the FIFO again.
+
 This is it! We've now formally verified that the implementation of the one
 stage fifo satisfies all the formal requirements.
+
+Here it is a good idea to step back and review what we have done. We've
+transcribed the FIFO requirements into PSL statements and verified these
+statements are satisfied by the implementation. Does the FIFO now work?  Well,
+there may still be bugs in the implementation. This could happen, if the PSL
+statements are not strict enough. I.e. if there are requirements that are not
+properly expressed in PSL statements.
+
+Moving on, I've added another target in the Makefile to use Yosys as a synthesis tool.
+Just type
+```
+make synth
+```
+
+The end of the generated log file `yosys.log` contains a summary of the synthesis:
+```
+Number of wires:                 58
+Number of wire bits:           2247
+Number of public wires:          18
+Number of public wire bits:    2155
+Number of memories:               0
+Number of memory bits:            0
+Number of processes:              0
+Number of cells:                100
+  $assert                         5
+  $assume                         1
+  $cover                          5
+  BUFG                            1
+  FDRE                           32
+  IBUF                           12
+  INV                             1
+  LUT2                           10
+  LUT3                            2
+  LUT4                            1
+  LUT5                            4
+  LUT6                           10
+  MUXF7                           4
+  MUXF8                           2
+  OBUF                           10
+
+Estimated number of LCs:         21
+```
+Here we see that the additional registers needed for formal verification are
+included.  This is probably not desired, and this can be mitigated by wrapping
+the formal verification inside a `generate` statement, using a boolean generic
+with a default value. However, since I will be using Vivado for synthesis, I
+have skipped this part, in order to keep the source file as simple as possible.
 
