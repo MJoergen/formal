@@ -216,6 +216,10 @@ f_dc_back2back : cover {dc_valid_o and dc_ready_i; dc_valid_o};
 The last cover statement can be seen in this waveform:
 ![Waveform](waveform.png)
 
+Here we see in the waveform that the WISHBONE interface only delivers data
+every other clock cycle. This is not quite what I was hoping for, so there is
+still work to do ...
+
 And that is it for the formal verification!
 
 ## Implementation details
