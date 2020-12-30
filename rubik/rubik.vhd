@@ -4,7 +4,7 @@ use ieee.std_logic_unsigned.all;
 
 -- This attempts to solve the 2x2x2 Rubik's cube using formal methods.
 --
--- The cube is described by the following 24 signals
+-- The cube is described by the following 24 tiles
 --
 --         U0 U1
 --         U2 U3
@@ -17,7 +17,7 @@ use ieee.std_logic_unsigned.all;
 --
 -- The six faces are named Left, Front, Right, Back, Up, and Down.
 --
--- Each place has one of six colours.
+-- Each tile has one of six colours.
 --
 -- The input signal cmd_i is interpreted as follows
 -- 0101 : F+
@@ -53,47 +53,49 @@ end entity rubik;
 
 architecture synthesis of rubik is
 
-   signal u0 : std_logic_vector(2 downto 0) := "000";
-   signal u1 : std_logic_vector(2 downto 0) := "000";
+   -- Valid input commands
+   constant C_CMD_FP : std_logic_vector(3 downto 0) := "0101"; -- F+
+   constant C_CMD_F2 : std_logic_vector(3 downto 0) := "0110"; -- F2
+   constant C_CMD_FM : std_logic_vector(3 downto 0) := "0111"; -- F-
+
+   constant C_CMD_RP : std_logic_vector(3 downto 0) := "1001"; -- R+
+   constant C_CMD_R2 : std_logic_vector(3 downto 0) := "1010"; -- R2
+   constant C_CMD_RM : std_logic_vector(3 downto 0) := "1011"; -- R-
+
+   constant C_CMD_UP : std_logic_vector(3 downto 0) := "1101"; -- U+
+   constant C_CMD_U2 : std_logic_vector(3 downto 0) := "1110"; -- U2
+   constant C_CMD_UM : std_logic_vector(3 downto 0) := "1111"; -- U-
+
+   -- The initial condition is chosen from the output of the testbench rubik_tb.vhd.
+   signal u0 : std_logic_vector(2 downto 0) := "101";
+   signal u1 : std_logic_vector(2 downto 0) := "100";
    signal u2 : std_logic_vector(2 downto 0) := "000";
-   signal u3 : std_logic_vector(2 downto 0) := "000";
+   signal u3 : std_logic_vector(2 downto 0) := "001";
 
-   signal f0 : std_logic_vector(2 downto 0) := "001";
-   signal f1 : std_logic_vector(2 downto 0) := "001";
-   signal f2 : std_logic_vector(2 downto 0) := "001";
-   signal f3 : std_logic_vector(2 downto 0) := "001";
+   signal f0 : std_logic_vector(2 downto 0) := "100";
+   signal f1 : std_logic_vector(2 downto 0) := "010";
+   signal f2 : std_logic_vector(2 downto 0) := "101";
+   signal f3 : std_logic_vector(2 downto 0) := "011";
 
-   signal r0 : std_logic_vector(2 downto 0) := "010";
-   signal r1 : std_logic_vector(2 downto 0) := "010";
-   signal r2 : std_logic_vector(2 downto 0) := "010";
-   signal r3 : std_logic_vector(2 downto 0) := "010";
+   signal r0 : std_logic_vector(2 downto 0) := "000";
+   signal r1 : std_logic_vector(2 downto 0) := "101";
+   signal r2 : std_logic_vector(2 downto 0) := "001";
+   signal r3 : std_logic_vector(2 downto 0) := "011";
 
-   signal d0 : std_logic_vector(2 downto 0) := "011";
-   signal d1 : std_logic_vector(2 downto 0) := "011";
+   signal d0 : std_logic_vector(2 downto 0) := "000";
+   signal d1 : std_logic_vector(2 downto 0) := "010";
    signal d2 : std_logic_vector(2 downto 0) := "011";
-   signal d3 : std_logic_vector(2 downto 0) := "011";
+   signal d3 : std_logic_vector(2 downto 0) := "100";
 
-   signal b0 : std_logic_vector(2 downto 0) := "100";
-   signal b1 : std_logic_vector(2 downto 0) := "100";
-   signal b2 : std_logic_vector(2 downto 0) := "100";
+   signal b0 : std_logic_vector(2 downto 0) := "000";
+   signal b1 : std_logic_vector(2 downto 0) := "011";
+   signal b2 : std_logic_vector(2 downto 0) := "010";
    signal b3 : std_logic_vector(2 downto 0) := "100";
 
-   signal l0 : std_logic_vector(2 downto 0) := "101";
-   signal l1 : std_logic_vector(2 downto 0) := "101";
+   signal l0 : std_logic_vector(2 downto 0) := "001";
+   signal l1 : std_logic_vector(2 downto 0) := "010";
    signal l2 : std_logic_vector(2 downto 0) := "101";
-   signal l3 : std_logic_vector(2 downto 0) := "101";
-
-   constant C_CMD_FP : std_logic_vector(3 downto 0) := "0101";
-   constant C_CMD_F2 : std_logic_vector(3 downto 0) := "0110";
-   constant C_CMD_FM : std_logic_vector(3 downto 0) := "0111";
-
-   constant C_CMD_RP : std_logic_vector(3 downto 0) := "1001";
-   constant C_CMD_R2 : std_logic_vector(3 downto 0) := "1010";
-   constant C_CMD_RM : std_logic_vector(3 downto 0) := "1011";
-
-   constant C_CMD_UP : std_logic_vector(3 downto 0) := "1101";
-   constant C_CMD_U2 : std_logic_vector(3 downto 0) := "1110";
-   constant C_CMD_UM : std_logic_vector(3 downto 0) := "1111";
+   signal l3 : std_logic_vector(2 downto 0) := "001";
 
 begin
 
@@ -267,9 +269,10 @@ begin
                l0 <= b0;
                b0 <= r0;
 
-            when others => null;
+            when others => null; -- Ignore any illegal commands
          end case;
 
+         -- Reset the cube to the solved position.
          if rst_i = '1' then
             u0 <= "000";
             u1 <= "000";
@@ -304,6 +307,7 @@ begin
       end if;
    end process;
 
+   -- Check whether the cube is in the solved position.
    done_o <= '1' when
              u0 = "000" and u1 = "000" and u2 = "000" and u3 = "000" and
              f0 = "001" and f1 = "001" and f2 = "001" and f3 = "001" and
@@ -319,17 +323,7 @@ begin
 
    formal_gen : if G_FORMAL generate
 
-      signal f_rst        : std_logic := '1';
       signal f_num_colors : integer_vector(0 to 7);
-      signal f_output     : std_logic_vector(71 downto 0);
-
-      constant C_PATTERN : std_logic_vector(71 downto 0) :=
-         B"101_100_000_001" &
-         B"100_010_101_011" &
-         B"000_101_001_011" &
-         B"000_010_011_100" &
-         B"000_011_010_100" &
-         B"001_010_101_001";
 
    begin
 
@@ -338,49 +332,40 @@ begin
 
 
       -----------------------------
-      -- ASSUMPTIONS ABOUT INPUTS
-      -----------------------------
-
-      process (clk_i)
-      begin
-         if rising_edge(clk_i) then
-            f_rst <= '0';
-         end if;
-      end process;
-
-      -- Require reset at startup.
-      -- This is to ensure BMC starts in a valid state.
-      -- psl f_reset : assume always {rst_i or not f_rst};
-
-
-      -----------------------------
       -- ASSERTIONS ABOUT OUTPUTS
       -----------------------------
 
-      -- psl f_edge_u2_f0 : assert always {u2 /= f0} abort rst_i;
-      -- psl f_edge_u3_f1 : assert always {u3 /= f1} abort rst_i;
-      -- psl f_edge_l1_f0 : assert always {l1 /= f0} abort rst_i;
-      -- psl f_edge_l3_f2 : assert always {l3 /= f2} abort rst_i;
-      -- psl f_edge_d0_f2 : assert always {d0 /= f2} abort rst_i;
-      -- psl f_edge_d1_f3 : assert always {d1 /= f3} abort rst_i;
-      -- psl f_edge_r2_f3 : assert always {r2 /= f3} abort rst_i;
-      -- psl f_edge_r0_f1 : assert always {r0 /= f1} abort rst_i;
-      -- psl f_edge_u2_l1 : assert always {u2 /= l1} abort rst_i;
-      -- psl f_edge_u0_l0 : assert always {u0 /= l0} abort rst_i;
-      -- psl f_edge_l3_d0 : assert always {l3 /= d0} abort rst_i;
-      -- psl f_edge_l2_d2 : assert always {l2 /= d2} abort rst_i;
-      -- psl f_edge_d1_r2 : assert always {d1 /= r2} abort rst_i;
-      -- psl f_edge_d3_r3 : assert always {d3 /= r3} abort rst_i;
-      -- psl f_edge_r0_u3 : assert always {r0 /= u3} abort rst_i;
-      -- psl f_edge_r1_u1 : assert always {r1 /= u1} abort rst_i;
-      -- psl f_edge_r1_b0 : assert always {r1 /= b0} abort rst_i;
-      -- psl f_edge_r3_b2 : assert always {r3 /= b2} abort rst_i;
-      -- psl f_edge_d3_b2 : assert always {d3 /= b2} abort rst_i;
-      -- psl f_edge_d2_b3 : assert always {d2 /= b3} abort rst_i;
-      -- psl f_edge_u0_b1 : assert always {u0 /= b1} abort rst_i;
-      -- psl f_edge_u1_b0 : assert always {u1 /= b0} abort rst_i;
-      -- psl f_edge_b1_l0 : assert always {b1 /= l0} abort rst_i;
-      -- psl f_edge_b3_l2 : assert always {b3 /= l2} abort rst_i;
+      -- psl f_edge_u2_f0 : assert always {u2 /= f0};
+      -- psl f_edge_u2_l1 : assert always {u2 /= l1};
+      -- psl f_edge_l1_f0 : assert always {l1 /= f0};
+
+      -- psl f_edge_u3_f1 : assert always {u3 /= f1};
+      -- psl f_edge_r0_f1 : assert always {r0 /= f1};
+      -- psl f_edge_r0_u3 : assert always {r0 /= u3};
+
+      -- psl f_edge_l3_f2 : assert always {l3 /= f2};
+      -- psl f_edge_d0_f2 : assert always {d0 /= f2};
+      -- psl f_edge_l3_d0 : assert always {l3 /= d0};
+
+      -- psl f_edge_d1_f3 : assert always {d1 /= f3};
+      -- psl f_edge_r2_f3 : assert always {r2 /= f3};
+      -- psl f_edge_d1_r2 : assert always {d1 /= r2};
+
+      -- psl f_edge_u0_l0 : assert always {u0 /= l0};
+      -- psl f_edge_b1_l0 : assert always {b1 /= l0};
+      -- psl f_edge_u0_b1 : assert always {u0 /= b1};
+
+      -- psl f_edge_l2_d2 : assert always {l2 /= d2};
+      -- psl f_edge_d2_b3 : assert always {d2 /= b3};
+      -- psl f_edge_b3_l2 : assert always {b3 /= l2};
+
+      -- psl f_edge_d3_r3 : assert always {d3 /= r3};
+      -- psl f_edge_r3_b2 : assert always {r3 /= b2};
+      -- psl f_edge_d3_b2 : assert always {d3 /= b2};
+
+      -- psl f_edge_r1_u1 : assert always {r1 /= u1};
+      -- psl f_edge_r1_b0 : assert always {r1 /= b0};
+      -- psl f_edge_u1_b0 : assert always {u1 /= b0};
 
       process (all)
          variable num_colors : integer_vector(0 to 7);
@@ -413,23 +398,23 @@ begin
          f_num_colors <= num_colors;
       end process;
 
-      -- psl f_colors : assert always {f_num_colors = (0 to 5 => 4, 6 to 7 => 0)} abort rst_i;
+      -- psl f_colors : assert always {f_num_colors(0 to 5) = (0 to 5 => 4)};
+
+
+      -----------------------------
+      -- ASSUMPTIONS ABOUT INPUTS
+      -----------------------------
+
+      -- We prevent any reset at all, because that would be cheating :-)
+      -- psl f_no_rst : assume always {not rst_i};
 
 
       --------------------------------------------
       -- COVER STATEMENTS TO VERIFY REACHABILITY
       --------------------------------------------
 
-      -- psl f_done : cover {not done_o and not rst_i; done_o};
-
-      f_output <= u0 & u1 & u2 & u3 &
-                f0 & f1 & f2 & f3 &
-                r0 & r1 & r2 & r3 &
-                d0 & d1 & d2 & d3 &
-                b0 & b1 & b2 & b3 &
-                l0 & l1 & l2 & l3;
-
-      -- psl f_pattern : cover {f_output = C_PATTERN};
+      -- Attempt to solve the cube from the given initial condition.
+      -- psl f_done : cover {done_o};
 
    end generate formal_gen;
 

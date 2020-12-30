@@ -5,7 +5,7 @@ use ieee.numeric_std.all;
 entity rubik_tb is
 end entity rubik_tb;
 
-architecture synthesis of rubik_tb is
+architecture simulation of rubik_tb is
 
    signal clk  : std_logic;
    signal rst  : std_logic;
@@ -24,7 +24,7 @@ architecture synthesis of rubik_tb is
    constant C_CMD_U2 : std_logic_vector(3 downto 0) := "1110";
    constant C_CMD_UM : std_logic_vector(3 downto 0) := "1111";
 
-   -- Random number generator
+   -- Random number generator with initial seed
    signal prbs255 : std_logic_vector(254 downto 0) := (others => '1');
 
 begin
@@ -78,7 +78,8 @@ begin
       wait until clk = '1';
       assert done = '1';
 
-      -- Test period of each rotation
+      -- Test period of each rotation.
+      -- I.e. verify that after repeating the rotation we get back the original cube.
       repeat(C_CMD_FP, 4); assert done = '1';
       repeat("0000", 1);
       repeat(C_CMD_F2, 2); assert done = '1';
@@ -100,7 +101,8 @@ begin
       repeat(C_CMD_UM, 4); assert done = '1';
       repeat("0000", 2);
 
-      -- Generate smoe random turnings
+      -- Generate some random rotations.
+      -- Any illegal commands will just be skipped.
       for i in 1 to 50 loop
          repeat(prbs255(3 downto 0), 1);
       end loop;
@@ -116,5 +118,5 @@ begin
          done_o => done
       ); -- i_rubik
 
-end architecture synthesis;
+end architecture simulation;
 

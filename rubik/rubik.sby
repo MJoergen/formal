@@ -4,9 +4,9 @@ cover
 
 [options]
 bmc: mode bmc
-bmc: depth 4
+bmc: depth 3
 cover: mode cover
-cover: depth 11
+cover: depth 10
 
 [engines]
 smtbmc
