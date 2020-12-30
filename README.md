@@ -23,9 +23,12 @@ line parameters.  This is demonstrated in the below examples.
 ## Example designs using formal verification
 * [One Stage Fifo](one_stage_fifo/). This is a kind of "hello world" of formal verification.
 * [One Stage Buffer](one_stage_buffer/). Another simple but useful module.
-* [Fox, Goat, and Cabbage](fgc). This uses formal verification to solve a well-known puzzle.
 * [Wishbone memory](wb_mem/). This is to learn about the wishbone bus protocol.
 * [Fetch](fetch/). The first "real" module. This is a simple instruction fetch module for a CPU.
+
+## Example puzzles using formal verification
+* [Fox, Goat, and Cabbage](fgc). This uses formal verification to solve a well-known puzzle.
+* [Rubik's 2x2x2](rubik). This uses formal verification to solve Rubik's 2x2x2 cube.
 
 ## Other resources
 * [This video](https://www.youtube.com/watch?v=H3tsP9tjYdY) gives a nice
