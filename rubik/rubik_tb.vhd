@@ -5,13 +5,24 @@ use ieee.numeric_std.all;
 entity rubik_tb is
 end entity rubik_tb;
 
-
 architecture synthesis of rubik_tb is
 
    signal clk  : std_logic;
    signal rst  : std_logic;
    signal cmd  : std_logic_vector(3 downto 0);
    signal done : std_logic;
+
+   constant C_CMD_FP : std_logic_vector(3 downto 0) := "0101";
+   constant C_CMD_F2 : std_logic_vector(3 downto 0) := "0110";
+   constant C_CMD_FM : std_logic_vector(3 downto 0) := "0111";
+
+   constant C_CMD_RP : std_logic_vector(3 downto 0) := "1001";
+   constant C_CMD_R2 : std_logic_vector(3 downto 0) := "1010";
+   constant C_CMD_RM : std_logic_vector(3 downto 0) := "1011";
+
+   constant C_CMD_UP : std_logic_vector(3 downto 0) := "1101";
+   constant C_CMD_U2 : std_logic_vector(3 downto 0) := "1110";
+   constant C_CMD_UM : std_logic_vector(3 downto 0) := "1111";
 
    -- Random number generator
    signal prbs255 : std_logic_vector(254 downto 0) := (others => '1');
@@ -65,26 +76,28 @@ begin
       cmd <= "0000";
       wait until rst = '0';
       wait until clk = '1';
+      assert done = '1';
 
-      repeat("0101", 4);
+      -- Test period of each rotation
+      repeat(C_CMD_FP, 4); assert done = '1';
       repeat("0000", 1);
-      repeat("0110", 2);
+      repeat(C_CMD_F2, 2); assert done = '1';
       repeat("0000", 1);
-      repeat("0111", 4);
+      repeat(C_CMD_FM, 4); assert done = '1';
       repeat("0000", 2);
 
-      repeat("1001", 4);
+      repeat(C_CMD_RP, 4); assert done = '1';
       repeat("0000", 1);
-      repeat("1010", 2);
+      repeat(C_CMD_R2, 2); assert done = '1';
       repeat("0000", 1);
-      repeat("1011", 4);
+      repeat(C_CMD_RM, 4); assert done = '1';
       repeat("0000", 2);
 
-      repeat("1101", 4);
+      repeat(C_CMD_UP, 4); assert done = '1';
       repeat("0000", 1);
-      repeat("1110", 2);
+      repeat(C_CMD_U2, 2); assert done = '1';
       repeat("0000", 1);
-      repeat("1111", 4);
+      repeat(C_CMD_UM, 4); assert done = '1';
       repeat("0000", 2);
 
       -- Generate smoe random turnings

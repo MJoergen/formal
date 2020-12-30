@@ -38,14 +38,6 @@ use ieee.std_logic_unsigned.all;
 -- Dx = 3
 -- Bx = 4
 -- Lx = 5
---
--- The input grid after reset is (TBD)
--- Ux = x+0 mod 6
--- Fx = x+1 mod 6
--- Rx = x+2 mod 6
--- Dx = x+3 mod 6
--- Bx = x+4 mod 6
--- Lx = x+5 mod 6
 
 entity rubik is
    generic (
@@ -61,39 +53,47 @@ end entity rubik;
 
 architecture synthesis of rubik is
 
-   signal u0 : std_logic_vector(2 downto 0) := (others => '0');
-   signal u1 : std_logic_vector(2 downto 0) := (others => '0');
-   signal u2 : std_logic_vector(2 downto 0) := (others => '0');
-   signal u3 : std_logic_vector(2 downto 0) := (others => '0');
+   signal u0 : std_logic_vector(2 downto 0) := "000";
+   signal u1 : std_logic_vector(2 downto 0) := "000";
+   signal u2 : std_logic_vector(2 downto 0) := "000";
+   signal u3 : std_logic_vector(2 downto 0) := "000";
 
-   signal f0 : std_logic_vector(2 downto 0) := (others => '0');
-   signal f1 : std_logic_vector(2 downto 0) := (others => '0');
-   signal f2 : std_logic_vector(2 downto 0) := (others => '0');
-   signal f3 : std_logic_vector(2 downto 0) := (others => '0');
+   signal f0 : std_logic_vector(2 downto 0) := "001";
+   signal f1 : std_logic_vector(2 downto 0) := "001";
+   signal f2 : std_logic_vector(2 downto 0) := "001";
+   signal f3 : std_logic_vector(2 downto 0) := "001";
 
-   signal r0 : std_logic_vector(2 downto 0) := (others => '0');
-   signal r1 : std_logic_vector(2 downto 0) := (others => '0');
-   signal r2 : std_logic_vector(2 downto 0) := (others => '0');
-   signal r3 : std_logic_vector(2 downto 0) := (others => '0');
+   signal r0 : std_logic_vector(2 downto 0) := "010";
+   signal r1 : std_logic_vector(2 downto 0) := "010";
+   signal r2 : std_logic_vector(2 downto 0) := "010";
+   signal r3 : std_logic_vector(2 downto 0) := "010";
 
-   signal d0 : std_logic_vector(2 downto 0) := (others => '0');
-   signal d1 : std_logic_vector(2 downto 0) := (others => '0');
-   signal d2 : std_logic_vector(2 downto 0) := (others => '0');
-   signal d3 : std_logic_vector(2 downto 0) := (others => '0');
+   signal d0 : std_logic_vector(2 downto 0) := "011";
+   signal d1 : std_logic_vector(2 downto 0) := "011";
+   signal d2 : std_logic_vector(2 downto 0) := "011";
+   signal d3 : std_logic_vector(2 downto 0) := "011";
 
-   signal b0 : std_logic_vector(2 downto 0) := (others => '0');
-   signal b1 : std_logic_vector(2 downto 0) := (others => '0');
-   signal b2 : std_logic_vector(2 downto 0) := (others => '0');
-   signal b3 : std_logic_vector(2 downto 0) := (others => '0');
+   signal b0 : std_logic_vector(2 downto 0) := "100";
+   signal b1 : std_logic_vector(2 downto 0) := "100";
+   signal b2 : std_logic_vector(2 downto 0) := "100";
+   signal b3 : std_logic_vector(2 downto 0) := "100";
 
-   signal l0 : std_logic_vector(2 downto 0) := (others => '0');
-   signal l1 : std_logic_vector(2 downto 0) := (others => '0');
-   signal l2 : std_logic_vector(2 downto 0) := (others => '0');
-   signal l3 : std_logic_vector(2 downto 0) := (others => '0');
+   signal l0 : std_logic_vector(2 downto 0) := "101";
+   signal l1 : std_logic_vector(2 downto 0) := "101";
+   signal l2 : std_logic_vector(2 downto 0) := "101";
+   signal l3 : std_logic_vector(2 downto 0) := "101";
 
-   -- Formal verification
-   signal f_rst        : std_logic := '1';
-   signal f_num_colors : integer_vector(0 to 7);
+   constant C_CMD_FP : std_logic_vector(3 downto 0) := "0101";
+   constant C_CMD_F2 : std_logic_vector(3 downto 0) := "0110";
+   constant C_CMD_FM : std_logic_vector(3 downto 0) := "0111";
+
+   constant C_CMD_RP : std_logic_vector(3 downto 0) := "1001";
+   constant C_CMD_R2 : std_logic_vector(3 downto 0) := "1010";
+   constant C_CMD_RM : std_logic_vector(3 downto 0) := "1011";
+
+   constant C_CMD_UP : std_logic_vector(3 downto 0) := "1101";
+   constant C_CMD_U2 : std_logic_vector(3 downto 0) := "1110";
+   constant C_CMD_UM : std_logic_vector(3 downto 0) := "1111";
 
 begin
 
@@ -111,7 +111,7 @@ begin
 --         D0 D1
 --         D2 D3
 
-            when "0101" => -- : F+
+            when C_CMD_FP => -- : F+
                f1 <= f0;
                f3 <= f1;
                f2 <= f3;
@@ -126,7 +126,7 @@ begin
                u3 <= l1;
                r2 <= u3;
 
-            when "0110" => -- : F2
+            when C_CMD_F2 => -- : F2
                f3 <= f0;
                f0 <= f3;
                f2 <= f1;
@@ -141,7 +141,7 @@ begin
                d0 <= u3;
                u3 <= d0;
 
-            when "0111" => -- : F-
+            when C_CMD_FM => -- : F-
                f2 <= f0;
                f3 <= f2;
                f1 <= f3;
@@ -167,7 +167,7 @@ begin
 --         D1 D3
 --         D0 D2
 
-            when "1001" => -- : R+
+            when C_CMD_RP => -- : R+
                r1 <= r0;
                r3 <= r1;
                r2 <= r3;
@@ -182,7 +182,7 @@ begin
                u1 <= f1;
                b2 <= u1;
 
-            when "1010" => -- : R2
+            when C_CMD_R2 => -- : R2
                r0 <= r3;
                r3 <= r0;
                r1 <= r2;
@@ -197,7 +197,7 @@ begin
                d1 <= u1;
                u1 <= d1;
 
-            when "1011" => -- : R-
+            when C_CMD_RM => -- : R-
                r2 <= r0;
                r3 <= r2;
                r1 <= r3;
@@ -222,7 +222,7 @@ begin
 --         F0 F1
 --         F2 F3
 
-            when "1101" => -- : U+
+            when C_CMD_UP => -- : U+
                u1 <= u0;
                u3 <= u1;
                u2 <= u3;
@@ -237,7 +237,7 @@ begin
                b0 <= l0;
                r0 <= b0;
 
-            when "1110" => -- : U2
+            when C_CMD_U2 => -- : U2
                u3 <= u0;
                u0 <= u3;
                u2 <= u1;
@@ -252,7 +252,7 @@ begin
                f0 <= b0;
                b0 <= f0;
 
-            when "1111" => -- : U-
+            when C_CMD_UM => -- : U-
                u0 <= u1;
                u2 <= u0;
                u3 <= u2;
@@ -319,8 +319,22 @@ begin
 
    formal_gen : if G_FORMAL generate
 
+      signal f_rst        : std_logic := '1';
+      signal f_num_colors : integer_vector(0 to 7);
+      signal f_output     : std_logic_vector(71 downto 0);
+
+      constant C_PATTERN : std_logic_vector(71 downto 0) :=
+         B"101_100_000_001" &
+         B"100_010_101_011" &
+         B"000_101_001_011" &
+         B"000_010_011_100" &
+         B"000_011_010_100" &
+         B"001_010_101_001";
+
+   begin
+
       -- set all declarations to run on clk_i
-      default clock is rising_edge(clk_i);
+      -- psl default clock is rising_edge(clk_i);
 
 
       -----------------------------
@@ -336,37 +350,37 @@ begin
 
       -- Require reset at startup.
       -- This is to ensure BMC starts in a valid state.
-      f_reset : assume always {rst_i or not f_rst};
+      -- psl f_reset : assume always {rst_i or not f_rst};
 
 
       -----------------------------
       -- ASSERTIONS ABOUT OUTPUTS
       -----------------------------
 
-      f_edge_u2_f0 : assert always {u2 /= f0} abort rst_i;
-      f_edge_u3_f1 : assert always {u3 /= f1} abort rst_i;
-      f_edge_l1_f0 : assert always {l1 /= f0} abort rst_i;
-      f_edge_l3_f2 : assert always {l3 /= f2} abort rst_i;
-      f_edge_d0_f2 : assert always {d0 /= f2} abort rst_i;
-      f_edge_d1_f3 : assert always {d1 /= f3} abort rst_i;
-      f_edge_r2_f3 : assert always {r2 /= f3} abort rst_i;
-      f_edge_r0_f1 : assert always {r0 /= f1} abort rst_i;
-      f_edge_u2_l1 : assert always {u2 /= l1} abort rst_i;
-      f_edge_u0_l0 : assert always {u0 /= l0} abort rst_i;
-      f_edge_l3_d0 : assert always {l3 /= d0} abort rst_i;
-      f_edge_l2_d2 : assert always {l2 /= d2} abort rst_i;
-      f_edge_d1_r2 : assert always {d1 /= r2} abort rst_i;
-      f_edge_d3_r3 : assert always {d3 /= r3} abort rst_i;
-      f_edge_r0_u3 : assert always {r0 /= u3} abort rst_i;
-      f_edge_r1_u1 : assert always {r1 /= u1} abort rst_i;
-      f_edge_r1_b0 : assert always {r1 /= b0} abort rst_i;
-      f_edge_r3_b2 : assert always {r3 /= b2} abort rst_i;
-      f_edge_d3_b2 : assert always {d3 /= b2} abort rst_i;
-      f_edge_d2_b3 : assert always {d2 /= b3} abort rst_i;
-      f_edge_u0_b1 : assert always {u0 /= b1} abort rst_i;
-      f_edge_u1_b0 : assert always {u1 /= b0} abort rst_i;
-      f_edge_b1_l0 : assert always {b1 /= l0} abort rst_i;
-      f_edge_b3_l2 : assert always {b3 /= l2} abort rst_i;
+      -- psl f_edge_u2_f0 : assert always {u2 /= f0} abort rst_i;
+      -- psl f_edge_u3_f1 : assert always {u3 /= f1} abort rst_i;
+      -- psl f_edge_l1_f0 : assert always {l1 /= f0} abort rst_i;
+      -- psl f_edge_l3_f2 : assert always {l3 /= f2} abort rst_i;
+      -- psl f_edge_d0_f2 : assert always {d0 /= f2} abort rst_i;
+      -- psl f_edge_d1_f3 : assert always {d1 /= f3} abort rst_i;
+      -- psl f_edge_r2_f3 : assert always {r2 /= f3} abort rst_i;
+      -- psl f_edge_r0_f1 : assert always {r0 /= f1} abort rst_i;
+      -- psl f_edge_u2_l1 : assert always {u2 /= l1} abort rst_i;
+      -- psl f_edge_u0_l0 : assert always {u0 /= l0} abort rst_i;
+      -- psl f_edge_l3_d0 : assert always {l3 /= d0} abort rst_i;
+      -- psl f_edge_l2_d2 : assert always {l2 /= d2} abort rst_i;
+      -- psl f_edge_d1_r2 : assert always {d1 /= r2} abort rst_i;
+      -- psl f_edge_d3_r3 : assert always {d3 /= r3} abort rst_i;
+      -- psl f_edge_r0_u3 : assert always {r0 /= u3} abort rst_i;
+      -- psl f_edge_r1_u1 : assert always {r1 /= u1} abort rst_i;
+      -- psl f_edge_r1_b0 : assert always {r1 /= b0} abort rst_i;
+      -- psl f_edge_r3_b2 : assert always {r3 /= b2} abort rst_i;
+      -- psl f_edge_d3_b2 : assert always {d3 /= b2} abort rst_i;
+      -- psl f_edge_d2_b3 : assert always {d2 /= b3} abort rst_i;
+      -- psl f_edge_u0_b1 : assert always {u0 /= b1} abort rst_i;
+      -- psl f_edge_u1_b0 : assert always {u1 /= b0} abort rst_i;
+      -- psl f_edge_b1_l0 : assert always {b1 /= l0} abort rst_i;
+      -- psl f_edge_b3_l2 : assert always {b3 /= l2} abort rst_i;
 
       process (all)
          variable num_colors : integer_vector(0 to 7);
@@ -399,39 +413,23 @@ begin
          f_num_colors <= num_colors;
       end process;
 
-      f_colors : assert always {f_num_colors = (0 to 5 => 4, 6 to 7 => 0)} abort rst_i;
+      -- psl f_colors : assert always {f_num_colors = (0 to 5 => 4, 6 to 7 => 0)} abort rst_i;
+
 
       --------------------------------------------
       -- COVER STATEMENTS TO VERIFY REACHABILITY
       --------------------------------------------
 
-      f_done : cover {not done_o and not rst_i; done_o};
+      -- psl f_done : cover {not done_o and not rst_i; done_o};
 
-      f_pattern : cover {
-         u0 = "101" and
-         u1 = "100" and
-         u2 = "000" and
-         u3 = "001" and
-         f0 = "100" and
-         f1 = "010" and
-         f2 = "101" and
-         f3 = "011" and
-         r0 = "000" and
-         r1 = "101" and
-         r2 = "001" and
-         r3 = "011" and
-         d0 = "000" and
-         d1 = "010" and
-         d2 = "011" and
-         d3 = "100" and
-         b0 = "000" and
-         b1 = "011" and
-         b2 = "010" and
-         b3 = "100" and
-         l0 = "001" and
-         l1 = "010" and
-         l2 = "101" and
-         l3 = "001"};
+      f_output <= u0 & u1 & u2 & u3 &
+                f0 & f1 & f2 & f3 &
+                r0 & r1 & r2 & r3 &
+                d0 & d1 & d2 & d3 &
+                b0 & b1 & b2 & b3 &
+                l0 & l1 & l2 & l3;
+
+      -- psl f_pattern : cover {f_output = C_PATTERN};
 
    end generate formal_gen;
 
