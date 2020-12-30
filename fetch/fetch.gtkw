@@ -1,15 +1,15 @@
 [*]
-[*] GTKWave Analyzer v3.3.86 (w)1999-2017 BSI
-[*] Sun Dec 27 17:16:06 2020
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Wed Dec 30 09:58:48 2020
 [*]
 [dumpfile] "/home/mike/git/MJoergen/formal/fetch/fetch_bmc/engine_0/trace.vcd"
-[dumpfile_mtime] "Sun Dec 27 17:15:13 2020"
-[dumpfile_size] 3886
+[dumpfile_mtime] "Wed Dec 30 09:55:44 2020"
+[dumpfile_size] 4003
 [savefile] "/home/mike/git/MJoergen/formal/fetch/fetch.gtkw"
 [timestart] 0
 [size] 1873 1011
 [pos] 18 0
-*-4.128796 38 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-4.128796 25 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] fetch.
 [sst_width] 249
 [signals_width] 308
@@ -61,9 +61,6 @@ fetch.i_one_stage_buffer.m_valid_o
 fetch.i_one_stage_buffer.m_ready_i
 @22
 fetch.i_one_stage_buffer.m_data_o[31:0]
-fetch.i_one_stage_buffer.s_data_r[31:0]
-@28
-fetch.i_one_stage_buffer.s_valid_r
 @1000200
 -one_stage_buffer
 @200
@@ -79,13 +76,13 @@ fetch.dc_data_o[15:0]
 @200
 -
 @28
-fetch.f_rst
-fetch.f_dc_wait_count[1:0]
-@23
-fetch.f_last_addr[15:0]
+fetch.formal_gen.f_count[1:0]
+fetch.formal_gen.f_dc_wait_count[1:0]
 @22
-fetch.f_req_addr[15:0]
-@200
--
+fetch.formal_gen.f_last_addr[15:0]
+@28
+fetch.formal_gen.f_last_addr_valid
+@22
+fetch.formal_gen.f_req_addr[15:0]
 [pattern_trace] 1
 [pattern_trace] 0

@@ -70,13 +70,6 @@ architecture synthesis of fetch is
    subtype R_ADDR is natural range 31 downto 16;
    subtype R_DATA is natural range 15 downto  0;
 
-   -- Formal verification
-   signal f_rst             : std_logic := '1';
-   signal f_req_addr        : std_logic_vector(15 downto 0) := (others => '0');
-   signal f_dc_wait_count   : integer range 0 to 3;
-   signal f_last_addr_valid : std_logic := '0';
-   signal f_last_addr       : std_logic_vector(15 downto 0) := (others => '0');
-
 begin
 
    wb_wait  <= wb_cyc and not wb_ack_i;
@@ -188,27 +181,110 @@ begin
 
    formal_gen : if G_FORMAL generate
 
+      signal f_count           : integer range 0 to 3 := 0;
+      signal f_req_addr        : std_logic_vector(15 downto 0) := (others => '0');
+      signal f_dc_wait_count   : integer range 0 to 3;
+      signal f_last_addr_valid : std_logic := '0';
+      signal f_last_addr       : std_logic_vector(15 downto 0) := (others => '0');
+
+   begin
+
       -- set all declarations to run on clk
-      default clock is rising_edge(clk_i);
+      -- psl default clock is rising_edge(clk_i);
+
+
+      -----------------------------
+      -- ASSERTIONS ABOUT OUTPUTS
+      -----------------------------
+
+      -- Keep track of addresses expected to be requested on the WISHBONE bus
+      process (clk_i)
+      begin
+         if rising_edge(clk_i) then
+            if wb_cyc_o = '1' and wb_ack_i = '1' then
+               f_req_addr <= std_logic_vector(unsigned(f_req_addr) + 1);
+            end if;
+
+            if dc_valid_i = '1' then
+               f_req_addr <= dc_addr_i;
+            end if;
+         end if;
+      end process;
+
+      -- Verify address requested on WISHBONE bus is as expected
+      -- psl f_wishbone_addr : assert always {wb_cyc_o and wb_stb_o} |-> wb_addr_o = f_req_addr;
+
+      -- Count the number of outstanding requests
+      p_count : process (clk_i)
+      begin
+         if rising_edge(clk_i) then
+            -- Request without response
+            if wb_cyc_o and wb_stb_o and not wb_stall_i and not (wb_ack_i) then
+               f_count <= f_count + 1;
+            end if;
+
+            -- Reponse without request
+            if not(wb_cyc_o and wb_stb_o and not wb_stall_i) and wb_ack_i then
+               f_count <= f_count - 1;
+            end if;
+
+            -- If CYC goes low mid-transaction, the transaction is aborted.
+            if rst_i or not wb_cyc_o then
+               f_count <= 0;
+            end if;
+         end if;
+      end process p_count;
+
+      -- At most one outstanding request
+      -- psl f_outstanding : assert always {0 <= f_count and f_count <= 1};
+
+      -- STB must be low when CYC is low.
+      -- psl f_stb_low : assert always {not wb_cyc_o} |-> {not wb_stb_o};
+
+      -- While STB and STALL are active, the request cannot change.
+      -- psl f_wb_stable : assert always {wb_stb_o and wb_stall_i and not dc_valid_i and not rst_i} |=> {stable(wb_stb_o) and stable(wb_addr_o)};
+
+
+
+      -- Verify data sent to DECODE satisfies the same artifical constraint as
+      -- the WISHBONE interface.
+      -- psl f_decode_data : assert always {dc_valid_o} |-> dc_data_o = not dc_addr_o;
+
+      -- Record the last valid address sent to the DECODE stage
+      process (clk_i)
+      begin
+         if rising_edge(clk_i) then
+            if dc_valid_o = '1' then
+               f_last_addr_valid <= '1';
+               f_last_addr <= dc_addr_o;
+            end if;
+
+            if rst_i = '1' or dc_valid_i = '1' then
+               f_last_addr_valid <= '0';
+            end if;
+         end if;
+      end process;
+
+      -- Validate that the address forwarded to the DECODE stage continuously
+      -- increments by one.
+      -- psl f_decode_addr : assert always {dc_ready_i; f_last_addr_valid and dc_valid_o} |-> {dc_addr_o = std_logic_vector(unsigned(f_last_addr) + 1)};
+
+      -- psl f_decode_request : assert always {dc_ready_i; dc_valid_o} |-> f_req_addr = std_logic_vector(unsigned(dc_addr_o) + 1);
+
+      -- psl f_decode_stable : assert always {dc_valid_o and not dc_ready_i} |=> {stable(dc_valid_o) and stable(dc_addr_o) and stable(dc_data_o)} abort rst_i or dc_valid_i;
+
 
       -----------------------------
       -- ASSUMPTIONS ABOUT INPUTS
       -----------------------------
 
-      process (clk_i)
-      begin
-         if rising_edge(clk_i) then
-            f_rst <= '0';
-         end if;
-      end process;
-
       -- Require reset at startup.
       -- This is to ensure BMC starts in a valid state.
-      f_reset : assume always {rst_i = f_rst};
+      -- psl f_reset : assume {rst_i};
 
       -- Assume DECODE starts by sending a new PC right after reset.
       -- This is to ensure BMC starts in a valid state.
-      f_decode_after_reset : assume always {rst_i} |=> dc_valid_i;
+      -- psl f_decode_after_reset : assume always {rst_i} |=> dc_valid_i;
 
       -- Count the number of cycles we are waiting for DECODE stage to accept
       process (clk_i)
@@ -227,69 +303,15 @@ begin
       end process;
 
       -- Artifically constrain the maximum amount of time the DECODE may stall
-      f_decode_wait : assume always {f_dc_wait_count < 3};
+      -- psl f_decode_wait : assume always {f_dc_wait_count < 3};
 
       -- We want to make sure that the DECODE stage receives the correct data.
       -- We do this by artifically constraining the data received on the WISHBONE
       -- interface.
-      f_wishbone_data : assume always {wb_cyc_o and wb_ack_i} |->
-         wb_data_i = not wb_addr_o;
+      -- psl f_wishbone_data : assume always {wb_cyc_o and wb_ack_i} |-> wb_data_i = not wb_addr_o;
 
-
-      -----------------------------
-      -- ASSERTIONS ABOUT OUTPUTS
-      -----------------------------
-
-      -- Verify data sent to DECODE satisfies the same artifical constraint as
-      -- the WISHBONE interface.
-      f_decode_data : assert always {dc_valid_o} |->
-         dc_data_o = not dc_addr_o;
-
-      -- Keep track of addresses expected to be requested on the WISHBONE bus
-      process (clk_i)
-      begin
-         if rising_edge(clk_i) then
-            if wb_cyc_o and wb_ack_i then
-               f_req_addr <= std_logic_vector(unsigned(f_req_addr) + 1);
-            end if;
-
-            if dc_valid_i then
-               f_req_addr <= dc_addr_i;
-            end if;
-         end if;
-      end process;
-
-      -- Verify address requested on WISHBONE bus is as expected
-      f_wishbone_addr : assert always {wb_cyc_o and wb_stb_o} |->
-         wb_addr_o = f_req_addr;
-
-      -- Record the last valid address sent to the DECODE stage
-      process (clk_i)
-      begin
-         if rising_edge(clk_i) then
-            if dc_valid_o then
-               f_last_addr_valid <= '1';
-               f_last_addr <= dc_addr_o;
-            end if;
-
-            if rst_i or dc_valid_i then
-               f_last_addr_valid <= '0';
-            end if;
-         end if;
-      end process;
-
-      -- Validate that the address forwarded to the DECODE stage continuously
-      -- increments by one.
-      f_decode_addr : assert always {dc_ready_i; f_last_addr_valid and dc_valid_o} |->
-         {dc_addr_o = std_logic_vector(unsigned(f_last_addr) + 1)};
-
-      f_decode_request : assert always {dc_ready_i; dc_valid_o} |->
-         f_req_addr = std_logic_vector(unsigned(dc_addr_o) + 1);
-
-      f_decode_stable : assert always {dc_valid_o and not dc_ready_i} |=>
-         {dc_valid_o = prev(dc_valid_o) and
-          dc_addr_o  = prev(dc_addr_o) and
-          dc_data_o  = prev(dc_data_o)} abort rst_i or dc_valid_i;
+      -- Only ACK an outstanding request
+      -- psl f_count_0 : assume always {f_count = 0} |-> not wb_ack_i;
 
 
       --------------------------------------------
@@ -297,10 +319,10 @@ begin
       --------------------------------------------
 
       -- DECODE stage accepts data
-      f_decode_accept : cover {dc_valid_o; not dc_valid_o};
+      -- psl f_decode_accept : cover {dc_valid_o; not dc_valid_o};
 
       -- DECODE stage receives two data cycles back-to-back
-      f_decode_back2back : cover {dc_valid_o and dc_ready_i; dc_valid_o};
+      -- psl f_decode_back2back : cover {dc_valid_o and dc_ready_i; dc_valid_o};
 
    end generate formal_gen;
 
