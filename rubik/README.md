@@ -98,7 +98,7 @@ Similar lines are repeated for the remaining corners.
 
 Secondly, I require that all the tiles should have equal number of colors. I.e.
 the 24 tiles should have four tiles of each of the six colors. This is done
-by creating a new signal `f_num_colors` which contains the number of tiles of
+by creating a new signal `f_num_colors` that contains the number of tiles of
 each color. Then I simply add the following statement:
 ```
 f_colors : assert always {f_num_colors(0 to 5) = (0 to 5 => 4)};
@@ -125,10 +125,10 @@ The solution takes around a minute to find, and can then be viewed by writing
 ```
 make show_cover
 ```
-![Waveform](cover_statement.png)
+![Waveform](waveform.png)
 
 This shows that the cube (from this particular initial condition) can be solved
-in a sequence of nine rotation.
+in a sequence of nine rotations.
 
 ## Synthesis
 Finally, just for fun, we can synthesize the module by typing
@@ -166,7 +166,6 @@ get a total of 63 registers. Surely, the cube contains 24 tiles with 3 bits for
 each tile, so a total of 72 registers are needed?
 
 Not so fast! Since we only consider rotations of three of the faces, one of the
-corners is completely untouched, and its three tiles never change color. So
-that reduces the number of registers by 9.
-
+corners (`D2,B3,L2`) is completely untouched, and its three tiles never change
+color. So that reduces the number of registers by 9.
 
