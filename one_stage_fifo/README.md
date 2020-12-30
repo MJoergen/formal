@@ -173,31 +173,11 @@ keyword to restrict the allowed inputs.
 For instance, one such requirement is that we start of in a reset condition.
 This can be written as follows:
 ```
-f_reset : assume always {rst_i or not f_rst};
+f_reset : assume {rst_i};
 ```
 
-Here the signal `f_rst` must start out as true, and transition to false on the
-very next clock cycle.
-
-Note here we do not require `rst_i` and `f_rst` to be equal. This is because
-we leave open the possibility of `rst_i` being asserted again at a later
-time. The only hard requirement we impose is that the very first clock
-cycle has `rst_i` asserted.
-
-The generation of the `f_rst` signal is done simply by:
-```
-process (clk_i)
-begin
-   if rising_edge(clk_i) then
-      f_rst <= '0';
-   end if;
-end process;
-```
-and with an appropriate initial value:
-
-```
-signal f_rst : std_logic := '1';
-```
+Note the absence of the keyword `always`. So this assumption only applies in the first clock cycle,
+which is exactly what we want.
 
 ### Cover statements to verify reachability
 

@@ -89,9 +89,6 @@ begin
 
    formal_gen : if G_FORMAL generate
 
-      -- Additional signals used during formal verification
-      signal f_rst : std_logic := '1';
-
    begin
 
       -- set all declarations to run on clk_i
@@ -102,15 +99,8 @@ begin
       -- ASSUMPTIONS ABOUT INPUTS
       -----------------------------
 
-      process (clk_i)
-      begin
-         if rising_edge(clk_i) then
-            f_rst <= '0';
-         end if;
-      end process;
-
       -- Require reset at startup.
-      -- psl f_reset : assume always {rst_i or not f_rst};
+      -- psl f_reset : assume {rst_i};
 
       -- Fox and Goat can not be alone
       -- psl f_fox_goat : assume always {bank_f_o = bank_g_o} |-> bank_m_o = bank_f_o;

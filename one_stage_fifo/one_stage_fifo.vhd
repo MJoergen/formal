@@ -71,7 +71,6 @@ begin
    formal_gen : if G_FORMAL generate
 
       -- Additional signals used during formal verification
-      signal f_rst        : std_logic := '1';
       signal f_last_value : std_logic_vector(G_DATA_SIZE-1 downto 0) := (others => '0');
       signal f_count      : integer range 0 to 3 := 0;
 
@@ -141,15 +140,8 @@ begin
       -- ASSUMPTIONS ABOUT INPUTS
       -----------------------------
 
-      process (clk_i)
-      begin
-         if rising_edge(clk_i) then
-            f_rst <= '0';
-         end if;
-      end process;
-
       -- Require reset at startup.
-      -- psl f_reset : assume always {rst_i or not f_rst};
+      -- psl f_reset : assume {rst_i};
 
 
       --------------------------------------------
