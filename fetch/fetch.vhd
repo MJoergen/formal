@@ -356,6 +356,12 @@ begin
 
 
       --------------------------------------------
+      -- INTERNAL ASSERTIONS
+      --------------------------------------------
+
+      -- psl f_osb_stable : assert always {osb_in_valid and not osb_in_ready and not rst_i and not dc_valid_i} |=> {stable(osb_in_valid) and stable(osb_in_data)};
+
+      --------------------------------------------
       -- COVER STATEMENTS TO VERIFY REACHABILITY
       --------------------------------------------
 

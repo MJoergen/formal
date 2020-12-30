@@ -53,7 +53,7 @@ complication here is that we may receive data from the WISHBONE but not be able
 to send the data to the DECODE stage. The [simple
 version](http://zipcpu.com/zipcpu/2017/11/18/wb-prefetch.html) solved this
 problem by not issuing any new WISHBONE request until the DECODE stage had
-accepted the current data. This simplifies the design, at the cose of
+accepted the current data. This simplifies the design, at the cost of
 performance, so I will try to do it better.
 
 ## Formal verification
@@ -77,9 +77,9 @@ interface. The first such are:
   `p_wb_stall_delay`. This counts each clock cycle where `CYC`, `STB`, and
   `STALL` are asserted.
 
-* Number of clock cycles the WISHBONE Slave waits for responding in
+* Number of clock cycles the WISHBONE Slave waits for response in
   `p_wb_ack_delay`. This counts each clock cycle where `CYC` is high and `ACK`
-  is low and at least one outstanding request.
+  is low and with at least one outstanding request.
 
 We are now ready to describe the WISHBONE protocol. First we limit the number
 of outstanding requests to just 1, i.e. when there is an outstanding request,
@@ -89,7 +89,7 @@ its requests and limits the bandwidth of this module.
 f_wb_req_count_max : assert always {f_wb_req_count >= 1} |-> {not wb_stb_o};
 ```
 
-Then we pose the artifical requirement that the slave does not stall
+Then we pose the artifical requirement that the Slave does not stall
 indefinitely, and that it responds within a short time. Here I've chosen a
 maximum of 2 clock cycles:
 ```
@@ -97,8 +97,8 @@ f_wb_stall_delay_max : assume always {f_wb_stall_delay <= 2};
 f_wb_ack_delay_max   : assume always {f_wb_ack_delay <= 2};
 ```
 
-Then we have the requirement that when CYC is low, then STB must be low too.
-And we also must have that after CYC goes low, so must ACK. This last
+Then we have the requirement that when `CYC` is low, then `STB` must be low too.
+And we also must have that after `CYC` goes low, so must `ACK`. This last
 constraint prevents the slave from responding combinatorially.  These
 constraints are written as:
 ```
@@ -110,10 +110,11 @@ We want the request signals to be stable while they are stalled:
 ```
 f_wb_stable : assert always {wb_stb_o and wb_stall_i and not dc_valid_i and not rst_i} |=> {stable(wb_stb_o) and stable(wb_addr_o)};
 ```
-The only exception is reset. Here we allow the Master to abort the current
-wishbone transaction in case `dc_valid_i` is asserted.
+Here we allow the Master to abort the current wishbone transaction in case
+`dc_valid_i` is asserted.
 
-Finally, we prevent the Slave from ACK'ing when there is no outstanding request:
+Finally, we prevent the Slave from asserting `ACK` when there is no outstanding
+request:
 ```
 f_wb_ack_pending : assume always {wb_ack_i} |-> {f_wb_req_count > 0};
 ```
@@ -124,7 +125,7 @@ we have additional requirements to the actual requests themselves.
 Specifically, we want the WISHBONE requests to be consecutive addresses
 starting from the value in `dc_addr_i`. So we introduce a new signal
 `f_wb_addr` that is to contain the next address expected on the WISHBONE bus.
-It will increment any time an ACK is received, as follows:
+It will increment any time an `ACK` is received, as follows:
 ```
 p_wb_addr : process (clk_i)
 begin
@@ -148,7 +149,7 @@ f_wb_address : assert always {wb_cyc_o and wb_stb_o} |-> wb_addr_o = f_wb_addr;
 ### Properties of the DECODE interface
 Here too we begin with some additional statistics:
 * Number of clock cycles the DECODE stalls in `f_dc_stall_delay`. This counts
-  each clock cycle where `VALID` is high and 'READY' is low.
+  each clock cycle where `VALID` is high and `READY` is low.
 * The last valid address sent to DECODE in `f_dc_last_addr` and
   `f_dc_last_addr_valid`.  The latter signal is cleared whenever `dc_valid_i`
   is high.
@@ -171,7 +172,7 @@ f_dc_addr : assert always {dc_valid_o and dc_ready_i; f_dc_last_addr_valid and d
 ### Verifying the data path
 We want to verify that the data read from the WISHBONE bus is correctly
 forwarded to the DECODE interface.  We do this by arbitrarily enforcing that
-the data must be the address inverted. That gives a unique relationship that
+the data must be the address inverted. This gives a unique relationship that
 we can easily test:
 ```
 f_wb_data : assume always {wb_cyc_o and wb_ack_i} |-> wb_data_i = not wb_addr_o;
@@ -186,6 +187,14 @@ f_reset : assume {rst_i};
 f_dc_after_reset : assume always {rst_i} |=> dc_valid_i;
 ```
 
+### Internal Assertions
+Finally, since we're instantiating a submodule `one_stage_buffer` we want to validate the inputs
+to this buffer. Here we'll just verify that the input is stable until received:
+
+```
+f_osb_stable : assert always {osb_in_valid and not osb_in_ready and not rst_i and not dc_valid_i} |=> {stable(osb_in_valid) and stable(osb_in_data)};
+```
+
 ### Cover statements
 
 As a final step I thought it would be interesting with some specific cover
@@ -198,7 +207,7 @@ f_dc_accept : cover {dc_valid_o; not dc_valid_o};
 
 The second cover statement is that the DECODE stage can receive two data cycles
 back-to-back, i.e. with `dc_valid_o` and `dc_ready_i` asserted for two clock
-cycles. After all, this was my initial claim.
+cycles. After all, this was my initial claim!
 
 ```
 f_dc_back2back : cover {dc_valid_o and dc_ready_i; dc_valid_o};
@@ -210,18 +219,12 @@ The last cover statement can be seen in this waveform:
 And that is it for the formal verification!
 
 ## Implementation details
-One difficulty I had when implementing is that when we send a WISHBONE request
-for the next address, but the DECODE stage has not yet accepted the current
-address. This becomes a problem when we receive the response from the
-WISHBONE bus, and we have no-where to store the result.
+One difficulty I had when implementing is what happens when we send a WISHBONE
+request for the next address, but the DECODE stage has not yet accepted the
+current address? This becomes a problem when we receive the response from the
+WISHBONE bus, because we have no-where to store the result.
 
 The solution was to make use of the `one_stage_buffer`.
-
-However, I do see problems with formally verifying hierarchical designs in
-VHDL.  Because the `one_stage_buffer` has some associated properties, but so
-far I've not yet found a way to make use of them when verifying the FETCH
-module. This would not be a problem if all source files were written in
-Verilog.
 
 ## Synthesis report
 I've added a `make` target to use yosys to generate a synthesis report. Just type `make synth`. I get
