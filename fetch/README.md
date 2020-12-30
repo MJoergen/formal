@@ -9,7 +9,7 @@ particular, this module is expected to have higher throughput, i.e. potentially
 able to deliver a new instruction on every clock cycle.
 
 ## The interface
-The idea is that this module has a WISHBONE interface to e.g. a memory and
+The idea is that this module has a WISHBONE Master interface to e.g. a memory and
 another interface towards the DECODE stage of the CPU. The DECODE stage accepts
 pairs of (address, data) values, where the address increases by 1 every time.
 Additionally, the DECODE stage may request a new starting point, e.g.  after a
@@ -61,227 +61,129 @@ Rather than discussing the implementation, let's dive straight into the formal
 verification. The idea is to come up with just the right set of requirements
 needed to formally prove the correctness of the implementation.
 
-### WISHBONE interface
-Let's begin with verifying the WISHBONE transactions. This is as easy as
-instantiating the
-[fwb_master](https://github.com/ZipCPU/zipcpu/blob/master/rtl/ex/fwb_master.v)
-module.
+### Properties of the WISHBONE interface
+Let's begin with verifying the WISHBONE transactions. There are some
+requirements to the Master (implemented using `assert`) and some requirements
+for the Slave (implemented using `assume`).
 
-We have to be careful selecting the correct paramters. Here I've chosen the
-following values:
+In order to formulate the `assert` and `assume` statements concisely, it is
+convenient to calculate some statistics and timing characteristics of the
+interface. The first such are:
+* Number of outstanding WISHBONE requests in `p_wb_req_count`. This counts up
+  whenever `CYC` and `STB` are high and `STALL` is low, and counts down
+  whenever `CYC` and `ACK` are high.
+
+* Number of clock cycles the WISHBONE Slave stalls a request in
+  `p_wb_stall_delay`. This counts each clock cycle where `CYC`, `STB`, and
+  `STALL` are asserted.
+
+* Number of clock cycles the WISHBONE Slave waits for responding in
+  `p_wb_ack_delay`. This counts each clock cycle where `CYC` is high and `ACK`
+  is low and at least one outstanding request.
+
+We are now ready to describe the WISHBONE protocol. First we limit the number
+of outstanding requests to just 1, i.e. when there is an outstanding request,
+don't send a new request. This essentially prevents the Master from pipelining
+its requests and limits the bandwidth of this module.
 ```
-F_MAX_STALL          = 3. This prevents the WISHBONE slave from stalling forever. This is needed for the formal verification.
-F_MAX_ACK_DELAY      = 3. This
-F_OPT_SOURCE         = 1. This adds extra checks to the interface.
-F_OPT_RMW_BUS_OPTION = 0. We require CYC to go low when there are no outstanding requests.
-F_OPT_DISCONTINUOUS  = 1. We allow multiple requests in the same bus transactions.
+f_wb_req_count_max : assert always {f_wb_req_count >= 1} |-> {not wb_stb_o};
 ```
 
-Here `F_MAX_STALL` and `F_MAX_ACK_DELAY` are artificial values chosen to put an
-upper bound on the duration of the proof. They are needed to prevent the design
-from waiting indefinitely for input. The remaining parameters control the
-detailed behaviour of the design. Together they state the requirement that the
-FETCH module may issue several requests within the same transaction, and that
-the transaction must end when no more requests.
-
-Now, the above is not quite enough for the formal prover. Some more logic is
-needed to constrain the allowable states. The following code re-states that we
-can have at most one outstanding transaction at any time. The formal prover can
-verify the correctness of this assertion, and subsequenly use this is the
-induction step.
-
+Then we pose the artifical requirement that the slave does not stall
+indefinitely, and that it responds within a short time. Here I've chosen a
+maximum of 2 clock cycles:
 ```
-always @(posedge clk_i)
+f_wb_stall_delay_max : assume always {f_wb_stall_delay <= 2};
+f_wb_ack_delay_max   : assume always {f_wb_ack_delay <= 2};
+```
+
+Then we have the requirement that when CYC is low, then STB must be low too.
+And we also must have that after CYC goes low, so must ACK. This last
+constraint prevents the slave from responding combinatorially.  These
+constraints are written as:
+```
+f_stb_low    : assert always {not wb_cyc_o} |-> {not wb_stb_o};
+f_wb_ack_cyc : assume always {not wb_cyc_o} |=> {not wb_ack_i};
+```
+
+We want the request signals to be stable while they are stalled:
+```
+f_wb_stable : assert always {wb_stb_o and wb_stall_i and not dc_valid_i and not rst_i} |=> {stable(wb_stb_o) and stable(wb_addr_o)};
+```
+The only exception is reset. Here we allow the Master to abort the current
+wishbone transaction in case `dc_valid_i` is asserted.
+
+Finally, we prevent the Slave from ACK'ing when there is no outstanding request:
+```
+f_wb_ack_pending : assume always {wb_ack_i} |-> {f_wb_req_count > 0};
+```
+
+The above were the formal requirements of the WISHBONE protocol itself. However,
+we have additional requirements to the actual requests themselves.
+
+Specifically, we want the WISHBONE requests to be consecutive addresses
+starting from the value in `dc_addr_i`. So we introduce a new signal
+`f_wb_addr` that is to contain the next address expected on the WISHBONE bus.
+It will increment any time an ACK is received, as follows:
+```
+p_wb_addr : process (clk_i)
 begin
-   if (f_past_valid && $past(wb_cyc_o) && $past(wb_ack_i))
-      assert (f_outstanding == 0);
-   assert (f_outstanding <= 1);
-end
+   if rising_edge(clk_i) then
+      if wb_cyc_o = '1' and wb_ack_i = '1' then
+         f_wb_addr <= f_wb_addr + 1;
+      end if;
+
+      if dc_valid_i = '1' then
+         f_wb_addr <= dc_addr_i;
+      end if;
+   end if;
+end process p_wb_addr;
 ```
 
-### Assumptions about inputs
-We now turn our attention to our inputs.  First of all let's require that we
-start in reset. This requirement is needed by the BMC in order to make sure we
-start in a valid state.
-
+And the requirement is simply:
 ```
-initial `ASSUME(rst_i);
+f_wb_address : assert always {wb_cyc_o and wb_stb_o} |-> wb_addr_o = f_wb_addr;
 ```
 
-Next we impose the artifical requirement that the DECODE stage sends a new PC
-right after reset. This is again needed by the BMC.
+### Properties of the DECODE interface
+Here too we begin with some additional statistics:
+* Number of clock cycles the DECODE stalls in `f_dc_stall_delay`. This counts
+  each clock cycle where `VALID` is high and 'READY' is low.
+* The last valid address sent to DECODE in `f_dc_last_addr` and
+  `f_dc_last_addr_valid`.  The latter signal is cleared whenever `dc_valid_i`
+  is high.
 
+We begin by requiring that the output to the DECODE is stable until it is received:
 ```
-always @(posedge clk_i)
-begin
-   if (f_past_valid && $past(rst_i))
-      assume (dc_valid_i);
-end
-```
-
-And similar to the WISHBONE interface, we pose the artifical requirement that
-the DECODE stage does not stall indefinitely. So first we add some code to count
-the length of the current stall:
-
-```
-reg [1:0] f_dc_wait_count;
-initial f_dc_wait_count = 2'b0;
-always @(posedge clk_i)
-begin
-   if (dc_valid_o && ~dc_ready_i)
-      f_dc_wait_count <= f_dc_wait_count + 2'b1;
-   else
-      f_dc_wait_count <= 2'b0;
-
-   if (rst_i)
-   begin
-      f_dc_wait_count <= 2'b0;
-   end
-end
+f_dc_stable : assert always {dc_valid_o and not dc_ready_i} |=> {stable(dc_valid_o) and stable(dc_addr_o) and stable(dc_data_o)} abort rst_i or dc_valid_i;
 ```
 
-And then we impose the requirement as follows:
-
+Next we impose the artificial requirement that the DECODE stage stalls for at most 2 clock cycles:
 ```
-always @(posedge clk_i)
-begin
-   assume (f_dc_wait_count < 3);
-end
+f_dc_stall_delay_max : assume always {f_dc_stall_delay <= 2};
 ```
 
-Finally, we will place some additional requirements on the data inputs from the
-WISHBONE, in order to be able to recognize the same data on the output to the
-DECODE stage. Here I simply choose the data signal to be the inverse of the
-address signal:
-
+Then we have the requirement that the DECODE address is incrementing:
 ```
-always @(posedge clk_i)
-begin
-   if (wb_cyc_o && wb_ack_i)
-   begin
-      assume (wb_data_i == ~wb_addr_o);
-   end 
-end
+f_dc_addr : assert always {dc_valid_o and dc_ready_i; f_dc_last_addr_valid and dc_valid_o} |-> {dc_addr_o = f_dc_last_addr + 1};
 ```
 
-
-### Assertions about outputs
-We now get to the requirements. Let's just quickly deal with the data signal that
-we just constrained on the WISHBONE input. With this constraint we can assert
-the same relationship on the data presented to the DECODE stage:
-
+### Verifying the data path
+We want to verify that the data read from the WISHBONE bus is correctly
+forwarded to the DECODE interface.  We do this by arbitrarily enforcing that
+the data must be the address inverted. That gives a unique relationship that
+we can easily test:
 ```
-always @(posedge clk_i)
-begin
-   if (dc_valid_o)
-   begin
-      assert (dc_data_o == ~dc_addr_o);
-   end
-end
+f_wb_data : assume always {wb_cyc_o and wb_ack_i} |-> wb_data_i = not wb_addr_o;
+f_dc_data : assert always {dc_valid_o} |-> dc_data_o = not dc_addr_o;
 ```
 
-Now, recall that the FETCH module should read sequential addresses from the
-WISHBONE bus and present to the DECODE stage.
-
-So let's write code to check the WISHBONE addresses being requested.  The
-following code calculates the next address we expect to see on the WISHBONE
-bus:
-
+### Additional assumptions about the inputs
+We want the module to start with a reset, and the DECODE interface to request
+a new address immediately thereafter:
 ```
-reg [15:0] f_req_addr;
-initial f_req_addr = 16'h0000;
-always @(posedge clk_i)
-begin
-   if (dc_valid_i)
-   begin
-      // New PC received from DECODE
-      f_req_addr <= dc_addr_i;
-   end
-   else if (wb_cyc_o && wb_ack_i)
-   begin
-      // ACK received from WISHBONE
-      f_req_addr <= f_req_addr + 1'b1;
-   end
-end
-```
-
-And then we can do the actual verification here:
-
-```
-always @(posedge clk_i)
-begin
-   if (wb_cyc_o && wb_stb_o)
-   begin
-      assert (f_req_addr == wb_addr_o);
-   end
-end
-```
-
-We do something similar for the addresses presented on the DECODE bus.
-First we record the last valid address sent to the DECODE stage:
-
-```
-reg f_last_addr_valid;
-reg [15:0] f_last_addr;
-initial f_last_addr_valid = 1'b0;
-initial f_last_addr = 16'h0000;
-always @(posedge clk_i)
-begin
-   if (dc_valid_o)
-   begin
-      f_last_addr_valid <= 1'b1;
-      f_last_addr <= dc_addr_o;
-   end
-   if (rst_i || dc_valid_i)
-   begin
-      f_last_addr_valid <= 1'b0;
-   end
-end
-```
-
-Now we validate that the address on the DECODE bus is one more than the
-previous address.
-
-```
-always @(posedge clk_i)
-begin
-   if (f_past_valid && dc_valid_o && f_last_addr_valid && $past(dc_ready_i))
-   begin
-      assert (dc_addr_o == f_last_addr + 1'b1);
-   end
-end
-```
-
-In order to constrain the formal prover sufficiently, we need to add one more
-assertion: That the address requested on the WISHBONE bus is one more that the
-address presented on the DECODE stage. This is not an assumption, this is an
-assertion. I.e. it is a claim that the formal verifier will check. And
-subsequently the prover will use to complete the k-induction formal proof.
-
-```
-always @(posedge clk_i)
-begin
-   if (f_past_valid && dc_valid_o && $past(dc_ready_i))
-   begin
-      assert (f_req_addr == dc_addr_o + 1'b1);
-   end
-end
-```
-
-We have one final assertion:  The output to the DECODE stage should be kept
-stable until it has been accepted or until a new address request has been
-issued.
-
-```
-always @(posedge clk_i)
-begin
-   if (f_past_valid && $past(!rst_i) && $past(!dc_valid_i) && $past(dc_valid_o) && $past(!dc_ready_i))
-   begin
-      assert ($stable(dc_valid_o));
-      assert ($stable(dc_addr_o));
-      assert ($stable(dc_data_o));
-   end
-end
+f_reset : assume {rst_i};
+f_dc_after_reset : assume always {rst_i} |=> dc_valid_i;
 ```
 
 ### Cover statements
@@ -291,22 +193,19 @@ statements.  The first one is that the DECODE stage accepts data. This is seen
 by the `dc_valid_o` signal going from high to low:
 
 ```
-always @(posedge clk_i)
-begin
-   cover (f_past_valid && !rst_i && $past(dc_valid_o) && !dc_valid_o);
-end
+f_dc_accept : cover {dc_valid_o; not dc_valid_o};
 ```
 
-The second cover statement is that the DECODE stage can receive to data cycles
+The second cover statement is that the DECODE stage can receive two data cycles
 back-to-back, i.e. with `dc_valid_o` and `dc_ready_i` asserted for two clock
 cycles. After all, this was my initial claim.
 
 ```
-always @(posedge clk_i)
-begin
-   cover (f_past_valid && $past(dc_valid_o) && $past(dc_ready_i) && dc_valid_o);
-end
+f_dc_back2back : cover {dc_valid_o and dc_ready_i; dc_valid_o};
 ```
+
+The last cover statement can be seen in this waveform:
+![Waveform](waveform.png)
 
 And that is it for the formal verification!
 
@@ -320,7 +219,7 @@ The solution was to make use of the `one_stage_buffer`.
 
 However, I do see problems with formally verifying hierarchical designs in
 VHDL.  Because the `one_stage_buffer` has some associated properties, but so
-far I've not yet found a way to make use of them when verifyinf the FETCH
+far I've not yet found a way to make use of them when verifying the FETCH
 module. This would not be a problem if all source files were written in
 Verilog.
 
