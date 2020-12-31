@@ -64,7 +64,7 @@ begin
    -- Connect output signals
    s_ready_o <= s_ready_s;
    m_data_o  <= m_data_r when m_valid_r = '1' else s_data_i;
-   m_valid_o <= (m_valid_r or s_valid_i) and not rst_i;
+   m_valid_o <= m_valid_r or (s_valid_i and not rst_i);
 
 
    formal_gen : if G_FORMAL generate
@@ -91,7 +91,7 @@ begin
       -- psl f_after_reset : assert always {rst_i} |=> {not m_valid_o} abort s_valid_i;
 
       -- Output must be stable until accepted or reset
-      -- psl f_output_stable : assert always {m_valid_o and not m_ready_i} |=> {stable(m_valid_o) and stable(m_data_o)} abort rst_i;
+      -- psl f_output_stable : assert always {m_valid_o and not m_ready_i and not rst_i} |=> {stable(m_valid_o) and stable(m_data_o)};
 
       -- Keep track of amount of data flowing into and out of the FIFO
       p_count : process (clk_i)
