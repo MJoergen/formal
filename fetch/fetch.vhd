@@ -185,7 +185,7 @@ begin
       signal f_wb_stall_delay     : integer range 0 to 3 := 0;
       signal f_wb_ack_delay       : integer range 0 to 3 := 0;
       signal f_wb_addr            : std_logic_vector(15 downto 0) := (others => '0');
-      signal f_dc_stall_delay      : integer range 0 to 3 := 0;
+      signal f_dc_stall_delay     : integer range 0 to 3 := 0;
       signal f_dc_last_addr_valid : std_logic := '0';
       signal f_dc_last_addr       : std_logic_vector(15 downto 0) := (others => '0');
 
@@ -272,7 +272,7 @@ begin
       p_wb_addr : process (clk_i)
       begin
          if rising_edge(clk_i) then
-            if wb_cyc_o = '1' and wb_ack_i = '1' then
+            if wb_cyc_o = '1' and wb_stb_o = '1' and wb_stall_i = '0' then
                f_wb_addr <= f_wb_addr + 1;
             end if;
 
@@ -318,7 +318,7 @@ begin
       end process p_dc_last_addr;
 
       -- Verify that the DECODE output is stable while not received, unless aborted.
-      -- psl f_dc_stable : assert always {dc_valid_o and not dc_ready_i} |=> {stable(dc_valid_o) and stable(dc_addr_o) and stable(dc_data_o)} abort rst_i or dc_valid_i;
+      -- psl f_dc_stable : assert always {dc_valid_o and not dc_ready_i and not rst_i and not dc_valid_i} |=> {stable(dc_valid_o) and stable(dc_addr_o) and stable(dc_data_o)};
 
       -- Artifically constrain the maximum amount of time the DECODE may stall
       -- psl f_dc_stall_delay_max : assume always {f_dc_stall_delay <= 2};
