@@ -38,3 +38,13 @@ line parameters.  This is demonstrated in the below examples.
 * [This video-series](https://www.youtube.com/watch?v=_5R35QFsXM4) gives a more
   detailed tutorial for getting started with formal verification.
 
+* [Robert Baruch](https://www.youtube.com/watch?v=85ZCTuekjGA) has made a video
+  series on building a 6800 CPU using
+  [nMigen](https://github.com/nmigen/nmigen) and applying formal verification
+  in the process. This was the first time I heard about formal verification, and
+  has been a great inspiration for me.
+
+* [Charles LaForest](http://fpgacpu.ca/fpga/index.html) has compiled a huge
+  resource on VHDL design elements. There is no formal verification, but this
+  website is a good resource, with detailed explanation of each module.
+
