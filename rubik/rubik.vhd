@@ -1,6 +1,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.std_logic_unsigned.all;
+use ieee.numeric_std.all;
 
 -- This attempts to solve the 2x2x2 Rubik's cube using formal methods.
 --

@@ -12,7 +12,7 @@ cover: depth 10
 smtbmc
 
 [script]
-ghdl -fsynopsys --std=08 rubik.vhd rubik.psl -e rubik
+ghdl --std=08 rubik.vhd rubik.psl -e rubik
 prep -top rubik
 
 [files]
