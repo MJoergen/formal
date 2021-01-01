@@ -33,8 +33,9 @@ combinatorial path can be registered for improved timing, but requires a
 two-stage FIFO. More on that later.
 
 ## The implementation
-The FIFO implementation is found [here](one_stage_fifo.vhd). This file contains
-both the actual implementation and the additional commands for formal verification.
+The FIFO implementation is found [here](one_stage_fifo.vhd), whereas the
+commands for the formal verification are in a separate [PSL
+file](one_stage_fifo.psl).
 
 ## Formal verification
 Instead of writing a testbench that manually generates stimuli, we envision the
@@ -56,18 +57,6 @@ done for this one-stage FIFO.
 The main keywords to use are `assume` (for constraining input), `assert` (for
 validating output), and `cover` (for ensuring reachability).
 
-One complication regarding formal verification in VHDL is to get adequate tool support.
-For one thing, Xilinx Vivado does not support PSL statements at all. The solution
-therefore is to embed PSL statements into comments by preceding each statement with:
-```
--- psl
-```
-The [GHDL plugin to Yosys](../INSTALL.md) supports this particular syntax. This way we can use
-the same source file for both formal verification using Yosys and for synthesis
-using Vivado. Note, the GHDL plugin does support multiline PSL statements, but
-for the sake of consistent syntax highlighting we will only use single-line
-statements in the source file.
-
 One general thing about formal verification is that it is synchronous, and
 therefore requires specifying a clock. Since most entities use only a single
 clock, this can be selected efficiently by this single line:
@@ -75,9 +64,6 @@ clock, this can be selected efficiently by this single line:
 ```
 default clock is rising_edge(clk_i);
 ```
-
-Note, as mentioned above this line must be preceeded by `-- psl` in the source
-file.
 
 ### Assertions on outputs
 We're now ready to start expressing the properties of the FIFO as assertions on
@@ -211,11 +197,9 @@ script [one_stage_fifo.sby](one_stage_fifo.sby).
 
 The tricky line in the script is the following:
 ```
-ghdl -fpsl --std=08 -gG_FORMAL=true one_stage_fifo.vhd -e one_stage_fifo
+ghdl --std=08 one_stage_fifo.vhd one_stage_fifo.psl -e one_stage_fifo
 ```
-The command line options `-fpsl --std=08` are necessary to enable the PSL
-statements inside comments. The option `-gG_FORMAL=true` instructs GHDL
-to include the extra code for formal verification.
+The command line option `--std=08` is necessary to enable the PSL feature.
 
 Then we just run the verifier using the command
 ```
