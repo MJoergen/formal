@@ -40,9 +40,6 @@ use ieee.std_logic_unsigned.all;
 -- Lx = 5
 
 entity rubik is
-   generic (
-      G_FORMAL : boolean := false
-   );
    port (
       clk_i  : in  std_logic;
       rst_i  : in  std_logic;
@@ -315,108 +312,6 @@ begin
              d0 = "011" and d1 = "011" and d2 = "011" and d3 = "011" and
              b0 = "100" and b1 = "100" and b2 = "100" and b3 = "100" and
              l0 = "101" and l1 = "101" and l2 = "101" and l3 = "101" else '0';
-
-
-   ------------------------
-   -- Formal verification
-   ------------------------
-
-   formal_gen : if G_FORMAL generate
-
-      signal f_num_colors : integer_vector(0 to 7);
-
-   begin
-
-      -- set all declarations to run on clk_i
-      -- psl default clock is rising_edge(clk_i);
-
-
-      -----------------------------
-      -- ASSERTIONS ABOUT OUTPUTS
-      -----------------------------
-
-      -- psl f_edge_u2_f0 : assert always {u2 /= f0};
-      -- psl f_edge_u2_l1 : assert always {u2 /= l1};
-      -- psl f_edge_l1_f0 : assert always {l1 /= f0};
-
-      -- psl f_edge_u3_f1 : assert always {u3 /= f1};
-      -- psl f_edge_r0_f1 : assert always {r0 /= f1};
-      -- psl f_edge_r0_u3 : assert always {r0 /= u3};
-
-      -- psl f_edge_l3_f2 : assert always {l3 /= f2};
-      -- psl f_edge_d0_f2 : assert always {d0 /= f2};
-      -- psl f_edge_l3_d0 : assert always {l3 /= d0};
-
-      -- psl f_edge_d1_f3 : assert always {d1 /= f3};
-      -- psl f_edge_r2_f3 : assert always {r2 /= f3};
-      -- psl f_edge_d1_r2 : assert always {d1 /= r2};
-
-      -- psl f_edge_u0_l0 : assert always {u0 /= l0};
-      -- psl f_edge_b1_l0 : assert always {b1 /= l0};
-      -- psl f_edge_u0_b1 : assert always {u0 /= b1};
-
-      -- psl f_edge_l2_d2 : assert always {l2 /= d2};
-      -- psl f_edge_d2_b3 : assert always {d2 /= b3};
-      -- psl f_edge_b3_l2 : assert always {b3 /= l2};
-
-      -- psl f_edge_d3_r3 : assert always {d3 /= r3};
-      -- psl f_edge_r3_b2 : assert always {r3 /= b2};
-      -- psl f_edge_d3_b2 : assert always {d3 /= b2};
-
-      -- psl f_edge_r1_u1 : assert always {r1 /= u1};
-      -- psl f_edge_r1_b0 : assert always {r1 /= b0};
-      -- psl f_edge_u1_b0 : assert always {u1 /= b0};
-
-      process (all)
-         variable num_colors : integer_vector(0 to 7);
-      begin
-         num_colors := (others => 0);
-         num_colors(conv_integer(u0)) := num_colors(conv_integer(u0)) + 1;
-         num_colors(conv_integer(u1)) := num_colors(conv_integer(u1)) + 1;
-         num_colors(conv_integer(u2)) := num_colors(conv_integer(u2)) + 1;
-         num_colors(conv_integer(u3)) := num_colors(conv_integer(u3)) + 1;
-         num_colors(conv_integer(f0)) := num_colors(conv_integer(f0)) + 1;
-         num_colors(conv_integer(f1)) := num_colors(conv_integer(f1)) + 1;
-         num_colors(conv_integer(f2)) := num_colors(conv_integer(f2)) + 1;
-         num_colors(conv_integer(f3)) := num_colors(conv_integer(f3)) + 1;
-         num_colors(conv_integer(r0)) := num_colors(conv_integer(r0)) + 1;
-         num_colors(conv_integer(r1)) := num_colors(conv_integer(r1)) + 1;
-         num_colors(conv_integer(r2)) := num_colors(conv_integer(r2)) + 1;
-         num_colors(conv_integer(r3)) := num_colors(conv_integer(r3)) + 1;
-         num_colors(conv_integer(d0)) := num_colors(conv_integer(d0)) + 1;
-         num_colors(conv_integer(d1)) := num_colors(conv_integer(d1)) + 1;
-         num_colors(conv_integer(d2)) := num_colors(conv_integer(d2)) + 1;
-         num_colors(conv_integer(d3)) := num_colors(conv_integer(d3)) + 1;
-         num_colors(conv_integer(b0)) := num_colors(conv_integer(b0)) + 1;
-         num_colors(conv_integer(b1)) := num_colors(conv_integer(b1)) + 1;
-         num_colors(conv_integer(b2)) := num_colors(conv_integer(b2)) + 1;
-         num_colors(conv_integer(b3)) := num_colors(conv_integer(b3)) + 1;
-         num_colors(conv_integer(l0)) := num_colors(conv_integer(l0)) + 1;
-         num_colors(conv_integer(l1)) := num_colors(conv_integer(l1)) + 1;
-         num_colors(conv_integer(l2)) := num_colors(conv_integer(l2)) + 1;
-         num_colors(conv_integer(l3)) := num_colors(conv_integer(l3)) + 1;
-         f_num_colors <= num_colors;
-      end process;
-
-      -- psl f_colors : assert always {f_num_colors(0 to 5) = (0 to 5 => 4)};
-
-
-      -----------------------------
-      -- ASSUMPTIONS ABOUT INPUTS
-      -----------------------------
-
-      -- We prevent any reset at all, because that would be cheating :-)
-      -- psl f_no_rst : assume always {not rst_i};
-
-
-      --------------------------------------------
-      -- COVER STATEMENTS TO VERIFY REACHABILITY
-      --------------------------------------------
-
-      -- Attempt to solve the cube from the given initial condition.
-      -- psl f_done : cover {done_o};
-
-   end generate formal_gen;
 
 end architecture synthesis;
 
