@@ -6,9 +6,6 @@ use ieee.numeric_std.all;
 -- to solve the Fox-Goat-Cabbage problem
 
 entity fgc is
-   generic (
-      G_FORMAL : boolean := false
-   );
    port (
       clk_i    : in  std_logic;
       rst_i    : in  std_logic;
@@ -81,42 +78,6 @@ begin
    bank_g_o <= bank_g;
    bank_c_o <= bank_c;
    bank_m_o <= bank_m;
-
-
-   ------------------------
-   -- Formal verification
-   ------------------------
-
-   formal_gen : if G_FORMAL generate
-
-   begin
-
-      -- set all declarations to run on clk_i
-      -- psl default clock is rising_edge(clk_i);
-
-
-      -----------------------------
-      -- ASSUMPTIONS ABOUT INPUTS
-      -----------------------------
-
-      -- Require reset at startup.
-      -- psl f_reset : assume {rst_i};
-
-      -- Fox and Goat can not be alone
-      -- psl f_fox_goat : assume always {bank_f_o = bank_g_o} |-> bank_m_o = bank_f_o;
-
-      -- Goat and cabbage can not be alone
-      -- psl f_goat_cabbage : assume always {bank_g_o = bank_c_o} |-> bank_m_o = bank_c_o;
-
-
-      --------------------------------------------
-      -- COVER STATEMENTS TO VERIFY REACHABILITY
-      --------------------------------------------
-
-      -- Attempt to have everything on bank 1
-      -- psl cover {bank_m_o and bank_f_o and bank_g_o and bank_c_o};
-
-   end generate formal_gen;
 
 end architecture synthesis;
 

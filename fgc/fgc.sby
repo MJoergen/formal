@@ -6,9 +6,10 @@ depth 20
 smtbmc
 
 [script]
-ghdl -fpsl --std=08 -gG_FORMAL=true fgc.vhd -e fgc
+ghdl --std=08 fgc.vhd fgc.psl -e fgc
 prep -top fgc
 
 [files]
 fgc.vhd
+fgc.psl
 

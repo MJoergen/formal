@@ -14,9 +14,10 @@ prove: depth 4
 smtbmc
 
 [script]
-ghdl -fpsl --std=08 -gG_FORMAL=true wb_mem.vhd -e wb_mem
+ghdl --std=08 wb_mem.vhd wb_mem.psl -e wb_mem
 prep -top wb_mem
 
 [files]
 wb_mem.vhd
+wb_mem.psl
 
