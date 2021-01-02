@@ -12,6 +12,7 @@ entity two_stage_fifo is
       s_valid_i : in  std_logic;
       s_ready_o : out std_logic;
       s_data_i  : in  std_logic_vector(G_DATA_SIZE-1 downto 0);
+      s_afull_o : out std_logic;
       m_valid_o : out std_logic;
       m_ready_i : in  std_logic;
       m_data_o  : out std_logic_vector(G_DATA_SIZE-1 downto 0)
@@ -27,6 +28,7 @@ architecture synthesis of two_stage_fifo is
    signal m_data_r  : std_logic_vector(G_DATA_SIZE-1 downto 0)   := (others => '0');
 
    -- Control signals
+   signal s_afull_r : std_logic := '0';
    signal s_ready_r : std_logic := '1';
    signal m_valid_r : std_logic := '0';
 
@@ -44,6 +46,10 @@ begin
       if rising_edge(clk_i) then
          case state_r is
             when EMPTY_ST =>
+               assert s_afull_r = '0'
+                  report "s_afull_r is not zero"
+                     severity error;
+
                assert m_valid_r = '0'
                   report "m_valid_r is not zero"
                      severity error;
@@ -54,11 +60,15 @@ begin
                   m_data_r  <= s_data_i;
 
                   m_valid_r <= '1';
-                  state_r    <= ONE_ST;
+                  s_afull_r <= '1';
+                  state_r   <= ONE_ST;
                end if;
 
             when ONE_ST =>
                -- The pipe has valid data in m_*
+               assert s_afull_r = '1'
+                  report "s_afull_r is not one"
+                     severity error;
                assert s_ready_r = '1'
                   report "s_ready_r is not one"
                      severity error;
@@ -74,12 +84,14 @@ begin
                      -- Increase pipeline
                      s_data_r  <= s_data_i;
                      s_ready_r <= '0';
-                     state_r    <= TWO_ST;
+                     s_afull_r <= '1';
+                     state_r   <= TWO_ST;
 
                   when "10" =>
                      -- Decrease pipeline
                      m_valid_r <= '0';
-                     state_r    <= EMPTY_ST;
+                     s_afull_r <= '0';
+                     state_r   <= EMPTY_ST;
 
                   when "11" =>
                      m_data_r  <= s_data_i;
@@ -89,6 +101,9 @@ begin
 
             when TWO_ST =>
                -- The pipe has valid data in both s_* and m_*
+               assert s_afull_r = '1'
+                  report "s_afull_r is not one"
+                     severity error;
                assert s_ready_r = '0'
                   report "s_ready_r is not zero"
                      severity error;
@@ -101,15 +116,17 @@ begin
                   m_data_r  <= s_data_r;
 
                   s_ready_r <= '1';
-                  state_r    <= ONE_ST;
+                  s_afull_r <= '1';
+                  state_r   <= ONE_ST;
                end if;
 
          end case;
 
          if rst_i = '1' then
+            s_afull_r <= '0';
             s_ready_r <= '1';
             m_valid_r <= '0';
-            state_r    <= EMPTY_ST;
+            state_r   <= EMPTY_ST;
          end if;
       end if;
    end process p_fsm;
@@ -119,6 +136,7 @@ begin
    -- Connect output signals
    --------------------------
 
+   s_afull_o <= s_afull_r;
    s_ready_o <= s_ready_r;
    m_valid_o <= m_valid_r;
    m_data_o  <= m_data_r;

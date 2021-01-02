@@ -67,6 +67,10 @@ vunit i_two_stage_fifo(two_stage_fifo(synthesis))
    f_state_count_1 : assert always {state_r = ONE_ST}   |-> {f_count = 1};
    f_state_count_2 : assert always {state_r = TWO_ST}   |-> {f_count = 2};
 
+   f_state_afull_0 : assert always {state_r = EMPTY_ST} |-> {not s_afull_o};
+   f_state_afull_1 : assert always {state_r = ONE_ST}   |-> {s_afull_o};
+   f_state_afull_2 : assert always {state_r = TWO_ST}   |-> {s_afull_o};
+
    -----------------------------
    -- ASSUMPTIONS ABOUT INPUTS
    -----------------------------
