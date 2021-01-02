@@ -1,0 +1,23 @@
+[tasks]
+bmc
+cover
+prove
+
+[options]
+bmc: mode bmc
+bmc: depth 10
+cover: mode cover
+prove: mode prove
+prove: depth 4
+
+[engines]
+smtbmc
+
+[script]
+ghdl --std=08 two_stage_fifo.vhd two_stage_fifo.psl -e two_stage_fifo
+prep -top two_stage_fifo
+
+[files]
+two_stage_fifo.psl
+two_stage_fifo.vhd
+
