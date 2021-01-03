@@ -101,10 +101,10 @@ begin
          end case;
 
          if rst_i = '1' then
+            s_ready_r <= '1';
             s_afull_r <= '0';
-            s_ready_r <= '0';
             m_valid_r <= '0';
-            state_r   <= RESET_ST;
+            state_r   <= EMPTY_ST;
          end if;
       end if;
    end process p_fsm;
