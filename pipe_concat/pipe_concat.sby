@@ -1,0 +1,23 @@
+[tasks]
+bmc
+cover
+prove
+
+[options]
+bmc: mode bmc
+bmc: depth 4
+cover: mode cover
+prove: mode prove
+prove: depth 4
+
+[engines]
+smtbmc
+
+[script]
+ghdl --std=08 pipe_concat.vhd pipe_concat.psl -e pipe_concat
+prep -top pipe_concat
+
+[files]
+pipe_concat.psl
+pipe_concat.vhd
+

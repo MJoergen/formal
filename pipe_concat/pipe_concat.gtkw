@@ -1,0 +1,33 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Sun Jan  3 08:47:58 2021
+[*]
+[dumpfile] "/home/mike/git/MJoergen/formal/pipe_concat/pipe_concat_cover/engine_0/trace2.vcd"
+[dumpfile_mtime] "Sun Jan  3 08:46:53 2021"
+[dumpfile_size] 1009
+[savefile] "/home/mike/git/MJoergen/formal/pipe_concat/pipe_concat.gtkw"
+[timestart] 0
+[size] 1301 776
+[pos] -1919 -131
+*-2.987028 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[sst_width] 249
+[signals_width] 223
+[sst_expanded] 1
+[sst_vpaned_height] 205
+@28
+pipe_concat.s0_valid_i
+pipe_concat.s0_ready_o
+@22
+pipe_concat.s0_data_i[7:0]
+@28
+pipe_concat.s1_valid_i
+pipe_concat.s1_ready_o
+@22
+pipe_concat.s1_data_i[7:0]
+@28
+pipe_concat.m_valid_o
+pipe_concat.m_ready_i
+@23
+pipe_concat.m_data_o[15:0]
+[pattern_trace] 1
+[pattern_trace] 0

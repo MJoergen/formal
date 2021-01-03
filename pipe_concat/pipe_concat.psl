@@ -1,0 +1,37 @@
+vunit i_pipe_concat(pipe_concat(synthesis))
+{
+   -- set all declarations to run on clk_i
+   default clock is rising_edge(clk_i);
+
+
+   -----------------------------
+   -- ASSERTIONS ABOUT OUTPUTS
+   -----------------------------
+
+   assert always {m_valid_o  and m_ready_i} |-> {s0_valid_i and s0_ready_o};
+   assert always {s0_valid_i and s0_ready_o}|-> {s1_valid_i and s1_ready_o};
+   assert always {s1_valid_i and s1_ready_o}|-> {m_valid_o  and m_ready_i};
+
+   assert always {m_valid_o and m_ready_i} |-> {m_data_o = s1_data_i & s0_data_i};
+
+
+   -----------------------------
+   -- ASSUMPTIONS ABOUT INPUTS
+   -----------------------------
+
+   -- Require reset at startup.
+   f_reset : assume {rst_i};
+
+
+   --------------------------------------------
+   -- COVER STATEMENTS TO VERIFY REACHABILITY
+   --------------------------------------------
+
+   -- Make sure output can transition from full to empty.
+   f_full_to_empty : cover {m_valid_o and not rst_i; not m_valid_o};
+
+   -- Make sure output can stay valid for two clock cycles.
+   f_back2back : cover {m_valid_o and m_ready_i; m_valid_o};
+
+} -- vunit i_one_stage_buffer(one_stage_buffer(synthesis))
+
