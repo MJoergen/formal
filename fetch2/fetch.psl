@@ -187,6 +187,7 @@ vunit i_fetch(fetch(synthesis))
    --------------------------------------------
 
 --   f_osb_stable : assert always {osb_in_valid and not osb_in_ready and not rst_i and not dc_valid_i} |=> {stable(osb_in_valid) and stable(osb_in_data)};
+   f_tsf_ready : assert always {wb_cyc_o and wb_stb_o} |-> {tsf_in_addr_ready};
 
 
    --------------------------------------------

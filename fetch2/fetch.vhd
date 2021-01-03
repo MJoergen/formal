@@ -44,11 +44,11 @@ end entity fetch;
 
 architecture synthesis of fetch is
 
-   signal osb_in_addr_ready  : std_logic;
-   signal osb_in_addr_afull  : std_logic;
-   signal osb_out_addr_valid : std_logic;
-   signal osb_out_addr_ready : std_logic;
-   signal osb_out_addr_data  : std_logic_vector(15 downto 0);
+   signal tsf_in_addr_ready  : std_logic;
+   signal tsf_in_addr_afull  : std_logic;
+   signal tsf_out_addr_valid : std_logic;
+   signal tsf_out_addr_ready : std_logic;
+   signal tsf_out_addr_data  : std_logic_vector(15 downto 0);
 
    signal osb_in_data_ready  : std_logic;
    signal osb_out_data_valid : std_logic;
@@ -80,7 +80,7 @@ begin
          end if;
 
          -- Start new transaction when ready to receive response
-         if (osb_out_addr_ready or not osb_in_addr_afull) and osb_in_data_ready then
+         if (tsf_out_addr_ready or not tsf_in_addr_afull) and osb_in_data_ready then
             wb_cyc_o  <= '1';
             wb_stb_o  <= '1';
          end if;
@@ -114,16 +114,16 @@ begin
          clk_i     => clk_i,
          rst_i     => rst_i,
          s_valid_i => wb_cyc_o and wb_stb_o,
-         s_ready_o => osb_in_addr_ready,
+         s_ready_o => tsf_in_addr_ready,
          s_data_i  => wb_addr_o,
-         s_afull_o => osb_in_addr_afull,
-         m_valid_o => osb_out_addr_valid,
-         m_ready_i => osb_out_addr_ready or dc_valid_i,
-         m_data_o  => osb_out_addr_data
-      ); -- i_one_stage_buffer_addr
+         s_afull_o => tsf_in_addr_afull,
+         m_valid_o => tsf_out_addr_valid,
+         m_ready_i => tsf_out_addr_ready or dc_valid_i,
+         m_data_o  => tsf_out_addr_data
+      ); -- i_two_stage_fifo_addr
 
 
-   i_one_stage_fifo_data : entity work.one_stage_buffer
+   i_one_stage_buffer_data : entity work.one_stage_buffer
       generic map (
          G_DATA_SIZE => 16
       )
@@ -146,12 +146,12 @@ begin
       port map (
          clk_i      => clk_i,
          rst_i      => rst_i,
+         s1_valid_i => tsf_out_addr_valid,
+         s1_ready_o => tsf_out_addr_ready,
+         s1_data_i  => tsf_out_addr_data,
          s0_valid_i => osb_out_data_valid,
          s0_ready_o => osb_out_data_ready,
          s0_data_i  => osb_out_data_data,
-         s1_valid_i => osb_out_addr_valid,
-         s1_ready_o => osb_out_addr_ready,
-         s1_data_i  => osb_out_addr_data,
          m_valid_o  => dc_valid_o,
          m_ready_i  => dc_ready_i,
          m_data_o   => dc_addr_data
