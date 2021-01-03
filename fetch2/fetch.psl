@@ -22,7 +22,7 @@ vunit i_fetch(fetch(synthesis))
    begin
       if rising_edge(clk_i) then
          -- Request without response
-         if wb_cyc_o and wb_stb_o and not wb_stall_i and not (wb_cyc_o and wb_ack_i) then
+         if (wb_cyc_o and wb_stb_o and not wb_stall_i) and not (wb_cyc_o and wb_ack_i) then
             f_wb_req_count <= f_wb_req_count + 1;
          end if;
 
@@ -83,21 +83,21 @@ vunit i_fetch(fetch(synthesis))
    f_wb_stable : assert always {wb_stb_o and wb_stall_i and not dc_valid_i and not rst_i} |=> {stable(wb_stb_o) and stable(wb_addr_o)};
 
    -- WISHBONE SLAVE: Only ACK an outstanding request
---   f_wb_ack_pending : assume always {wb_ack_i} |-> {f_wb_req_count > 0};
-   f_req : assert always {wb_cyc_o and wb_stb_o and not wb_stall_i} |=> {f_wb_req_count > 0};
-   f_ack : assert always {wb_cyc_o and wb_ack_i} |-> {f_wb_req_count > 0};
+   f_wb_req_active : assert always {wb_cyc_o and wb_stb_o and not wb_stall_i} |=> {f_wb_req_count > 0};
+   f_wb_ack_active : assert always {wb_cyc_o and wb_ack_i} |-> {f_wb_req_count > 0};
 
+   -- WISHBONE MASTER: CYC is held high only while waiting for responses
    f_wb_idle : assert always {wb_cyc_o and not wb_stb_o} |-> {f_wb_req_count > 0};
 
    -- Keep track of addresses expected to be requested on the WISHBONE bus
    p_wb_addr : process (clk_i)
    begin
       if rising_edge(clk_i) then
-         if wb_cyc_o = '1' and wb_stb_o = '1' and wb_stall_i = '0' then
+         if wb_cyc_o and wb_stb_o and not wb_stall_i then
             f_wb_addr <= f_wb_addr + 1;
          end if;
 
-         if dc_valid_i = '1' then
+         if dc_valid_i then
             f_wb_addr <= dc_addr_i;
          end if;
       end if;
@@ -174,21 +174,21 @@ vunit i_fetch(fetch(synthesis))
 
    -- Assume DECODE starts by sending a new PC right after reset.
    -- This is to ensure BMC starts in a valid state.
-   f_dc_after_reset : assume always {rst_i} |=> dc_valid_i;
-   f_dc_after_reset2 : assume always {not rst_i} |=> not dc_valid_i;
+   f_dc_after_reset : assume always {rst_i} |=> {dc_valid_i};
+   f_dc_after_reset2 : assume always {not rst_i} |=> {not dc_valid_i};
 
 --   assume always {dc_ready_i};
    assume always {not wb_stall_i};
-   assume always {wb_stb_o and not wb_stall_i and not rst_i} |=> wb_ack_i;
+   assume always {wb_stb_o and not wb_stall_i and not rst_i} |=> {wb_ack_i};
 
+   assume always {dc_ready_i and not dc_valid_o} |=> {dc_ready_i};
 
    --------------------------------------------
    -- INTERNAL ASSERTIONS
    --------------------------------------------
 
---   f_osb_stable : assert always {osb_in_valid and not osb_in_ready and not rst_i and not dc_valid_i} |=> {stable(osb_in_valid) and stable(osb_in_data)};
-   f_tsf_ready : assert always {wb_cyc_o and wb_stb_o} |-> {tsf_in_addr_ready};
-
+   f_addr_ready : assert always {wb_cyc_o and wb_stb_o} |-> {tsf_in_addr_ready};
+   f_data_ready : assert always {wb_cyc_o and wb_ack_i} |-> {osb_in_data_ready};
 
    --------------------------------------------
    -- COVER STATEMENTS TO VERIFY REACHABILITY
@@ -199,6 +199,9 @@ vunit i_fetch(fetch(synthesis))
 
    -- DECODE stage receives two data cycles back-to-back
    f_dc_back2back : cover {dc_valid_o and dc_ready_i; dc_valid_o};
+
+   -- DECODE stage receives three data cycles back-to-back
+   f_dc_back3back : cover {dc_valid_o and dc_ready_i; dc_valid_o and dc_ready_i; dc_valid_o};
 
 } -- vunit i_fetch(fetch(synthesis))
 
