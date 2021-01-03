@@ -1,0 +1,98 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Sun Jan  3 09:26:29 2021
+[*]
+[dumpfile] "/home/mike/git/MJoergen/formal/fetch/fetch_prove/engine_0/trace_induct.vcd"
+[dumpfile_mtime] "Sun Jan  3 09:21:33 2021"
+[dumpfile_size] 14794
+[savefile] "/home/mike/git/MJoergen/formal/fetch/fetch.gtkw"
+[timestart] 0
+[size] 1885 1091
+[pos] 18 0
+*-4.633660 134 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] fetch.
+[sst_width] 313
+[signals_width] 338
+[sst_expanded] 1
+[sst_vpaned_height] 313
+@28
+fetch.clk_i
+fetch.rst_i
+@200
+-
+@28
+[color] 2
+fetch.dc_valid_i
+@22
+fetch.dc_addr_i[15:0]
+@200
+-
+@28
+[color] 2
+fetch.wb_cyc_o
+[color] 2
+fetch.wb_stb_o
+[color] 7
+fetch.wb_stall_i
+@22
+fetch.wb_addr_o[15:0]
+@200
+-
+@28
+[color] 2
+fetch.wb_ack_i
+@22
+fetch.wb_data_i[15:0]
+@200
+-
+@28
+[color] 2
+fetch.dc_valid_o
+[color] 7
+fetch.dc_ready_i
+@22
+fetch.dc_addr_o[15:0]
+fetch.dc_data_o[15:0]
+@200
+-
+@800200
+-formal
+@24
+fetch.i_fetch.f_wb_stall_delay[1:0]
+fetch.i_fetch.f_wb_req_count[1:0]
+@22
+fetch.i_fetch.f_wb_addr[15:0]
+@24
+fetch.i_fetch.f_wb_ack_delay[1:0]
+fetch.i_fetch.f_dc_stall_delay[1:0]
+@28
+fetch.i_fetch.f_dc_last_addr_valid
+@22
+fetch.i_fetch.f_dc_last_addr[15:0]
+@1000200
+-formal
+@200
+-
+@800200
+-osb_addr
+@28
+[color] 2
+fetch.i_two_stage_fifo_addr.s_valid_i
+[color] 7
+fetch.i_two_stage_fifo_addr.s_ready_o
+@22
+fetch.i_two_stage_fifo_addr.s_data_i[15:0]
+@28
+fetch.i_two_stage_fifo_addr.s_afull_o
+[color] 2
+fetch.i_two_stage_fifo_addr.m_valid_o
+[color] 7
+fetch.i_two_stage_fifo_addr.m_ready_i
+@22
+fetch.i_two_stage_fifo_addr.m_data_o[15:0]
+@24
+fetch.i_two_stage_fifo_addr.state_r[1:0]
+@1000200
+-osb_addr
+[pattern_trace] 1
+[pattern_trace] 0

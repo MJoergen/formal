@@ -1,0 +1,203 @@
+vunit i_fetch(fetch(synthesis))
+{
+
+   signal f_wb_req_count       : integer range 0 to 3 := 0;
+   signal f_wb_stall_delay     : integer range 0 to 3 := 0;
+   signal f_wb_ack_delay       : integer range 0 to 3 := 0;
+   signal f_wb_addr            : std_logic_vector(15 downto 0) := (others => '0');
+   signal f_dc_stall_delay     : integer range 0 to 3 := 0;
+   signal f_dc_last_addr_valid : std_logic := '0';
+   signal f_dc_last_addr       : std_logic_vector(15 downto 0) := (others => '0');
+
+   -- set all declarations to run on clk
+   default clock is rising_edge(clk_i);
+
+
+   ------------------------------------------------
+   -- PROPERTIES OF THE WISHBONE MASTER INTERFACE
+   ------------------------------------------------
+
+   -- Count the number of outstanding WISHBONE requests
+   p_wb_req_count : process (clk_i)
+   begin
+      if rising_edge(clk_i) then
+         -- Request without response
+         if wb_cyc_o and wb_stb_o and not wb_stall_i and not (wb_cyc_o and wb_ack_i) then
+            f_wb_req_count <= f_wb_req_count + 1;
+         end if;
+
+         -- Reponse without request
+         if not(wb_cyc_o and wb_stb_o and not wb_stall_i) and (wb_cyc_o and wb_ack_i) then
+            f_wb_req_count <= f_wb_req_count - 1;
+         end if;
+
+         -- If CYC goes low mid-transaction, the transaction is aborted.
+         if rst_i or not wb_cyc_o then
+            f_wb_req_count <= 0;
+         end if;
+      end if;
+   end process p_wb_req_count;
+
+   -- Count the number of clock cycles the WISHBONE SLAVE stalls
+   p_wb_stall_delay : process (clk_i)
+   begin
+      if rising_edge(clk_i) then
+         -- Stalled request
+         if wb_cyc_o and wb_stb_o and wb_stall_i then
+            f_wb_stall_delay <= f_wb_stall_delay + 1;
+         else
+            f_wb_stall_delay <= 0;
+         end if;
+      end if;
+   end process p_wb_stall_delay;
+
+   -- Count the number of clock cycles the WISHBONE SLAVE waits before responding
+   p_wb_ack_delay : process (clk_i)
+   begin
+      if rising_edge(clk_i) then
+         -- Transaction without response
+         if (f_wb_req_count > 0 or (wb_cyc_o = '1' and wb_stb_o = '1' and wb_stall_i = '0')) and wb_cyc_o = '1' and wb_ack_i = '0' then
+            f_wb_ack_delay <= f_wb_ack_delay + 1;
+         else
+            f_wb_ack_delay <= 0;
+         end if;
+      end if;
+   end process p_wb_ack_delay;
+
+   -- WISHBONE MASTER: At most two outstanding requests
+   f_wb_req_count_max : assert always {f_wb_req_count >= 2} |-> {not wb_stb_o};
+
+   -- WISHBONE SLAVE: Only stall for at most 2 clock cycles. This is an artifical constraint.
+   f_wb_stall_delay_max : assume always {f_wb_stall_delay <= 2};
+
+   -- WISHBONE SLAVE: Respond within at most 2 clock cycles. This is an artifical constraint.
+   f_wb_ack_delay_max : assume always {f_wb_ack_delay <= 2};
+
+   -- WISHBONE MASTER: STB must be low when CYC is low.
+   f_stb_low : assert always {not wb_cyc_o} |-> {not wb_stb_o} abort rst_i;
+
+   -- WISHBONE SLAVE: No ACKs without CYC
+   f_wb_ack_cyc : assume always {not wb_cyc_o or not wb_stb_o} |=> {not wb_ack_i};
+
+   -- WISHBONE MASTER: While a request is stalled it cannot change, except on reset or abort.
+   f_wb_stable : assert always {wb_stb_o and wb_stall_i and not dc_valid_i and not rst_i} |=> {stable(wb_stb_o) and stable(wb_addr_o)};
+
+   -- WISHBONE SLAVE: Only ACK an outstanding request
+--   f_wb_ack_pending : assume always {wb_ack_i} |-> {f_wb_req_count > 0};
+   f_req : assert always {wb_cyc_o and wb_stb_o and not wb_stall_i} |=> {f_wb_req_count > 0};
+   f_ack : assert always {wb_cyc_o and wb_ack_i} |-> {f_wb_req_count > 0};
+
+   f_wb_idle : assert always {wb_cyc_o and not wb_stb_o} |-> {f_wb_req_count > 0};
+
+   -- Keep track of addresses expected to be requested on the WISHBONE bus
+   p_wb_addr : process (clk_i)
+   begin
+      if rising_edge(clk_i) then
+         if wb_cyc_o = '1' and wb_stb_o = '1' and wb_stall_i = '0' then
+            f_wb_addr <= f_wb_addr + 1;
+         end if;
+
+         if dc_valid_i = '1' then
+            f_wb_addr <= dc_addr_i;
+         end if;
+      end if;
+   end process p_wb_addr;
+
+   -- Verify address requested on WISHBONE bus is as expected
+   f_wb_address : assert always {wb_cyc_o and wb_stb_o} |-> wb_addr_o = f_wb_addr abort rst_i;
+
+
+   ---------------------------------------
+   -- PROPERTIES OF THE DECODE INTERFACE
+   ---------------------------------------
+
+   -- Count the number of cycles we are waiting for DECODE stage to accept
+   p_dc_stall_delay : process (clk_i)
+   begin
+      if rising_edge(clk_i) then
+         if dc_valid_o and not dc_ready_i then
+            f_dc_stall_delay <= f_dc_stall_delay + 1;
+         else
+            f_dc_stall_delay <= 0;
+         end if;
+      end if;
+   end process p_dc_stall_delay;
+
+   -- Record the last valid address sent to the DECODE stage
+   p_dc_last_addr : process (clk_i)
+   begin
+      if rising_edge(clk_i) then
+         if dc_valid_o = '1' and dc_ready_i = '1' then
+            f_dc_last_addr_valid <= '1';
+            f_dc_last_addr <= dc_addr_o;
+         end if;
+
+         if rst_i = '1' or dc_valid_i = '1' then
+            f_dc_last_addr_valid <= '0';
+         end if;
+      end if;
+   end process p_dc_last_addr;
+
+   -- Verify that the DECODE output is stable while not received, unless aborted.
+   f_dc_stable : assert always {dc_valid_o and not dc_ready_i and not rst_i and not dc_valid_i} |=> {stable(dc_valid_o) and stable(dc_addr_o) and stable(dc_data_o)};
+
+   -- Artifically constrain the maximum amount of time the DECODE may stall
+   f_dc_stall_delay_max : assume always {f_dc_stall_delay <= 2};
+
+   -- Validate that the address forwarded to the DECODE stage continuously
+   -- increments by one.
+   f_dc_addr : assert always {dc_valid_o and dc_ready_i; f_dc_last_addr_valid and dc_valid_o} |-> {dc_addr_o = f_dc_last_addr + 1};
+
+
+   ----------------------------
+   -- VERIFYING THE DATA PATH
+   ----------------------------
+
+   -- We want to make sure that the DECODE stage receives the correct data.
+   -- We do this by artifically constraining the data received on the WISHBONE
+   -- interface.
+--   f_wb_data : assume always {wb_cyc_o and wb_ack_i} |-> wb_data_i = not wb_addr_o;
+
+   -- Verify data sent to DECODE satisfies the same artifical constraint as
+   -- the WISHBONE interface.
+--   f_dc_data : assert always {dc_valid_o} |-> dc_data_o = not dc_addr_o abort rst_i;
+
+
+   -----------------------------
+   -- ASSUMPTIONS ABOUT INPUTS
+   -----------------------------
+
+   -- Require reset at startup.
+   -- This is to ensure BMC starts in a valid state.
+   f_reset : assume {rst_i};
+   f_reset2 : assume always {not rst_i} |=> {not rst_i};
+
+   -- Assume DECODE starts by sending a new PC right after reset.
+   -- This is to ensure BMC starts in a valid state.
+   f_dc_after_reset : assume always {rst_i} |=> dc_valid_i;
+   f_dc_after_reset2 : assume always {not rst_i} |=> not dc_valid_i;
+
+--   assume always {dc_ready_i};
+   assume always {not wb_stall_i};
+   assume always {wb_stb_o and not wb_stall_i and not rst_i} |=> wb_ack_i;
+
+
+   --------------------------------------------
+   -- INTERNAL ASSERTIONS
+   --------------------------------------------
+
+--   f_osb_stable : assert always {osb_in_valid and not osb_in_ready and not rst_i and not dc_valid_i} |=> {stable(osb_in_valid) and stable(osb_in_data)};
+
+
+   --------------------------------------------
+   -- COVER STATEMENTS TO VERIFY REACHABILITY
+   --------------------------------------------
+
+   -- DECODE stage accepts data
+   f_dc_accept : cover {dc_valid_o; not dc_valid_o};
+
+   -- DECODE stage receives two data cycles back-to-back
+   f_dc_back2back : cover {dc_valid_o and dc_ready_i; dc_valid_o};
+
+} -- vunit i_fetch(fetch(synthesis))
+
