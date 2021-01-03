@@ -59,17 +59,33 @@ vunit i_two_stage_fifo(two_stage_fifo(synthesis))
    -- If FIFO is empty, no data present on output
    f_count_0 : assert always {f_count = 0} |-> {m_valid_o = '0'} abort rst_i;
 
-   f_state    : assert always {state_r = EMPTY_ST or state_r = ONE_ST or state_r = TWO_ST};
-   f_state_ready_01 : assert always {state_r = EMPTY_ST or state_r = ONE_ST} |-> s_ready_o;
-   f_state_ready_2  : assert always {state_r = TWO_ST} |-> not s_ready_o;
 
-   f_state_count_0 : assert always {state_r = EMPTY_ST} |-> {f_count = 0};
-   f_state_count_1 : assert always {state_r = ONE_ST}   |-> {f_count = 1};
-   f_state_count_2 : assert always {state_r = TWO_ST}   |-> {f_count = 2};
+   ------------------------------------
+   -- ASSERTIONS ABOUT INTERNAL STATE
+   ------------------------------------
 
-   f_state_afull_0 : assert always {state_r = EMPTY_ST} |-> {not s_afull_o};
-   f_state_afull_1 : assert always {state_r = ONE_ST}   |-> {s_afull_o};
-   f_state_afull_2 : assert always {state_r = TWO_ST}   |-> {s_afull_o};
+   f_state_ready_r  : assert always {state_r = RESET_ST} |-> not s_ready_o;
+   f_state_ready_0  : assert always {state_r = EMPTY_ST} |-> s_ready_o;
+   f_state_ready_1  : assert always {state_r = ONE_ST}   |-> s_ready_o;
+   f_state_ready_2  : assert always {state_r = TWO_ST}   |-> not s_ready_o;
+
+   f_state_afull_r  : assert always {state_r = RESET_ST} |-> {not s_afull_o};
+   f_state_afull_0  : assert always {state_r = EMPTY_ST} |-> {not s_afull_o};
+   f_state_afull_1  : assert always {state_r = ONE_ST}   |-> {s_afull_o};
+   f_state_afull_2  : assert always {state_r = TWO_ST}   |-> {s_afull_o};
+
+   f_state_mvalid_r : assert always {state_r = RESET_ST} |-> {not m_valid_o};
+   f_state_mvalid_0 : assert always {state_r = EMPTY_ST} |-> {not m_valid_o};
+   f_state_mvalid_1 : assert always {state_r = ONE_ST}   |-> {m_valid_o};
+   f_state_mvalid_2 : assert always {state_r = TWO_ST}   |-> {m_valid_o};
+
+   f_state_count_r  : assert always {state_r = RESET_ST} |-> {f_count = 0};
+   f_state_count_0  : assert always {state_r = EMPTY_ST} |-> {f_count = 0};
+   f_state_count_1  : assert always {state_r = ONE_ST}   |-> {f_count = 1};
+   f_state_count_2  : assert always {state_r = TWO_ST}   |-> {f_count = 2};
+
+   f_afull_mvalid : assert always {s_afull_o = m_valid_o};
+
 
    -----------------------------
    -- ASSUMPTIONS ABOUT INPUTS
