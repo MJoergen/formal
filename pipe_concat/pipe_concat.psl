@@ -8,11 +8,14 @@ vunit i_pipe_concat(pipe_concat(synthesis))
    -- ASSERTIONS ABOUT OUTPUTS
    -----------------------------
 
-   assert always {m_valid_o  and m_ready_i} |-> {s0_valid_i and s0_ready_o};
-   assert always {s0_valid_i and s0_ready_o}|-> {s1_valid_i and s1_ready_o};
-   assert always {s1_valid_i and s1_ready_o}|-> {m_valid_o  and m_ready_i};
+   f_data_flowm: assert always {m_valid_o  and m_ready_i} |-> {s0_valid_i and s0_ready_o};
+   f_data_flow0: assert always {s0_valid_i and s0_ready_o}|-> {s1_valid_i and s1_ready_o};
+   f_data_flow1: assert always {s1_valid_i and s1_ready_o}|-> {m_valid_o  and m_ready_i};
 
-   assert always {m_valid_o and m_ready_i} |-> {m_data_o = s1_data_i & s0_data_i};
+   f_data: assert always {m_valid_o and m_ready_i} |-> {m_data_o = s1_data_i & s0_data_i};
+
+   -- Output must be stable until accepted
+   f_output_stable : assert always {m_valid_o and not m_ready_i and not rst_i} |=> {stable(m_valid_o) and stable(m_data_o)};
 
 
    -----------------------------
@@ -21,6 +24,10 @@ vunit i_pipe_concat(pipe_concat(synthesis))
 
    -- Require reset at startup.
    f_reset : assume {rst_i};
+
+   -- Input must be stable until accepted
+   f_input0_stable : assume always {s0_valid_i and not s0_ready_o and not rst_i} |=> {stable(s0_valid_i) and stable(s0_data_i)};
+   f_input1_stable : assume always {s1_valid_i and not s1_ready_o and not rst_i} |=> {stable(s1_valid_i) and stable(s1_data_i)};
 
 
    --------------------------------------------
