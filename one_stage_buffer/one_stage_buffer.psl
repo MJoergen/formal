@@ -62,10 +62,10 @@ vunit i_one_stage_buffer (one_stage_buffer(synthesis))
    f_count_0_input : assert always {f_count = 0 and s_valid_i = '1'} |-> {m_valid_o = '1' and m_data_o = s_data_i} abort rst_i;
 
    -- If FIFO is empty and no input, no data present on output
-   f_state_0 : assert always {f_count = 0} |-> {m_valid_r = '0'} abort rst_i;
+   f_state_0 : assert always {f_count = 0} |-> {s_afull_o = '0'} abort rst_i;
 
    -- If FIFO is empty and no input, no data present on output
-   f_state_1 : assert always {f_count = 1} |-> {m_valid_r = '1'} abort rst_i;
+   f_state_1 : assert always {f_count = 1} |-> {s_afull_o = '1'} abort rst_i;
 
 
    -----------------------------

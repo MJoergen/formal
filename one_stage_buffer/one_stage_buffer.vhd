@@ -15,6 +15,7 @@ entity one_stage_buffer is
       s_valid_i : in  std_logic;
       s_ready_o : out std_logic;
       s_data_i  : in  std_logic_vector(G_DATA_SIZE-1 downto 0);
+      s_afull_o : out std_logic;
       m_valid_o : out std_logic;
       m_ready_i : in  std_logic;
       m_data_o  : out std_logic_vector(G_DATA_SIZE-1 downto 0)
@@ -45,12 +46,13 @@ begin
          end if;
 
          -- Valid data on the input
-         if s_valid_i = '1' and m_ready_i = '0' then
-            m_valid_r <= '1';
+         if s_ready_s = '1' and s_valid_i = '1' then
+            m_data_r  <= s_data_i;
          end if;
 
-         if s_valid_i = '1' and s_ready_s = '1' then
-            m_data_r  <= s_data_i;
+         -- Store in buffer
+         if m_ready_i = '0' and s_valid_i = '1' then
+            m_valid_r <= '1';
          end if;
 
          -- Reset empties the FIFO
@@ -61,6 +63,7 @@ begin
    end process p_buffer;
 
    -- Connect output signals
+   s_afull_o <= m_valid_r;
    s_ready_o <= s_ready_s;
    m_data_o  <= m_data_r when m_valid_r = '1' else s_data_i;
    m_valid_o <= m_valid_r or (s_valid_i and not rst_i);
