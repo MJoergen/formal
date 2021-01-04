@@ -23,8 +23,12 @@ line parameters.  This is demonstrated in the below examples.
 ## Example designs using formal verification
 * [One Stage Fifo](one_stage_fifo/). This is a kind of "hello world" of formal verification.
 * [One Stage Buffer](one_stage_buffer/). Another simple but useful module.
+* [Two Stage Fifo](two_stage_fifo/). Small FIFO useful for timing closure.
+* [Two Stage Buffer](two_stage_buffer/). Small FIFO useful for timing closure.
+* [Pipe_Concat](pipe_concat/). Concatenate two elastic pipe streams.
 * [Wishbone memory](wb_mem/). This is to learn about the wishbone bus protocol.
 * [Fetch](fetch/). The first "real" module. This is a simple instruction fetch module for a CPU.
+* [Fetch2](fetch2/). A second (more optimized) implementation of the instruction fetch module.
 
 ## Example puzzles using formal verification
 * [Fox, Goat, and Cabbage](fgc). This uses formal verification to solve a well-known puzzle.
