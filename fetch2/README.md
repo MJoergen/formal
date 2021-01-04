@@ -23,15 +23,16 @@ of these two FIFOs are concatenated and sent to the DECODE stage.
 In this particular version I expect the WISHBONE data to arrive on the next
 clock cycle, i.e. a latency of just one clock cycle. Therefore, at most two
 requests need to be stored in the address FIFO, and we can therefore use the
-pre-existing [two_stage_fifo](../two_stage_fifo). And to reduce latency I
-notice that the data FIFO can just be a simple
-[one_stage_buffer](../one_stage_buffer). So the bulk of the implementation is
-shown in the skeleton code below:
+pre-existing [two_stage_fifo](../two_stage_fifo).
+
+The data FIFO must also be able to store two words, and to reduce latency we
+can conveniently use a [two_stage_buffer](../two_stage_buffer). So the bulk of
+the implementation is shown in the skeleton code below:
 
 ```
 i_two_stage_fifo_addr : entity work.two_stage_fifo
    port map (
-      s_valid_i => wb_cyc_o and wb_stb_o,
+      s_valid_i => wb_cyc_o and wb_stb_o and not wb_stall_i,
       s_ready_o => tsf_in_addr_ready,
       s_data_i  => wb_addr_o,
       m_data_o  => tsf_out_addr_data
@@ -75,7 +76,7 @@ has no back pressure. So we have the corresponding ASSERT on the address fifo
 input:
 
 ```
-f_addr_ready : assert always {wb_cyc_o and wb_stb_o} |-> {tsf_in_addr_ready};
+f_addr_ready : assert always {wb_cyc_o and wb_stb_o and not wb_stall_i} |-> {tsf_in_addr_ready};
 ```
 
 Note that these two assertions make use of the internal signals
