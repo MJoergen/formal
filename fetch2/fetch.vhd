@@ -50,10 +50,10 @@ architecture synthesis of fetch is
    signal tsf_out_addr_ready : std_logic;
    signal tsf_out_addr_data  : std_logic_vector(15 downto 0);
 
-   signal osb_in_data_ready  : std_logic;
-   signal osb_out_data_valid : std_logic;
-   signal osb_out_data_ready : std_logic;
-   signal osb_out_data_data  : std_logic_vector(15 downto 0);
+   signal tsb_in_data_ready  : std_logic;
+   signal tsb_out_data_valid : std_logic;
+   signal tsb_out_data_ready : std_logic;
+   signal tsb_out_data_data  : std_logic_vector(15 downto 0);
 
 begin
 
@@ -85,7 +85,7 @@ begin
          end if;
 
          -- Start new transaction when ready to receive response
-         if (tsf_out_addr_ready or not tsf_in_addr_afull) and osb_in_data_ready then
+         if (tsf_out_addr_ready or not tsf_in_addr_afull) and tsb_in_data_ready then
             wb_cyc_o  <= '1';
             wb_stb_o  <= '1';
          end if;
@@ -125,11 +125,11 @@ begin
          clk_i     => clk_i,
          rst_i     => rst_i or dc_valid_i,
          s_valid_i => wb_cyc_o and wb_ack_i,
-         s_ready_o => osb_in_data_ready,
+         s_ready_o => tsb_in_data_ready,
          s_data_i  => wb_data_i,
-         m_valid_o => osb_out_data_valid,
-         m_ready_i => osb_out_data_ready,
-         m_data_o  => osb_out_data_data
+         m_valid_o => tsb_out_data_valid,
+         m_ready_i => tsb_out_data_ready,
+         m_data_o  => tsb_out_data_data
       ); -- i_one_stage_buffer_data
 
 
@@ -145,9 +145,9 @@ begin
          s1_valid_i => tsf_out_addr_valid,
          s1_ready_o => tsf_out_addr_ready,
          s1_data_i  => tsf_out_addr_data,
-         s0_valid_i => osb_out_data_valid,
-         s0_ready_o => osb_out_data_ready,
-         s0_data_i  => osb_out_data_data,
+         s0_valid_i => tsb_out_data_valid,
+         s0_ready_o => tsb_out_data_ready,
+         s0_data_i  => tsb_out_data_data,
          m_valid_o  => dc_valid_o,
          m_ready_i  => dc_ready_i,
          m_data_o(31 downto 16) => dc_addr_o,

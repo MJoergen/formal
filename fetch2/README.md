@@ -37,17 +37,17 @@ i_two_stage_fifo_addr : entity work.two_stage_fifo
       m_data_o  => tsf_out_addr_data
       etc...
 
-i_one_stage_buffer_data : entity work.one_stage_buffer
+i_two_stage_buffer_data : entity work.two_stage_buffer
    port map (
       s_valid_i => wb_cyc_o and wb_ack_i,
       s_data_i  => wb_data_i,
-      m_data_o  => osb_out_data_data
+      m_data_o  => tsb_out_data_data
       etc...
 
 i_pipe_concat : entity work.pipe_concat
    port map (
       s1_data_i              => tsf_out_addr_data,
-      s0_data_i              => osb_out_data_data,
+      s0_data_i              => tsb_out_data_data,
       m_valid_o              => dc_valid_o,
       m_ready_i              => dc_ready_i,
       m_data_o(31 downto 16) => dc_addr_o,
@@ -64,7 +64,8 @@ to accept it.  Basically, I want to ensure that `s_ready_o` is true whenever
 `s_valid_i` is.  This gives the following property:
 
 ```
-f_tsf_ready : assert always {wb_cyc_o and wb_stb_o} |-> {tsf_in_addr_ready};
+f_addr_ready : assert always {wb_cyc_o and wb_stb_o} |-> {tsf_in_addr_ready};
+f_data_ready : assert always {wb_cyc_o and wb_ack_i} |-> {tsb_in_data_ready};
 ```
 
 ## Formal verification

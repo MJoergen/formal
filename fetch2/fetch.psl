@@ -188,7 +188,7 @@ vunit i_fetch(fetch(synthesis))
    --------------------------------------------
 
    f_addr_ready : assert always {wb_cyc_o and wb_stb_o} |-> {tsf_in_addr_ready};
-   f_data_ready : assert always {wb_cyc_o and wb_ack_i} |-> {osb_in_data_ready};
+   f_data_ready : assert always {wb_cyc_o and wb_ack_i} |-> {tsb_in_data_ready};
 
    --------------------------------------------
    -- COVER STATEMENTS TO VERIFY REACHABILITY
