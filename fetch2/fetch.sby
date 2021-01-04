@@ -5,12 +5,12 @@ prove
 
 [options]
 bmc: mode bmc
-bmc: depth 13
+bmc: depth 10
 cover: mode cover
-cover: depth 13
-cover: append 4
+cover: depth 10
+cover: append 2
 prove: mode prove
-prove: depth 13
+prove: depth 10
 
 [engines]
 smtbmc

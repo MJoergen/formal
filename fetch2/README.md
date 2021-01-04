@@ -40,6 +40,7 @@ i_two_stage_fifo_addr : entity work.two_stage_fifo
 i_two_stage_buffer_data : entity work.two_stage_buffer
    port map (
       s_valid_i => wb_cyc_o and wb_ack_i,
+      s_ready_o => tsb_in_data_ready,
       s_data_i  => wb_data_i,
       m_data_o  => tsb_out_data_data
       etc...
@@ -56,17 +57,27 @@ i_pipe_concat : entity work.pipe_concat
 ```
 
 With this approach I'm guaranteed that the address and data signals will always
-be in sync.
+be in sync.  The only remaining code is controlling the WISHBONE requests.
 
-The only remaining code is controlling the WISHBONE requests. I want to make
-sure that when the request is issued that the `two_stage_fifo` will have room
-to accept it.  Basically, I want to ensure that `s_ready_o` is true whenever
-`s_valid_i` is.  This gives the following property:
+## Formal verification
+
+In the implementation above notice that the data received from the WISHBONE
+interface has no back-pressure. Therefore, we must ASSERT that the
+`two_stage_buffer` always will accept the incoming data. This is handled by the
+following assertion.
 
 ```
-f_addr_ready : assert always {wb_cyc_o and wb_stb_o} |-> {tsf_in_addr_ready};
 f_data_ready : assert always {wb_cyc_o and wb_ack_i} |-> {tsb_in_data_ready};
 ```
 
-## Formal verification
+The same property must hold because the address entering the address fifo also
+has no back pressure. So we have the corresponding ASSERT on the address fifo
+input:
+
+```
+f_addr_ready : assert always {wb_cyc_o and wb_stb_o} |-> {tsf_in_addr_ready};
+```
+
+Note that these two assertions make use of the internal signals
+`tsb_in_data_ready` and `tsf_in_addr_ready`.
 

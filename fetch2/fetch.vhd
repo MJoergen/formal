@@ -73,8 +73,8 @@ begin
 
          -- Clear transaction when response received
          if wb_cyc_o and not wb_stb_o and wb_ack_i then
-            wb_cyc_o  <= '0';
-            wb_stb_o  <= '0';
+            wb_cyc_o <= '0';
+            wb_stb_o <= '0';
          end if;
 
          -- Abort current wishbone transaction
@@ -85,9 +85,9 @@ begin
          end if;
 
          -- Start new transaction when ready to receive response
-         if (tsf_out_addr_ready or not tsf_in_addr_afull) and tsb_in_data_ready then
-            wb_cyc_o  <= '1';
-            wb_stb_o  <= '1';
+         if (tsf_out_addr_ready or not tsf_in_addr_afull) and tsb_in_data_ready and not (wb_cyc_o and dc_valid_i) then
+            wb_cyc_o <= '1';
+            wb_stb_o <= '1';
          end if;
 
          if rst_i = '1' then
@@ -106,7 +106,7 @@ begin
       port map (
          clk_i     => clk_i,
          rst_i     => rst_i or dc_valid_i,
-         s_valid_i => wb_cyc_o and wb_stb_o,
+         s_valid_i => wb_cyc_o and wb_stb_o and not wb_stall_i,
          s_ready_o => tsf_in_addr_ready,
          s_data_i  => wb_addr_o,
          s_afull_o => tsf_in_addr_afull,
