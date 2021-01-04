@@ -14,7 +14,10 @@ vunit i_two_stage_fifo(two_stage_fifo(synthesis))
    -----------------------------
 
    -- FIFO must be empty after reset
-   f_after_reset : assert always {rst_i} |=> not m_valid_o;
+   f_after_reset_empty : assert always {rst_i} |=> not m_valid_o;
+
+   -- FIFO must be ready after reset
+   f_after_reset_ready : assert always {rst_i} |=> s_ready_o;
 
    -- Output must be stable until accepted
    f_output_stable : assert always {m_valid_o and not m_ready_i and not rst_i} |=> {stable(m_valid_o) and stable(m_data_o)};
@@ -103,5 +106,5 @@ vunit i_two_stage_fifo(two_stage_fifo(synthesis))
    f_full_to_empty : cover {m_valid_o and not rst_i; not m_valid_o};
    f_back2back : cover {m_valid_o and m_ready_i; m_valid_o};
 
-} -- vunit i_one_stage_buffer(one_stage_buffer(synthesis))
+} -- vunit i_two_stage_fifo(two_stage_fifo(synthesis))
 
