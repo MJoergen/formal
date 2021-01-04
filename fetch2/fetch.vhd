@@ -77,12 +77,6 @@ begin
             wb_stb_o  <= '0';
          end if;
 
-         -- Start new transaction when ready to receive response
-         if (tsf_out_addr_ready or not tsf_in_addr_afull) and osb_in_data_ready then
-            wb_cyc_o  <= '1';
-            wb_stb_o  <= '1';
-         end if;
-
          -- Abort current wishbone transaction
          if dc_valid_i = '1' then
             wb_addr_o <= dc_addr_i;
@@ -90,10 +84,10 @@ begin
             wb_stb_o <= '0';
          end if;
 
-         -- If no current transaction start new one immediately
-         if dc_valid_i = '1' and wb_cyc_o = '0' then
-            wb_cyc_o <= '1';
-            wb_stb_o <= '1';
+         -- Start new transaction when ready to receive response
+         if (tsf_out_addr_ready or not tsf_in_addr_afull) and osb_in_data_ready then
+            wb_cyc_o  <= '1';
+            wb_stb_o  <= '1';
          end if;
 
          if rst_i = '1' then
@@ -123,7 +117,7 @@ begin
 
 
    -- FIFO to store the WISHBONE data
-   i_one_stage_buffer_data : entity work.one_stage_buffer
+   i_one_stage_buffer_data : entity work.two_stage_buffer
       generic map (
          G_DATA_SIZE => 16
       )

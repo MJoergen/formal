@@ -16,7 +16,7 @@ prove: depth 13
 smtbmc
 
 [script]
-ghdl --std=08 fetch.vhd one_stage_buffer.vhd two_stage_fifo.vhd pipe_concat.vhd fetch.psl two_stage_fifo.psl -e fetch
+ghdl --std=08 fetch.vhd one_stage_buffer.vhd one_stage_buffer.psl two_stage_buffer.vhd two_stage_buffer.psl two_stage_fifo.vhd pipe_concat.vhd fetch.psl two_stage_fifo.psl -e fetch
 prep -top fetch
 
 [files]
@@ -24,7 +24,9 @@ fetch.vhd
 fetch.psl
 ../pipe_concat/pipe_concat.vhd
 ../one_stage_buffer/one_stage_buffer.vhd
-../one_stage_fifo/one_stage_fifo.vhd
+../one_stage_buffer/one_stage_buffer.psl
+../two_stage_buffer/two_stage_buffer.vhd
+../two_stage_buffer/two_stage_buffer.psl
 ../two_stage_fifo/two_stage_fifo.vhd
 ../two_stage_fifo/two_stage_fifo.psl
 

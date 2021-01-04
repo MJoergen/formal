@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Sun Jan  3 20:10:54 2021
+[*] Mon Jan  4 06:22:48 2021
 [*]
-[dumpfile] "/home/mike/git/MJoergen/formal/fetch2/fetch_bmc/engine_0/trace.vcd"
-[dumpfile_mtime] "Sun Jan  3 20:09:05 2021"
-[dumpfile_size] 6851
+[dumpfile] "/home/mike/git/MJoergen/formal/fetch2/fetch_cover/engine_0/trace6.vcd"
+[dumpfile_mtime] "Mon Jan  4 06:21:48 2021"
+[dumpfile_size] 12631
 [savefile] "/home/mike/git/MJoergen/formal/fetch2/fetch.gtkw"
 [timestart] 0
 [size] 1885 1091
 [pos] 18 0
-*-4.633660 134 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-4.633660 36 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] fetch.
 [sst_width] 313
 [signals_width] 338
@@ -73,7 +73,7 @@ fetch.i_fetch.f_dc_last_addr[15:0]
 -formal
 @200
 -
-@c00200
+@800200
 -tsf_addr
 @28
 [color] 2
@@ -92,8 +92,10 @@ fetch.i_two_stage_fifo_addr.m_ready_i
 fetch.i_two_stage_fifo_addr.m_data_o[15:0]
 @24
 fetch.i_two_stage_fifo_addr.state_r[1:0]
-@1401200
+@1000200
 -tsf_addr
+@200
+-
 @800200
 -osb_data
 @28
