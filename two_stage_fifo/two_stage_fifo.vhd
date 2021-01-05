@@ -27,15 +27,11 @@ architecture synthesis of two_stage_fifo is
    signal s_data_r  : std_logic_vector(G_DATA_SIZE-1 downto 0);
 
    -- Output registers
-   signal m_data_r  : std_logic_vector(G_DATA_SIZE-1 downto 0) := (others => '0');
+   signal m_data_r  : std_logic_vector(G_DATA_SIZE-1 downto 0);
 
    -- Control signals
-   signal s_afull_r : std_logic := '0';
-   signal s_ready_r : std_logic := '0';
+   signal s_ready_r : std_logic := '1';
    signal m_valid_r : std_logic := '0';
-
-   type state_t is (EMPTY_ST, ONE_ST, TWO_ST, RESET_ST);
-   signal state_r : state_t := RESET_ST;
 
 begin
 
@@ -46,18 +42,16 @@ begin
    p_fsm : process (clk_i)
    begin
       if rising_edge(clk_i) then
-         case state_r is
-            when EMPTY_ST =>
+         case std_logic_vector'(m_valid_o & s_ready_o) is
+            when "01" =>
                if s_valid_i = '1' then
                   -- Ready is already asserted, so we have to accept the data
                   m_data_r  <= s_data_i;
 
                   m_valid_r <= '1';
-                  s_afull_r <= '1';
-                  state_r   <= ONE_ST;
                end if;
 
-            when ONE_ST =>
+            when "11" =>
                -- The pipe has valid data in m_*
                case std_logic_vector'(m_ready_i & s_valid_i) is
                   when "00" =>
@@ -67,14 +61,10 @@ begin
                      -- Increase pipeline
                      s_data_r  <= s_data_i;
                      s_ready_r <= '0';
-                     s_afull_r <= '1';
-                     state_r   <= TWO_ST;
 
                   when "10" =>
                      -- Decrease pipeline
                      m_valid_r <= '0';
-                     s_afull_r <= '0';
-                     state_r   <= EMPTY_ST;
 
                   when "11" =>
                      m_data_r  <= s_data_i;
@@ -82,29 +72,24 @@ begin
                   when others => null;
                end case;
 
-            when TWO_ST =>
+            when "10" =>
                -- The pipe has valid data in both s_* and m_*
                if m_ready_i = '1' then
                   -- Valid is asserted, so data has been accepted
                   m_data_r  <= s_data_r;
 
                   s_ready_r <= '1';
-                  s_afull_r <= '1';
-                  state_r   <= ONE_ST;
                end if;
 
-            when RESET_ST =>
+            when others =>
                s_ready_r <= '1';
-               s_afull_r <= '0';
                m_valid_r <= '0';
-               state_r   <= EMPTY_ST;
+
          end case;
 
          if rst_i = '1' then
             s_ready_r <= '1';
-            s_afull_r <= '0';
             m_valid_r <= '0';
-            state_r   <= EMPTY_ST;
          end if;
       end if;
    end process p_fsm;
@@ -114,7 +99,7 @@ begin
    -- Connect output signals
    --------------------------
 
-   s_afull_o <= s_afull_r;
+   s_afull_o <= m_valid_r;
    s_ready_o <= s_ready_r;
    m_valid_o <= m_valid_r;
    m_data_o  <= m_data_r;

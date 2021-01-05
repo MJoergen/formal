@@ -56,36 +56,13 @@ vunit i_two_stage_fifo(two_stage_fifo(synthesis))
    -- The FIFO size is limited to 2.
    f_size : assert always {0 <= f_count and f_count <= 2};
 
-   -- If FIFO is full, it must always present valid data on output
-   f_count_1 : assert always {f_count >= 1} |-> {m_valid_o = '1'} abort rst_i;
+   f_count_0_valid : assert always {f_count = 0} |-> {not m_valid_o};
+   f_count_1_valid : assert always {f_count = 1} |-> {m_valid_o};
+   f_count_2_valid : assert always {f_count = 2} |-> {m_valid_o};
 
-   -- If FIFO is empty, no data present on output
-   f_count_0 : assert always {f_count = 0} |-> {m_valid_o = '0'} abort rst_i;
-
-
-   ------------------------------------
-   -- ASSERTIONS ABOUT INTERNAL STATE
-   ------------------------------------
-
-   f_state_ready_r  : assert always {state_r = RESET_ST} |-> not s_ready_o;
-   f_state_ready_0  : assert always {state_r = EMPTY_ST} |-> s_ready_o;
-   f_state_ready_1  : assert always {state_r = ONE_ST}   |-> s_ready_o;
-   f_state_ready_2  : assert always {state_r = TWO_ST}   |-> not s_ready_o;
-
-   f_state_afull_r  : assert always {state_r = RESET_ST} |-> {not s_afull_o};
-   f_state_afull_0  : assert always {state_r = EMPTY_ST} |-> {not s_afull_o};
-   f_state_afull_1  : assert always {state_r = ONE_ST}   |-> {s_afull_o};
-   f_state_afull_2  : assert always {state_r = TWO_ST}   |-> {s_afull_o};
-
-   f_state_mvalid_r : assert always {state_r = RESET_ST} |-> {not m_valid_o};
-   f_state_mvalid_0 : assert always {state_r = EMPTY_ST} |-> {not m_valid_o};
-   f_state_mvalid_1 : assert always {state_r = ONE_ST}   |-> {m_valid_o};
-   f_state_mvalid_2 : assert always {state_r = TWO_ST}   |-> {m_valid_o};
-
-   f_state_count_r  : assert always {state_r = RESET_ST} |-> {f_count = 0};
-   f_state_count_0  : assert always {state_r = EMPTY_ST} |-> {f_count = 0};
-   f_state_count_1  : assert always {state_r = ONE_ST}   |-> {f_count = 1};
-   f_state_count_2  : assert always {state_r = TWO_ST}   |-> {f_count = 2};
+   f_count_0_ready : assert always {f_count = 0} |-> {s_ready_o};
+   f_count_1_ready : assert always {f_count = 1} |-> {s_ready_o};
+   f_count_2_ready : assert always {f_count = 2} |-> {not s_ready_o};
 
    f_afull_mvalid : assert always {s_afull_o = m_valid_o};
 
