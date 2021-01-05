@@ -73,6 +73,8 @@ vunit i_two_stage_buffer(two_stage_buffer(synthesis))
    f_int1 : assert always {f_count = 1} |-> {    int_afull and not s_afull_o} abort rst_i;
    f_int0 : assert always {f_count = 0} |-> {not int_afull and not s_afull_o} abort rst_i;
 
+   f_fill : assert always {f_count = to_integer(s_fill_o)} abort rst_i;
+
 
    -----------------------------
    -- ASSUMPTIONS ABOUT INPUTS

@@ -16,6 +16,7 @@ entity two_stage_buffer is
       s_ready_o : out std_logic;
       s_data_i  : in  std_logic_vector(G_DATA_SIZE-1 downto 0);
       s_afull_o : out std_logic;
+      s_fill_o  : out std_logic_vector(1 downto 0);
       m_valid_o : out std_logic;
       m_ready_i : in  std_logic;
       m_data_o  : out std_logic_vector(G_DATA_SIZE-1 downto 0)
@@ -30,6 +31,11 @@ architecture synthesis of two_stage_buffer is
    signal int_afull : std_logic;
 
 begin
+
+   s_fill_o <= "00" when not int_afull and not s_afull_o else
+               "01" when     int_afull and not s_afull_o else
+               "10" when     int_afull and     s_afull_o else
+               "11";
 
    i_osb_first : entity work.one_stage_buffer
       generic map (
