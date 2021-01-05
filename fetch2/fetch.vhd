@@ -52,6 +52,7 @@ architecture synthesis of fetch is
 
    signal tsb_in_data_ready  : std_logic;
    signal tsb_in_data_afull  : std_logic;
+   signal tsb_in_data_fill   : std_logic_vector(1 downto 0);
    signal tsb_out_data_valid : std_logic;
    signal tsb_out_data_ready : std_logic;
    signal tsb_out_data_data  : std_logic_vector(15 downto 0);
@@ -72,10 +73,9 @@ begin
             wb_addr_o <= wb_addr_o + 1;
          end if;
 
-         -- Clear transaction when response received
-         if wb_cyc_o and not wb_stb_o and wb_ack_i then
+         -- Clear transaction when no requests active
+         if not tsf_in_addr_afull then
             wb_cyc_o <= '0';
-            wb_stb_o <= '0';
          end if;
 
          -- Abort current wishbone transaction
@@ -129,6 +129,7 @@ begin
          s_ready_o => tsb_in_data_ready,
          s_data_i  => wb_data_i,
          s_afull_o => tsb_in_data_afull,
+         s_fill_o  => tsb_in_data_fill,
          m_valid_o => tsb_out_data_valid,
          m_ready_i => tsb_out_data_ready,
          m_data_o  => tsb_out_data_data
