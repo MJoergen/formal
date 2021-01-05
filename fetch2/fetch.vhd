@@ -51,6 +51,7 @@ architecture synthesis of fetch is
    signal tsf_out_addr_data  : std_logic_vector(15 downto 0);
 
    signal tsb_in_data_ready  : std_logic;
+   signal tsb_in_data_afull  : std_logic;
    signal tsb_out_data_valid : std_logic;
    signal tsb_out_data_ready : std_logic;
    signal tsb_out_data_data  : std_logic_vector(15 downto 0);
@@ -117,7 +118,7 @@ begin
 
 
    -- FIFO to store the WISHBONE data
-   i_one_stage_buffer_data : entity work.two_stage_buffer
+   i_two_stage_buffer_data : entity work.two_stage_buffer
       generic map (
          G_DATA_SIZE => 16
       )
@@ -127,10 +128,11 @@ begin
          s_valid_i => wb_cyc_o and wb_ack_i,
          s_ready_o => tsb_in_data_ready,
          s_data_i  => wb_data_i,
+         s_afull_o => tsb_in_data_afull,
          m_valid_o => tsb_out_data_valid,
          m_ready_i => tsb_out_data_ready,
          m_data_o  => tsb_out_data_data
-      ); -- i_one_stage_buffer_data
+      ); -- i_two_stage_buffer_data
 
 
    -- Concatenate WISHBONE address and data

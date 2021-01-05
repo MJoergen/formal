@@ -8,6 +8,8 @@ vunit i_fetch(fetch(synthesis))
    signal f_dc_stall_delay     : integer range 0 to 3 := 0;
    signal f_dc_last_addr_valid : std_logic := '0';
    signal f_dc_last_addr       : std_logic_vector(15 downto 0) := (others => '0');
+   signal f_tsf_addr_size      : integer range 0 to 2 := 0;
+   signal f_tsb_data_size      : integer range 0 to 2 := 0;
 
    -- set all declarations to run on clk
    default clock is rising_edge(clk_i);
@@ -208,7 +210,32 @@ vunit i_fetch(fetch(synthesis))
    -- ADDITIONAL ASSERTS NEEDED FOR K-INDUCTION
    ----------------------------------------------
 
-   f_wb_req_3 : assert always {f_wb_req_count <= 2};
+   p_tsf_addr_size : process (tsf_out_addr_valid, tsf_in_addr_ready)
+   begin
+      case std_logic_vector'(tsf_out_addr_valid & tsf_in_addr_ready) is
+         when "01" => f_tsf_addr_size <= 0;
+         when "11" => f_tsf_addr_size <= 1;
+         when "10" => f_tsf_addr_size <= 2;
+         when others => f_tsf_addr_size <= 0; assert false;
+      end case;
+   end process p_tsf_addr_size;
+
+   p_tsb_data_size : process (tsb_in_data_afull, tsb_out_data_valid)
+   begin
+      case std_logic_vector'(tsb_in_data_afull & tsb_out_data_valid) is
+         when "00" => f_tsb_data_size <= 0;
+         when "01" => f_tsb_data_size <= 1;
+         when "11" => f_tsb_data_size <= 2;
+         when others => f_tsb_data_size <= 0; assert false;
+      end case;
+   end process p_tsb_data_size;
+
+   f_addr_data_size : assert f_tsf_addr_size = f_tsb_data_size + f_wb_req_count;
+
+--   f_wb_req_3 : assert always {f_wb_req_count <= 2};
+
+   -- No data without an address
+--   f_data_addr : assert always {tsb_out_data_valid} |-> {tsf_out_addr_valid};
 
 
    ----------------------------------------------
