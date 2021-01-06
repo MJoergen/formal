@@ -23,7 +23,7 @@ clean:
 
 # Synthesis
 
-work-obj08.cf: $(DUT).vhd
+work-obj08.cf: ../one_stage_buffer/one_stage_buffer.vhd $(DUT).vhd
 	ghdl -a -fpsl --std=08 $^
 
 synth: work-obj08.cf
