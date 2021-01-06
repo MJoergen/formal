@@ -18,12 +18,16 @@ simultaneously (i.e. in the same clock cycle) move data into the FIFO and out
 of the FIFO, regardless of whether the FIFO is empty or full.
 
 Although not strictly necessary for the correct operation of this protocol,
-I've added an additional constraint: When the upstream has asserted VALID, and
+I've added two additional constraints: When the upstream has asserted VALID, and
 READY is not yet asserted, the signals DATA and VALID are required to remain
 unchanged, until the data transfer has completed.  In other words, the sender
 may not "change its mind" once it has announced that data is waiting.  This
 requirement is not strictly necessary, but is kind of "common sense". However,
 it does mean the sender is not able to "abort" a transfer.
+
+The second requirement is that once a consumer asserts ready, then the ready
+signal must remain asserted until new data is received. The idea is that the
+only reason a consumer will become not ready is by receiving new data.
 
 One thing to note about this protocol is that the upstream READY signal (back
 towards the producer) is often combinatorial, whereas the downstrean VALID and
@@ -33,9 +37,37 @@ combinatorial path can be registered for improved timing, but requires a
 two-stage FIFO. More on that later.
 
 ## The implementation
-The FIFO implementation is found [here](one_stage_fifo.vhd), whereas the
-commands for the formal verification are in a separate [PSL
-file](one_stage_fifo.psl).
+The FIFO implementation is found [here](one_stage_fifo.vhd). The implementation
+is quite simple and I'll just go over it very quickly. It consists of a single
+process controlling the registered outputs `m_valid_r` and `m_data_r`.
+
+The first part of the process handles acknowledgement from the consumer:
+```
+if m_ready_i = '1' then
+   m_valid_r <= '0';
+end if;
+```
+This statement prevents any data from lingering on the output signals after it
+has been received by the consumer.  Note: It is important to place this logic
+in the beginning of the process, so later statements may override. 
+
+Next we handle the case of incoming data:
+```
+if s_ready_o = '1' and s_valid_i = '1' then
+   m_data_r  <= s_data_i;
+   m_valid_r <= '1';
+end if;
+```
+The key point here is that when both VALID and READY are asserted, then the
+input data must be taken care of in that clock cycle.
+
+Finally, we handle reset:
+```
+if rst_i = '1' then
+   m_valid_r <= '0';
+end if;
+```
+There is no need to reset the `m_data_r` signal.
 
 ## Formal verification
 Instead of writing a testbench that manually generates stimuli, we envision the
@@ -48,11 +80,11 @@ of this contract. If the tool is successful, it will generate a testbench and
 waveform showing the exact failure.
 
 To be more concrete we will be formulate the requirements of the contract using
-[PSL assertions](http://www.project-veripage.com/psl_tutorial_1.php). The
-assertions in PSL are more powerful (i.e. allow more complex
-constructions) than regular VHDL assertions. The process of writing these `assert` commands
-is non-trivial, and takes some practice. I will describe in detail how this is
-done for this one-stage FIFO.
+[PSL assertions](http://www.project-veripage.com/psl_tutorial_1.php), placed in
+a separate [PSL file](one_stage_fifo.psl).  The assertions in PSL are more
+powerful (i.e. allow more complex constructions) than regular VHDL assertions.
+The process of writing these `assert` commands is non-trivial, and takes some
+practice. I will describe in detail how this is done for this one-stage FIFO.
 
 The main keywords to use are `assume` (for constraining input), `assert` (for
 validating output), and `cover` (for ensuring reachability).
@@ -91,6 +123,12 @@ f_output_stable : assert always {m_valid_o and not m_ready_i and not rst_i} |=> 
 Here the combination `m_valid_o and not m_ready_i` indicates the FIFO outputs
 data, but the data is not read yet. Then on the next clock cycle, the outputs
 from the FIFO should be unchanged.
+
+Similarly, we assert that the upstream ready signal must be stable until we
+receive new data.
+```
+f_ready_stable : assert always {s_ready_o and not s_valid_i and not rst_i} |=> {stable(s_ready_o)};
+```
 
 The next few properties rely on keeping track of the amont of data flowing into
 and out of the FIFO. So we introduce a new signal `f_count` that contains the
@@ -186,11 +224,6 @@ By writing `cover` statements the formal verification tool will automatically
 try to generate the stimuli necessary to satisfy the condition. In other words,
 the tool writes the testbench for you!
 
-Finally, I wrap the entire section of formal verification inside a `generate`
-block using a generic `G_FORMAL` with a default value of `false`. This is
-good practice and instructs the synthesis tool not to generate logic for
-formal verification.
-
 ## Running the formal verifier
 In order to run the formal verifier, we must create a small
 script [one_stage_fifo.sby](one_stage_fifo.sby).
@@ -243,6 +276,8 @@ statements are satisfied by the implementation. Does the FIFO now work?  Well,
 there may still be bugs in the implementation. This could happen, if the PSL
 statements are not strict enough. I.e. if there are requirements that are not
 properly expressed in PSL statements.
+
+## Synthesis
 
 Moving on, I've added another target in the Makefile to use Yosys as a synthesis tool.
 Just type

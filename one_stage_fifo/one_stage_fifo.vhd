@@ -49,7 +49,7 @@ begin
          end if;
 
          -- Valid data on the input
-         if s_ready_s = '1' and s_valid_i = '1' then
+         if s_ready_o = '1' and s_valid_i = '1' then
             m_data_r  <= s_data_i;
             m_valid_r <= '1';
          end if;
