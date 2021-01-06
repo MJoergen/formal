@@ -45,13 +45,12 @@ end entity fetch;
 architecture synthesis of fetch is
 
    signal tsf_in_addr_ready  : std_logic;
-   signal tsf_in_addr_afull  : std_logic;
+   signal tsf_in_addr_fill   : std_logic_vector(1 downto 0);
    signal tsf_out_addr_valid : std_logic;
    signal tsf_out_addr_ready : std_logic;
    signal tsf_out_addr_data  : std_logic_vector(15 downto 0);
 
    signal tsb_in_data_ready  : std_logic;
-   signal tsb_in_data_afull  : std_logic;
    signal tsb_in_data_fill   : std_logic_vector(1 downto 0);
    signal tsb_out_data_valid : std_logic;
    signal tsb_out_data_ready : std_logic;
@@ -74,7 +73,7 @@ begin
          end if;
 
          -- Clear transaction when no requests active
-         if not tsf_in_addr_afull then
+         if tsf_in_addr_fill = "00" then
             wb_cyc_o <= '0';
          end if;
 
@@ -86,7 +85,7 @@ begin
          end if;
 
          -- Start new transaction when ready to receive response
-         if (tsf_out_addr_ready or not tsf_in_addr_afull) and tsb_in_data_ready and not (wb_cyc_o and dc_valid_i) then
+         if (tsf_out_addr_ready or nor(tsf_in_addr_fill)) and tsb_in_data_ready and not (wb_cyc_o and dc_valid_i) then
             wb_cyc_o <= '1';
             wb_stb_o <= '1';
          end if;
@@ -110,7 +109,7 @@ begin
          s_valid_i => wb_cyc_o and wb_stb_o and not wb_stall_i,
          s_ready_o => tsf_in_addr_ready,
          s_data_i  => wb_addr_o,
-         s_afull_o => tsf_in_addr_afull,
+         s_fill_o  => tsf_in_addr_fill,
          m_valid_o => tsf_out_addr_valid,
          m_ready_i => tsf_out_addr_ready,
          m_data_o  => tsf_out_addr_data
@@ -128,7 +127,6 @@ begin
          s_valid_i => wb_cyc_o and wb_ack_i,
          s_ready_o => tsb_in_data_ready,
          s_data_i  => wb_data_i,
-         s_afull_o => tsb_in_data_afull,
          s_fill_o  => tsb_in_data_fill,
          m_valid_o => tsb_out_data_valid,
          m_ready_i => tsb_out_data_ready,
