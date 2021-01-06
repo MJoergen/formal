@@ -1,5 +1,5 @@
--- An elastic pipeline with two stages. I.e. can accept two writes before blocking.
--- In other words, a FIFO of depth two.
+-- An elastic pipeline with two stages, with zero latency.
+-- It can accept two writes before blocking, i.e. a FIFO of depth two.
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -15,7 +15,6 @@ entity two_stage_buffer is
       s_valid_i : in  std_logic;
       s_ready_o : out std_logic;
       s_data_i  : in  std_logic_vector(G_DATA_SIZE-1 downto 0);
-      s_afull_o : out std_logic;
       s_fill_o  : out std_logic_vector(1 downto 0);
       m_valid_o : out std_logic;
       m_ready_i : in  std_logic;
@@ -29,13 +28,13 @@ architecture synthesis of two_stage_buffer is
    signal int_ready : std_logic;
    signal int_data  : std_logic_vector(G_DATA_SIZE-1 downto 0);
    signal int_afull : std_logic;
+   signal s_afull   : std_logic;
 
 begin
 
-   s_fill_o <= "00" when not int_afull and not s_afull_o else
-               "01" when     int_afull and not s_afull_o else
-               "10" when     int_afull and     s_afull_o else
-               "11";
+   s_fill_o <= "00" when not int_afull else
+               "01" when not s_afull else
+               "10";
 
    i_osb_first : entity work.one_stage_buffer
       generic map (
@@ -47,7 +46,7 @@ begin
          s_valid_i => s_valid_i,
          s_ready_o => s_ready_o,
          s_data_i  => s_data_i,
-         s_afull_o => s_afull_o,
+         s_afull_o => s_afull,
          m_valid_o => int_valid,
          m_ready_i => int_ready,
          m_data_o  => int_data
@@ -67,7 +66,7 @@ begin
          m_valid_o => m_valid_o,
          m_ready_i => m_ready_i,
          m_data_o  => m_data_o
-      ); -- i_osb_first
+      ); -- i_osb_second
 
 end architecture synthesis;
 

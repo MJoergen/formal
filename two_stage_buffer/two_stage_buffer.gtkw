@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Mon Jan  4 07:14:19 2021
+[*] Wed Jan  6 19:55:27 2021
 [*]
-[dumpfile] "/home/mike/git/MJoergen/formal/two_stage_buffer/two_stage_buffer_prove/engine_0/trace_induct.vcd"
-[dumpfile_mtime] "Mon Jan  4 07:12:27 2021"
-[dumpfile_size] 3562
+[dumpfile] "/home/mike/git/MJoergen/formal/two_stage_buffer/two_stage_buffer_cover/engine_0/trace5.vcd"
+[dumpfile_mtime] "Wed Jan  6 19:54:51 2021"
+[dumpfile_size] 4038
 [savefile] "/home/mike/git/MJoergen/formal/two_stage_buffer/two_stage_buffer.gtkw"
 [timestart] 0
 [size] 1424 746
-[pos] -1952 -69
-*-3.528379 35 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[pos] -1 -1
+*-3.786691 35 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] two_stage_buffer.
 [sst_width] 249
 [signals_width] 244
@@ -25,7 +25,7 @@ two_stage_buffer.s_ready_o
 @22
 two_stage_buffer.s_data_i[7:0]
 @28
-two_stage_buffer.s_afull_o
+two_stage_buffer.s_fill_o[1:0]
 [color] 2
 two_stage_buffer.m_valid_o
 [color] 7
@@ -34,7 +34,7 @@ two_stage_buffer.m_ready_i
 two_stage_buffer.m_data_o[7:0]
 @200
 -
-@28
+@24
 two_stage_buffer.i_two_stage_buffer.f_count[1:0]
 @200
 -
@@ -43,9 +43,10 @@ two_stage_buffer.i_two_stage_buffer.f_count[1:0]
 two_stage_buffer.int_valid
 [color] 7
 two_stage_buffer.int_ready
-@23
+@22
 two_stage_buffer.int_data[7:0]
 @28
 two_stage_buffer.int_afull
+two_stage_buffer.s_afull
 [pattern_trace] 1
 [pattern_trace] 0
