@@ -3,6 +3,7 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std_unsigned.all;
 
 entity two_stage_fifo is
    generic (
@@ -14,7 +15,7 @@ entity two_stage_fifo is
       s_valid_i : in  std_logic;
       s_ready_o : out std_logic;
       s_data_i  : in  std_logic_vector(G_DATA_SIZE-1 downto 0);
-      s_afull_o : out std_logic;
+      s_fill_o  : out std_logic_vector(1 downto 0);
       m_valid_o : out std_logic;
       m_ready_i : in  std_logic;
       m_data_o  : out std_logic_vector(G_DATA_SIZE-1 downto 0)
@@ -34,6 +35,10 @@ architecture synthesis of two_stage_fifo is
    signal m_valid_r : std_logic := '0';
 
 begin
+
+   s_fill_o <= "00" when m_valid_o = '0' else
+               "01" when s_ready_o = '1' else
+               "10";
 
    -----------------
    -- State machine
@@ -99,7 +104,6 @@ begin
    -- Connect output signals
    --------------------------
 
-   s_afull_o <= m_valid_r;
    s_ready_o <= s_ready_r;
    m_valid_o <= m_valid_r;
    m_data_o  <= m_data_r;
