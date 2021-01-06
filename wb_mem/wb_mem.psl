@@ -1,6 +1,5 @@
 vunit i_wb_mem(wb_mem(synthesis))
 {
-
    -- Additional signals used during formal verification
    signal f_count : integer range 0 to 3 := 0;
 
@@ -70,7 +69,7 @@ vunit i_wb_mem(wb_mem(synthesis))
    -- COVER STATEMENTS TO VERIFY REACHABILITY
    --------------------------------------------
 
-   -- Make sure FIFO can transition from full to empty.
+   -- Make sure memory can respond to a request
    f_full_to_empty : cover {f_count = 1; f_count = 0};
 
 } -- vunit i_wb_mem(wb_mem(synthesis))
