@@ -44,7 +44,14 @@ clean:
 
 # Synthesis
 
-work-obj08.cf: ../one_stage_buffer/one_stage_buffer.vhd $(DUT).vhd
+SOURCES += ../one_stage_buffer/one_stage_buffer.vhd
+SOURCES += ../one_stage_fifo/one_stage_fifo.vhd
+SOURCES += ../two_stage_buffer/two_stage_buffer.vhd
+SOURCES += ../two_stage_fifo/two_stage_fifo.vhd
+SOURCES += ../pipe_concat/pipe_concat.vhd
+SOURCES += $(DUT).vhd
+
+work-obj08.cf: $(SOURCES)
 	ghdl -a -fpsl -fsynopsys --std=08 $^
 
 synth: work-obj08.cf

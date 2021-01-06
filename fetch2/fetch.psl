@@ -76,9 +76,6 @@ vunit i_fetch(fetch(synthesis))
    -- WISHBONE MASTER: While a request is stalled it cannot change, except on reset or abort.
    f_wb_master_stable : assert always {wb_stb_o and wb_stall_i and not dc_valid_i and not rst_i} |=> {stable(wb_stb_o) and stable(wb_addr_o)};
 
-   -- WISHBONE MASTER: CYC is held high only while waiting for responses
---   f_wb_master_cyc_idle : assert always {wb_cyc_o and not wb_stb_o} |-> {f_wb_req_count > 0};
-
    -- WISHBONE MASTER: At most two outstanding requests
    f_wb_master_req_count_max : assert always {f_wb_req_count >= 2} |-> {not wb_stb_o};
 
@@ -110,20 +107,6 @@ vunit i_fetch(fetch(synthesis))
 
    -- DECODE ASSERT: Validate that the address forwarded to the DECODE stage continuously increments by one.
    f_dc_assert_addr : assert always {dc_valid_o and dc_ready_i; f_dc_last_addr_valid and dc_valid_o} |-> {dc_addr_o = f_dc_last_addr + 1};
-
-
-   ----------------------------
-   -- VERIFYING THE DATA PATH
-   ----------------------------
-
-   -- We want to make sure that the DECODE stage receives the correct data.
-   -- We do this by artifically constraining the data received on the WISHBONE
-   -- interface.
---   f_wb_data : assume always {wb_cyc_o and wb_ack_i} |-> wb_data_i = not wb_addr_o;
-
-   -- Verify data sent to DECODE satisfies the same artifical constraint as
-   -- the WISHBONE interface.
---   f_dc_data : assert always {dc_valid_o} |-> dc_data_o = not dc_addr_o abort rst_i;
 
 
    -----------------------------
