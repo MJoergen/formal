@@ -1,0 +1,34 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Sun Jan 10 15:38:04 2021
+[*]
+[dumpfile] "/home/mike/git/MJoergen/formal/rubik2/rubik_cover/engine_0/trace0.vcd"
+[dumpfile_mtime] "Sun Jan 10 15:31:30 2021"
+[dumpfile_size] 2285
+[savefile] "/home/mike/git/MJoergen/formal/rubik2/rubik.gtkw"
+[timestart] 0
+[size] 1920 1011
+[pos] -1 -1
+*-4.045955 96 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[sst_width] 249
+[signals_width] 280
+[sst_expanded] 1
+[sst_vpaned_height] 286
+@28
+rubik.clk_i
+rubik.rst_i
+rubik.cmd_i[3:0]
+rubik.done_o
+@200
+-
+@28
+rubik.corner_ubl[5:0]
+rubik.corner_ubr[5:0]
+rubik.corner_ufl[5:0]
+rubik.corner_ufr[5:0]
+rubik.corner_dbl[5:0]
+rubik.corner_dbr[5:0]
+rubik.corner_dfl[5:0]
+rubik.corner_dfr[5:0]
+[pattern_trace] 1
+[pattern_trace] 0

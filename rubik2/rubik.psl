@@ -1,0 +1,75 @@
+vunit i_rubik(rubik(synthesis))
+{
+
+   signal f_parity : integer range 0 to 2;
+
+
+   -- set all declarations to run on clk_i
+   default clock is rising_edge(clk_i);
+
+
+   ------------------------------------
+   -- ASSERTIONS ABOUT INTERNAL STATE
+   ------------------------------------
+
+   process (all)
+      variable parity : integer;
+   begin
+      parity :=          to_integer(corner_ubl(2 downto 1));
+      parity := parity + to_integer(corner_ubr(2 downto 1));
+      parity := parity + to_integer(corner_ufl(2 downto 1));
+      parity := parity + to_integer(corner_ufr(2 downto 1));
+      parity := parity + to_integer(corner_dbl(2 downto 1));
+      parity := parity + to_integer(corner_dbr(2 downto 1));
+      parity := parity + to_integer(corner_dfl(2 downto 1));
+      parity := parity + to_integer(corner_dfr(2 downto 1));
+      f_parity <= parity mod 3;
+   end process;
+
+   f_colors : assert always {f_parity = 0};
+
+   assert always or(corner_ubl(2 downto 0)) = '1';
+   assert always or(corner_ubr(2 downto 0)) = '1';
+   assert always or(corner_ufl(2 downto 0)) = '1';
+   assert always or(corner_ufr(2 downto 0)) = '1';
+   assert always or(corner_dbl(2 downto 0)) = '1';
+   assert always or(corner_dbr(2 downto 0)) = '1';
+   assert always or(corner_dfl(2 downto 0)) = '1';
+   assert always or(corner_dfr(2 downto 0)) = '1';
+
+   assert always and(corner_ubl(2 downto 1)) = '0';
+   assert always and(corner_ubr(2 downto 1)) = '0';
+   assert always and(corner_ufl(2 downto 1)) = '0';
+   assert always and(corner_ufr(2 downto 1)) = '0';
+   assert always and(corner_dbl(2 downto 1)) = '0';
+   assert always and(corner_dbr(2 downto 1)) = '0';
+   assert always and(corner_dfl(2 downto 1)) = '0';
+   assert always and(corner_dfr(2 downto 1)) = '0';
+
+   assert always nor(corner_ubl(2 downto 1)) = corner_ubl(0);
+   assert always nor(corner_ubr(2 downto 1)) = corner_ubr(0);
+   assert always nor(corner_ufl(2 downto 1)) = corner_ufl(0);
+   assert always nor(corner_ufr(2 downto 1)) = corner_ufr(0);
+   assert always nor(corner_dbl(2 downto 1)) = corner_dbl(0);
+   assert always nor(corner_dbr(2 downto 1)) = corner_dbr(0);
+   assert always nor(corner_dfl(2 downto 1)) = corner_dfl(0);
+   assert always nor(corner_dfr(2 downto 1)) = corner_dfr(0);
+
+
+   -----------------------------
+   -- ASSUMPTIONS ABOUT INPUTS
+   -----------------------------
+
+   -- We prevent any reset at all, because that would be cheating :-)
+   f_no_rst : assume always {not rst_i};
+
+
+   --------------------------------------------
+   -- COVER STATEMENTS TO VERIFY REACHABILITY
+   --------------------------------------------
+
+   -- Attempt to solve the cube from the given initial condition.
+   f_done : cover {done_o};
+
+} -- vunit i_rubik(rubik(synthesis))
+

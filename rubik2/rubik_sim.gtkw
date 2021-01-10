@@ -1,0 +1,37 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Sun Jan 10 15:10:53 2021
+[*]
+[dumpfile] "/home/mike/git/MJoergen/formal/rubik2/rubik.ghw"
+[dumpfile_mtime] "Sun Jan 10 15:10:03 2021"
+[dumpfile_size] 46771
+[savefile] "/home/mike/git/MJoergen/formal/rubik2/rubik_sim.gtkw"
+[timestart] 0
+[size] 1920 1011
+[pos] -1672 29
+*-29.143534 3842000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[treeopen] top.rubik_tb.
+[treeopen] top.rubik_tb.i_rubik.
+[sst_width] 249
+[signals_width] 275
+[sst_expanded] 1
+[sst_vpaned_height] 286
+@28
+top.rubik_tb.i_rubik.clk_i
+top.rubik_tb.i_rubik.rst_i
+#{top.rubik_tb.i_rubik.cmd_i[3:0]} top.rubik_tb.i_rubik.cmd_i[3] top.rubik_tb.i_rubik.cmd_i[2] top.rubik_tb.i_rubik.cmd_i[1] top.rubik_tb.i_rubik.cmd_i[0]
+top.rubik_tb.i_rubik.done_o
+@200
+-
+@28
+#{top.rubik_tb.i_rubik.corner_ubl[5:0]} top.rubik_tb.i_rubik.corner_ubl[5] top.rubik_tb.i_rubik.corner_ubl[4] top.rubik_tb.i_rubik.corner_ubl[3] top.rubik_tb.i_rubik.corner_ubl[2] top.rubik_tb.i_rubik.corner_ubl[1] top.rubik_tb.i_rubik.corner_ubl[0]
+#{top.rubik_tb.i_rubik.corner_ubr[5:0]} top.rubik_tb.i_rubik.corner_ubr[5] top.rubik_tb.i_rubik.corner_ubr[4] top.rubik_tb.i_rubik.corner_ubr[3] top.rubik_tb.i_rubik.corner_ubr[2] top.rubik_tb.i_rubik.corner_ubr[1] top.rubik_tb.i_rubik.corner_ubr[0]
+#{top.rubik_tb.i_rubik.corner_ufl[5:0]} top.rubik_tb.i_rubik.corner_ufl[5] top.rubik_tb.i_rubik.corner_ufl[4] top.rubik_tb.i_rubik.corner_ufl[3] top.rubik_tb.i_rubik.corner_ufl[2] top.rubik_tb.i_rubik.corner_ufl[1] top.rubik_tb.i_rubik.corner_ufl[0]
+#{top.rubik_tb.i_rubik.corner_ufr[5:0]} top.rubik_tb.i_rubik.corner_ufr[5] top.rubik_tb.i_rubik.corner_ufr[4] top.rubik_tb.i_rubik.corner_ufr[3] top.rubik_tb.i_rubik.corner_ufr[2] top.rubik_tb.i_rubik.corner_ufr[1] top.rubik_tb.i_rubik.corner_ufr[0]
+#{top.rubik_tb.i_rubik.corner_dbl[5:0]} top.rubik_tb.i_rubik.corner_dbl[5] top.rubik_tb.i_rubik.corner_dbl[4] top.rubik_tb.i_rubik.corner_dbl[3] top.rubik_tb.i_rubik.corner_dbl[2] top.rubik_tb.i_rubik.corner_dbl[1] top.rubik_tb.i_rubik.corner_dbl[0]
+#{top.rubik_tb.i_rubik.corner_dbr[5:0]} top.rubik_tb.i_rubik.corner_dbr[5] top.rubik_tb.i_rubik.corner_dbr[4] top.rubik_tb.i_rubik.corner_dbr[3] top.rubik_tb.i_rubik.corner_dbr[2] top.rubik_tb.i_rubik.corner_dbr[1] top.rubik_tb.i_rubik.corner_dbr[0]
+#{top.rubik_tb.i_rubik.corner_dfl[5:0]} top.rubik_tb.i_rubik.corner_dfl[5] top.rubik_tb.i_rubik.corner_dfl[4] top.rubik_tb.i_rubik.corner_dfl[3] top.rubik_tb.i_rubik.corner_dfl[2] top.rubik_tb.i_rubik.corner_dfl[1] top.rubik_tb.i_rubik.corner_dfl[0]
+#{top.rubik_tb.i_rubik.corner_dfr[5:0]} top.rubik_tb.i_rubik.corner_dfr[5] top.rubik_tb.i_rubik.corner_dfr[4] top.rubik_tb.i_rubik.corner_dfr[3] top.rubik_tb.i_rubik.corner_dfr[2] top.rubik_tb.i_rubik.corner_dfr[1] top.rubik_tb.i_rubik.corner_dfr[0]
+[pattern_trace] 1
+[pattern_trace] 0
