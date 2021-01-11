@@ -60,6 +60,26 @@ architecture synthesis of rubik is
    signal corner_dfl : std_logic_vector(5 downto 0) := "010001";
    signal corner_dfr : std_logic_vector(5 downto 0) := "111010";
 
+--   -- Swapped corners
+--   signal corner_ubl : std_logic_vector(5 downto 0) := "000001";
+--   signal corner_ubr : std_logic_vector(5 downto 0) := "001001";
+--   signal corner_ufl : std_logic_vector(5 downto 0) := "011001";   -- swapped
+--   signal corner_ufr : std_logic_vector(5 downto 0) := "010001";   -- swapped
+--   signal corner_dbl : std_logic_vector(5 downto 0) := "100001";
+--   signal corner_dbr : std_logic_vector(5 downto 0) := "101001";
+--   signal corner_dfl : std_logic_vector(5 downto 0) := "110001";
+--   signal corner_dfr : std_logic_vector(5 downto 0) := "111001";
+
+--   -- Twisted corners
+--   signal corner_ubl : std_logic_vector(5 downto 0) := "000001";
+--   signal corner_ubr : std_logic_vector(5 downto 0) := "001001";
+--   signal corner_ufl : std_logic_vector(5 downto 0) := "010010";  -- twisted
+--   signal corner_ufr : std_logic_vector(5 downto 0) := "011100";  -- twisted
+--   signal corner_dbl : std_logic_vector(5 downto 0) := "100001";
+--   signal corner_dbr : std_logic_vector(5 downto 0) := "101001";
+--   signal corner_dfl : std_logic_vector(5 downto 0) := "110001";
+--   signal corner_dfr : std_logic_vector(5 downto 0) := "111001";
+
 begin
 
    process (clk_i)

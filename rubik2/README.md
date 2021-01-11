@@ -87,6 +87,74 @@ make show_cover
 This shows that the cube (from this particular initial condition) can be solved
 in a sequence of nine rotations.
 
+## Swapping two corners
+In the case where the two top corners (UFL and UFR) are swapped (but not twisted)
+the minimal solution is 10 moves.
+
+We have the initial condition
+```
+corner_ubl <= "000001";
+corner_ubr <= "001001";
+corner_ufl <= "011001"; -- swapped
+corner_ufr <= "010001"; -- swapped
+corner_dbl <= "100001";
+corner_dbr <= "101001";
+corner_dfl <= "110001";
+corner_dfr <= "111001";
+```
+and the solution is
+```
+1001
+1111
+1001
+1101
+1010
+0110
+1001
+0101
+1011
+0110
+```
+i.e. the sequence `R+`, `U-`, `R+`, `U+`, `R2`, `F2`, `R+`, `F+`, `R-`, `F2`,
+as shown in this waveform:
+
+![Waveform](swapped.png)
+
+## Twisting two corners
+In the case where the two top corners (UFL and UFR) are twisted (but not swapped)
+the minimal solution is 10 moves.
+
+We have the initial condition
+```
+corner_ubl <= "000001";
+corner_ubr <= "001001";
+corner_ufl <= "010010"; -- twisted
+corner_ufr <= "011100"; -- twisted
+corner_dbl <= "100001";
+corner_dbr <= "101001";
+corner_dfl <= "110001";
+corner_dfr <= "111001";
+```
+and the solution is
+```
+1101
+0111
+1101
+1011
+1101
+1011
+0111
+1010
+1110
+0101
+```
+i.e. the sequence `U+`, `F-`, `U+`, `R-`, `U+`, `R-`, `F-`, `R2`, `U2`, `F+`
+as shown in this waveform:
+
+![Waveform](twisted.png)
+
+
+
 ## Synthesis
 Finally, just for fun, we can synthesize the module by typing
 ```
