@@ -52,7 +52,7 @@ make sim
 ## Formal verification
 I'm using formal verification here to try to solve the cube. So from the
 testbench I have created a random (but legal!) coloring of the cube, and use
-that as initial condition when declaring the signals `u0`, `u1`, etc.
+that as initial condition when declaring the signals `corner_ubl`, etc.
 
 I've added an assertion to verify that the position is indeed legal and can be
 solved. This is done by calculating the parity (an invariant) of the position
@@ -88,7 +88,7 @@ This shows that the cube (from this particular initial condition) can be solved
 in a sequence of nine rotations.
 
 ## Swapping two corners
-In the case where the two top corners (UFL and UFR) are swapped (but not twisted)
+In the case where the two top corners (`UFL` and `UFR`) are swapped (but not twisted)
 the minimal solution is 10 moves.
 
 We have the initial condition
@@ -121,8 +121,8 @@ as shown in this waveform:
 ![Waveform](swapped.png)
 
 ## Twisting two corners
-In the case where the two top corners (UFL and UFR) are twisted (but not swapped)
-the minimal solution is 10 moves.
+In the case where the two top corners (`UFL` and `UFR`) are twisted (but not swapped)
+the minimal solution is again 10 moves.
 
 We have the initial condition
 ```
