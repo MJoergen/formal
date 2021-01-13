@@ -28,7 +28,7 @@ architecture synthesis of wb_mem is
    type mem_t is array (0 to 2**G_ADDR_SIZE-1) of std_logic_vector(G_DATA_SIZE-1 downto 0);
 
    -- Initial memory contents
-   signal mem_r : mem_t := (others => (others => '0'));
+   shared variable mem_r : mem_t := (others => (others => '0'));
 
    signal wb_ack_r  : std_logic := '0';
    signal wb_data_r : std_logic_vector(G_DATA_SIZE-1 downto 0) := (others => '0');
@@ -40,7 +40,7 @@ begin
    begin
       if rising_edge(clk_i) then
          if wb_cyc_i = '1' and wb_stb_i = '1' and wb_stall_o = '0' and wb_we_i = '1' then
-            mem_r(to_integer(unsigned(wb_addr_i))) <= wb_data_i;
+            mem_r(to_integer(unsigned(wb_addr_i))) := wb_data_i;
          end if;
       end if;
    end process p_write;

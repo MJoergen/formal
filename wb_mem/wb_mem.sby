@@ -14,7 +14,7 @@ prove: depth 4
 smtbmc
 
 [script]
-ghdl --std=08 wb_mem.vhd wb_mem.psl -e wb_mem
+ghdl --std=08 -frelaxed wb_mem.vhd wb_mem.psl -e wb_mem
 prep -top wb_mem
 
 [files]
