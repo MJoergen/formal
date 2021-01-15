@@ -36,9 +36,10 @@ architecture synthesis of two_stage_fifo is
 
 begin
 
-   s_fill_o <= "00" when m_valid_o = '0' else
-               "01" when s_ready_o = '1' else
-               "10";
+   s_fill_o <= "00" when m_valid_o = '0' and s_ready_o = '1' else
+               "01" when m_valid_o = '1' and s_ready_o = '1' else
+               "10" when m_valid_o = '1' and s_ready_o = '0' else
+               "11";
 
    -----------------
    -- State machine
@@ -47,8 +48,8 @@ begin
    p_fsm : process (clk_i)
    begin
       if rising_edge(clk_i) then
-         case std_logic_vector'(m_valid_o & s_ready_o) is
-            when "01" =>
+         case s_fill_o is
+            when "00" =>
                if s_valid_i = '1' then
                   -- Ready is already asserted, so we have to accept the data
                   m_data_r  <= s_data_i;
@@ -56,7 +57,7 @@ begin
                   m_valid_r <= '1';
                end if;
 
-            when "11" =>
+            when "01" =>
                -- The pipe has valid data in m_*
                case std_logic_vector'(m_ready_i & s_valid_i) is
                   when "00" =>
