@@ -1,5 +1,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std_unsigned.all;
 
 -- Read src and dst register values and pass on to next stage
 -- Split out microops:
@@ -81,7 +82,9 @@ architecture synthesis of decode is
    constant C_MODE_INC : std_logic_vector(1 downto 0) := "10"; -- @R++
    constant C_MODE_DEC : std_logic_vector(1 downto 0) := "11"; -- @--R
 
-   signal immediate : std_logic;
+   signal immediate    : std_logic;
+   signal count        : std_logic_vector(1 downto 0);
+   signal fetch_data_d : std_logic_vector(15 downto 0);
 
 begin
 
@@ -90,21 +93,62 @@ begin
    immediate <= '1' when fetch_data_i(R_SRC_REG) = "1111" and fetch_data_i(R_SRC_MODE) = C_MODE_INC
            else '0';
 
-   exe_opcode_o   <= fetch_data_i(R_OPCODE);
    reg_src_addr_o <= fetch_data_i(R_SRC_REG);
    reg_dst_addr_o <= fetch_data_i(R_DST_REG);
 
+   exe_opcode_o   <= fetch_data_i(R_OPCODE);
    exe_src_val_o  <= reg_src_val_i;
    exe_dst_val_o  <= reg_dst_val_i;
+
+   fetch_ready_o <= exe_ready_i when count = 0
+               else '0';
 
    p_fsm : process (clk_i)
    begin
       if rising_edge(clk_i) then
+         if exe_ready_i = '1' then
+            exe_valid_o <= '0';
+         end if;
+
          fetch_valid_o <= '0';
          fetch_addr_o  <= (others => '0');
+         fetch_data_d  <= fetch_data_i;
+
+         case to_integer(count) is
+            when 0 =>
+               if fetch_valid_i = '1' and fetch_ready_o = '1' then
+                  if fetch_data_i(R_SRC_MODE) /= C_MODE_REG then
+                     exe_microop_o <= C_MICRO_MEM_READ_SRC;
+                     exe_valid_o   <= '1';
+                     count <= to_stdlogicvector(1, 2);
+                  elsif fetch_data_i(R_DST_MODE) /= C_MODE_REG then
+                     exe_microop_o <= C_MICRO_MEM_READ_DST;
+                     exe_valid_o   <= '1';
+                     count <= to_stdlogicvector(1, 2);
+                  end if;
+               end if;
+
+            when 1 =>
+               count <= to_stdlogicvector(0, 2);
+               if fetch_data_d(R_DST_MODE) /= C_MODE_REG then
+                  exe_microop_o <= C_MICRO_MEM_READ_DST;
+                  exe_valid_o   <= '1';
+                  count <= to_stdlogicvector(2, 2);
+               end if;
+
+            when 2 =>
+               count <= to_stdlogicvector(0, 2);
+               exe_mem_addr_o <= reg_dst_val_i;
+               exe_microop_o  <= C_MICRO_MEM_WRITE;
+               exe_valid_o    <= '1';
+
+            when others => null;
+         end case;
+
          if rst_i = '1' then
             fetch_valid_o <= '1';
             fetch_addr_o  <= (others => '0');
+            count         <= (others => '0');
          end if;
       end if;
    end process p_fsm;

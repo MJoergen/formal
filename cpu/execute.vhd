@@ -120,6 +120,14 @@ begin
                when others => null;
             end case;
          end if;
+
+         if rst_i = '1' then
+            wb_cyc_o  <= '0';
+            wb_stb_o  <= '0';
+            wb_addr_o <= (others => '0');
+            wb_we_o   <= '0';
+            wb_dat_o  <= (others => '0');
+         end if;
       end if;
    end process p_microop;
 
