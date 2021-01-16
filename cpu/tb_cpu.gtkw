@@ -1,0 +1,56 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Sat Jan 16 19:59:43 2021
+[*]
+[dumpfile] "/home/mike/git/MJoergen/formal/cpu/tb_cpu.ghw"
+[dumpfile_mtime] "Sat Jan 16 19:58:12 2021"
+[dumpfile_size] 125261
+[savefile] "/home/mike/git/MJoergen/formal/cpu/tb_cpu.gtkw"
+[timestart] 0
+[size] 1920 1132
+[pos] -1 -1
+*-26.158585 130000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[treeopen] top.tb_cpu.
+[treeopen] top.tb_cpu.i_system.
+[treeopen] top.tb_cpu.i_system.i_cpu.
+[sst_width] 249
+[signals_width] 289
+[sst_expanded] 1
+[sst_vpaned_height] 342
+@800200
+-cpu
+@28
+top.tb_cpu.i_system.i_cpu.clk_i
+top.tb_cpu.i_system.i_cpu.rst_i
+top.tb_cpu.i_system.i_cpu.wbi_cyc_o
+top.tb_cpu.i_system.i_cpu.wbi_stb_o
+top.tb_cpu.i_system.i_cpu.wbi_stall_i
+@22
+#{top.tb_cpu.i_system.i_cpu.wbi_addr_o[15:0]} top.tb_cpu.i_system.i_cpu.wbi_addr_o[15] top.tb_cpu.i_system.i_cpu.wbi_addr_o[14] top.tb_cpu.i_system.i_cpu.wbi_addr_o[13] top.tb_cpu.i_system.i_cpu.wbi_addr_o[12] top.tb_cpu.i_system.i_cpu.wbi_addr_o[11] top.tb_cpu.i_system.i_cpu.wbi_addr_o[10] top.tb_cpu.i_system.i_cpu.wbi_addr_o[9] top.tb_cpu.i_system.i_cpu.wbi_addr_o[8] top.tb_cpu.i_system.i_cpu.wbi_addr_o[7] top.tb_cpu.i_system.i_cpu.wbi_addr_o[6] top.tb_cpu.i_system.i_cpu.wbi_addr_o[5] top.tb_cpu.i_system.i_cpu.wbi_addr_o[4] top.tb_cpu.i_system.i_cpu.wbi_addr_o[3] top.tb_cpu.i_system.i_cpu.wbi_addr_o[2] top.tb_cpu.i_system.i_cpu.wbi_addr_o[1] top.tb_cpu.i_system.i_cpu.wbi_addr_o[0]
+@28
+top.tb_cpu.i_system.i_cpu.wbi_ack_i
+@22
+#{top.tb_cpu.i_system.i_cpu.wbi_data_i[15:0]} top.tb_cpu.i_system.i_cpu.wbi_data_i[15] top.tb_cpu.i_system.i_cpu.wbi_data_i[14] top.tb_cpu.i_system.i_cpu.wbi_data_i[13] top.tb_cpu.i_system.i_cpu.wbi_data_i[12] top.tb_cpu.i_system.i_cpu.wbi_data_i[11] top.tb_cpu.i_system.i_cpu.wbi_data_i[10] top.tb_cpu.i_system.i_cpu.wbi_data_i[9] top.tb_cpu.i_system.i_cpu.wbi_data_i[8] top.tb_cpu.i_system.i_cpu.wbi_data_i[7] top.tb_cpu.i_system.i_cpu.wbi_data_i[6] top.tb_cpu.i_system.i_cpu.wbi_data_i[5] top.tb_cpu.i_system.i_cpu.wbi_data_i[4] top.tb_cpu.i_system.i_cpu.wbi_data_i[3] top.tb_cpu.i_system.i_cpu.wbi_data_i[2] top.tb_cpu.i_system.i_cpu.wbi_data_i[1] top.tb_cpu.i_system.i_cpu.wbi_data_i[0]
+@200
+-
+@28
+top.tb_cpu.i_system.i_cpu.wbd_cyc_o
+top.tb_cpu.i_system.i_cpu.wbd_stb_o
+top.tb_cpu.i_system.i_cpu.wbd_stall_i
+top.tb_cpu.i_system.i_cpu.wbd_we_o
+@22
+#{top.tb_cpu.i_system.i_cpu.wbd_addr_o[15:0]} top.tb_cpu.i_system.i_cpu.wbd_addr_o[15] top.tb_cpu.i_system.i_cpu.wbd_addr_o[14] top.tb_cpu.i_system.i_cpu.wbd_addr_o[13] top.tb_cpu.i_system.i_cpu.wbd_addr_o[12] top.tb_cpu.i_system.i_cpu.wbd_addr_o[11] top.tb_cpu.i_system.i_cpu.wbd_addr_o[10] top.tb_cpu.i_system.i_cpu.wbd_addr_o[9] top.tb_cpu.i_system.i_cpu.wbd_addr_o[8] top.tb_cpu.i_system.i_cpu.wbd_addr_o[7] top.tb_cpu.i_system.i_cpu.wbd_addr_o[6] top.tb_cpu.i_system.i_cpu.wbd_addr_o[5] top.tb_cpu.i_system.i_cpu.wbd_addr_o[4] top.tb_cpu.i_system.i_cpu.wbd_addr_o[3] top.tb_cpu.i_system.i_cpu.wbd_addr_o[2] top.tb_cpu.i_system.i_cpu.wbd_addr_o[1] top.tb_cpu.i_system.i_cpu.wbd_addr_o[0]
+#{top.tb_cpu.i_system.i_cpu.wbd_dat_o[15:0]} top.tb_cpu.i_system.i_cpu.wbd_dat_o[15] top.tb_cpu.i_system.i_cpu.wbd_dat_o[14] top.tb_cpu.i_system.i_cpu.wbd_dat_o[13] top.tb_cpu.i_system.i_cpu.wbd_dat_o[12] top.tb_cpu.i_system.i_cpu.wbd_dat_o[11] top.tb_cpu.i_system.i_cpu.wbd_dat_o[10] top.tb_cpu.i_system.i_cpu.wbd_dat_o[9] top.tb_cpu.i_system.i_cpu.wbd_dat_o[8] top.tb_cpu.i_system.i_cpu.wbd_dat_o[7] top.tb_cpu.i_system.i_cpu.wbd_dat_o[6] top.tb_cpu.i_system.i_cpu.wbd_dat_o[5] top.tb_cpu.i_system.i_cpu.wbd_dat_o[4] top.tb_cpu.i_system.i_cpu.wbd_dat_o[3] top.tb_cpu.i_system.i_cpu.wbd_dat_o[2] top.tb_cpu.i_system.i_cpu.wbd_dat_o[1] top.tb_cpu.i_system.i_cpu.wbd_dat_o[0]
+@28
+top.tb_cpu.i_system.i_cpu.wbd_ack_i
+@22
+#{top.tb_cpu.i_system.i_cpu.wbd_data_i[15:0]} top.tb_cpu.i_system.i_cpu.wbd_data_i[15] top.tb_cpu.i_system.i_cpu.wbd_data_i[14] top.tb_cpu.i_system.i_cpu.wbd_data_i[13] top.tb_cpu.i_system.i_cpu.wbd_data_i[12] top.tb_cpu.i_system.i_cpu.wbd_data_i[11] top.tb_cpu.i_system.i_cpu.wbd_data_i[10] top.tb_cpu.i_system.i_cpu.wbd_data_i[9] top.tb_cpu.i_system.i_cpu.wbd_data_i[8] top.tb_cpu.i_system.i_cpu.wbd_data_i[7] top.tb_cpu.i_system.i_cpu.wbd_data_i[6] top.tb_cpu.i_system.i_cpu.wbd_data_i[5] top.tb_cpu.i_system.i_cpu.wbd_data_i[4] top.tb_cpu.i_system.i_cpu.wbd_data_i[3] top.tb_cpu.i_system.i_cpu.wbd_data_i[2] top.tb_cpu.i_system.i_cpu.wbd_data_i[1] top.tb_cpu.i_system.i_cpu.wbd_data_i[0]
+@1000200
+-cpu
+@28
+top.tb_cpu.i_system.i_cpu.fetch2dec_valid
+@29
+top.tb_cpu.i_system.i_cpu.fetch2dec_ready
+[pattern_trace] 1
+[pattern_trace] 0

@@ -9,8 +9,30 @@ SOURCES += decode.vhd
 SOURCES += execute.vhd
 SOURCES += registers.vhd
 SOURCES += cpu.vhd
+SOURCES += system.vhd
 TB_SOURCES += ../wb_mem/wb_mem.vhd
 TB_SOURCES += tb_cpu.vhd
+TB   = tb_cpu
+WAVE = $(TB).ghw
+SAVE = $(TB).gtkw
+ROM  = prog.rom
 
-all: $(SOURCES) $(TB_SOURCES)
-	ghdl -a --std=08 -frelaxed $^
+ASSEMBLER = /home/mike/git/sy2002/QNICE-FPGA/assembler/asm
+
+$(WAVE): $(SOURCES) $(TB_SOURCES) $(ROM)
+	ghdl -i --std=08 $(SOURCES) $(TB_SOURCES)
+	ghdl -m --std=08 $(TB)
+	ghdl -r --std=08 $(TB) --wave=$(WAVE) --stop-time=1us
+	gtkwave $(WAVE) $(SAVE)
+
+test%:
+	$(ASSEMBLER) $@.asm
+	mv $@.rom $(ROM)
+	make $(WAVE)
+
+clean:
+	rm -rf test1.lis
+	rm -rf test1.out
+	rm -rf work-obj08.cf
+	rm -rf $(WAVE)
+

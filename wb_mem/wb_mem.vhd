@@ -1,11 +1,13 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use std.textio.all;
 
 -- A simple memory with a Wishbone Slave interface.
 
 entity wb_mem is
    generic (
+      G_ROM_FILE  : string := "";
       G_ADDR_SIZE : integer := 8;
       G_DATA_SIZE : integer := 16
    );
@@ -27,8 +29,27 @@ architecture synthesis of wb_mem is
 
    type mem_t is array (0 to 2**G_ADDR_SIZE-1) of std_logic_vector(G_DATA_SIZE-1 downto 0);
 
+   -- This reads the ROM contents from a text file
+   impure function InitRamFromFile(RamFileName : in string) return mem_t is
+      FILE RamFile : text;
+      variable RamFileLine : line;
+      variable ram : mem_t := (others => (others => '0'));
+   begin
+      if RamFileName /= "" then
+         file_open(RamFile, RamFileName, read_mode);
+         for i in mem_t'range loop
+            readline (RamFile, RamFileLine);
+            read (RamFileLine, ram(i));
+            if endfile(RamFile) then
+               return ram;
+            end if;
+         end loop;
+      end if;
+      return ram;
+   end function;
+
    -- Initial memory contents
-   shared variable mem_r : mem_t := (others => (others => '0'));
+   signal mem_r : mem_t := InitRamFromFile(G_ROM_FILE);
 
    signal wb_ack_r  : std_logic := '0';
    signal wb_data_r : std_logic_vector(G_DATA_SIZE-1 downto 0) := (others => '0');
@@ -40,7 +61,7 @@ begin
    begin
       if rising_edge(clk_i) then
          if wb_cyc_i = '1' and wb_stb_i = '1' and wb_stall_o = '0' and wb_we_i = '1' then
-            mem_r(to_integer(unsigned(wb_addr_i))) := wb_data_i;
+            mem_r(to_integer(unsigned(wb_addr_i))) <= wb_data_i;
          end if;
       end if;
    end process p_write;

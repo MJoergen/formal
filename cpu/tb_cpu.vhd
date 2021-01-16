@@ -8,77 +8,29 @@ architecture simulation of tb_cpu is
 
    signal clk         : std_logic;
    signal rst         : std_logic;
-   signal wbi_cyc     : std_logic;
-   signal wbi_stb     : std_logic;
-   signal wbi_stall   : std_logic;
-   signal wbi_addr    : std_logic_vector(15 downto 0);
-   signal wbi_ack     : std_logic;
-   signal wbi_data_rd : std_logic_vector(15 downto 0);
-   signal wbd_cyc     : std_logic;
-   signal wbd_stb     : std_logic;
-   signal wbd_stall   : std_logic;
-   signal wbd_addr    : std_logic_vector(15 downto 0);
-   signal wbd_we      : std_logic;
-   signal wbd_data_wr : std_logic_vector(15 downto 0);
-   signal wbd_ack     : std_logic;
-   signal wbd_data_rd : std_logic_vector(15 downto 0);
 
 begin
 
-   i_cpu : entity work.cpu
+   p_clk : process
+   begin
+      clk <= '1', '0' after 5 ns;
+      wait for 10 ns; -- 100 MHz
+   end process p_clk;
+
+   p_rst : process
+   begin
+      rst <= '1';
+      wait for 100 ns;
+      wait until clk = '1';
+      rst <= '0';
+      wait;
+   end process p_rst;
+
+   i_system : entity work.system
       port map (
-         clk_i       => clk,
-         rst_i       => rst,
-         wbi_cyc_o   => wbi_cyc,
-         wbi_stb_o   => wbi_stb,
-         wbi_stall_i => wbi_stall,
-         wbi_addr_o  => wbi_addr,
-         wbi_ack_i   => wbi_ack,
-         wbi_data_i  => wbi_data_rd,
-         wbd_cyc_o   => wbd_cyc,
-         wbd_stb_o   => wbd_stb,
-         wbd_stall_i => wbd_stall,
-         wbd_addr_o  => wbd_addr,
-         wbd_we_o    => wbd_we,
-         wbd_dat_o   => wbd_data_wr,
-         wbd_ack_i   => wbd_ack,
-         wbd_data_i  => wbd_data_rd
+         clk_i => clk,
+         rst_i => rst
       ); -- i_cpu
 
-   i_mem_inst : entity work.wb_mem
-      generic map (
-         G_ADDR_SIZE => 16,
-         G_DATA_SIZE => 16
-      )
-      port map (
-         clk_i      => clk,
-         rst_i      => rst,
-         wb_cyc_i   => wbi_cyc,
-         wb_stb_i   => wbi_stb,
-         wb_stall_o => wbi_stall,
-         wb_addr_i  => wbi_addr,
-         wb_we_i    => '0',
-         wb_data_i  => X"0000",
-         wb_ack_o   => wbi_ack,
-         wb_data_o  => wbi_data_rd
-      ); -- i_mem_inst
-
-   i_mem_data : entity work.wb_mem
-      generic map (
-         G_ADDR_SIZE => 16,
-         G_DATA_SIZE => 16
-      )
-      port map (
-         clk_i      => clk,
-         rst_i      => rst,
-         wb_cyc_i   => wbd_cyc,
-         wb_stb_i   => wbd_stb,
-         wb_stall_o => wbd_stall,
-         wb_addr_i  => wbd_addr,
-         wb_we_i    => wbd_we,
-         wb_data_i  => wbd_data_wr,
-         wb_ack_o   => wbd_ack,
-         wb_data_o  => wbd_data_rd
-      ); -- i_mem_data
-
 end architecture simulation;
+

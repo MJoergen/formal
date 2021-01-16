@@ -100,6 +100,12 @@ begin
    p_fsm : process (clk_i)
    begin
       if rising_edge(clk_i) then
+         fetch_valid_o <= '0';
+         fetch_addr_o  <= (others => '0');
+         if rst_i = '1' then
+            fetch_valid_o <= '1';
+            fetch_addr_o  <= (others => '0');
+         end if;
       end if;
    end process p_fsm;
 
