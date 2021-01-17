@@ -33,12 +33,14 @@ entity decode is
       reg_dst_addr_o  : out std_logic_vector(3 downto 0);
       reg_src_val_i   : in  std_logic_vector(15 downto 0);
       reg_dst_val_i   : in  std_logic_vector(15 downto 0);
+      reg_flags_i     : in  std_logic_vector(15 downto 0);
 
       -- Execute stage
       exe_valid_o     : out std_logic;
       exe_ready_i     : in  std_logic;
       exe_microop_o   : out std_logic_vector(3 downto 0);
       exe_opcode_o    : out std_logic_vector(3 downto 0);
+      exe_flags_o     : out std_logic_vector(15 downto 0);
       exe_src_val_o   : out std_logic_vector(15 downto 0);
       exe_dst_val_o   : out std_logic_vector(15 downto 0);
       exe_reg_addr_o  : out std_logic_vector(3 downto 0);
@@ -121,10 +123,6 @@ begin
    reg_src_addr_o <= fetch_data_i(R_SRC_REG);
    reg_dst_addr_o <= fetch_data_i(R_DST_REG);
 
-   exe_opcode_o   <= fetch_data_i(R_OPCODE);
-   exe_src_val_o  <= reg_src_val_i;
-   exe_dst_val_o  <= reg_dst_val_i;
-
    fetch_ready_o <= exe_ready_i when count = 0
                else '0';
 
@@ -162,6 +160,13 @@ begin
          fetch_addr_o  <= (others => '0');
          fetch_data_d  <= fetch_data_i;
 
+         exe_opcode_o   <= fetch_data_i(R_OPCODE);
+         exe_src_val_o  <= reg_src_val_i;
+         exe_dst_val_o  <= reg_dst_val_i;
+         exe_flags_o    <= reg_flags_i;
+         exe_reg_addr_o <= fetch_data_i(R_DST_REG);
+         exe_mem_addr_o <= reg_dst_val_i;
+
          if count > 0 or (fetch_valid_i = '1' and fetch_ready_o = '1') then
             exe_microop_o <= microcode_value(3 downto 0);
             exe_valid_o   <= '1';
@@ -174,9 +179,16 @@ begin
          end if;
 
          if rst_i = '1' then
-            fetch_valid_o <= '1';
-            fetch_addr_o  <= (others => '0');
-            count         <= (others => '0');
+            fetch_valid_o  <= '1';
+            fetch_addr_o   <= (others => '0');
+            count          <= (others => '0');
+            exe_valid_o    <= '0';
+            exe_microop_o  <= (others => '0');
+            exe_opcode_o   <= (others => '0');
+            exe_src_val_o  <= (others => '0');
+            exe_dst_val_o  <= (others => '0');
+            exe_reg_addr_o <= (others => '0');
+            exe_mem_addr_o <= (others => '0');
          end if;
       end if;
    end process p_fsm;

@@ -4,7 +4,8 @@ use ieee.std_logic_1164.all;
 entity system is
    port (
       clk_i : in  std_logic;
-      rst_i : in  std_logic
+      rst_i : in  std_logic;
+      led_o : out std_logic_vector(15 downto 0)
    );
 end entity system;
 
@@ -26,6 +27,8 @@ architecture synthesis of system is
    signal wbd_data_rd : std_logic_vector(15 downto 0);
 
 begin
+
+   led_o <= wbd_addr;
 
    i_cpu : entity work.cpu
       port map (
@@ -49,7 +52,7 @@ begin
 
    i_mem_inst : entity work.wb_mem
       generic map (
-         G_ROM_FILE  => "prog.rom",
+         G_ROM_FILE  => "../cpu/prog.rom",
          G_ADDR_SIZE => 8,
          G_DATA_SIZE => 16
       )

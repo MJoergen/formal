@@ -49,6 +49,8 @@ entity execute is
       wb_data_i       : in  std_logic_vector(15 downto 0);
 
       -- Register file
+      reg_flags_we_o  : out std_logic;
+      reg_flags_o     : out std_logic_vector(15 downto 0);
       reg_we_o        : out std_logic;
       reg_addr_o      : out std_logic_vector(3 downto 0);
       reg_val_o       : out std_logic_vector(15 downto 0)
@@ -62,11 +64,19 @@ architecture synthesis of execute is
    constant C_MICRO_MEM_WRITE    : std_logic_vector(1 downto 0) := "10";
    constant C_MICRO_REG_WRITE    : std_logic_vector(1 downto 0) := "11";
 
+   signal alu_src_val : std_logic_vector(15 downto 0);
+   signal alu_dst_val : std_logic_vector(15 downto 0);
+
 begin
 
-   dec_ready_o <= not wb_stall_i;
-   alu_oper_o  <= dec_opcode_i;
-   alu_flags_o <= reg_flags_i;
+   dec_ready_o   <= not wb_stall_i;
+   alu_oper_o    <= dec_opcode_i;
+   alu_flags_o   <= reg_flags_i;
+   alu_src_val_o <= reg_src_val_i or alu_src_val;
+   alu_dst_val_o <= reg_dst_val_i or alu_dst_val;
+
+   reg_flags_o    <= alu_res_flags_i;
+   reg_flags_we_o <= '1';
 
    p_microop : process (clk_i)
    begin
@@ -117,11 +127,11 @@ begin
 -- bit 0 : reg write
          if wb_ack_i = '1' then
             if dec_microop_i(3) = '1' then
-               alu_src_val_o <= wb_data_i;
+               alu_src_val <= wb_data_i;
             end if;
 
             if dec_microop_i(2) = '1' then
-               alu_dst_val_o <= wb_data_i;
+               alu_dst_val <= wb_data_i;
             end if;
          end if;
 

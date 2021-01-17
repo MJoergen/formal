@@ -48,6 +48,7 @@ architecture synthesis of cpu is
    signal dec2reg_src_val     : std_logic_vector(15 downto 0);
    signal dec2reg_dst_reg     : std_logic_vector(3 downto 0);
    signal dec2reg_dst_val     : std_logic_vector(15 downto 0);
+   signal dec2reg_flags       : std_logic_vector(15 downto 0);
 
    -- Decode to execute
    signal dec2exe_valid       : std_logic;
@@ -69,6 +70,8 @@ architecture synthesis of cpu is
    signal alu_res_flags       : std_logic_vector(15 downto 0);
 
    -- Execute to registers
+   signal exe2reg_flags_we    : std_logic;
+   signal exe2reg_flags       : std_logic_vector(15 downto 0);
    signal exe2reg_we          : std_logic;
    signal exe2reg_addr        : std_logic_vector(3 downto 0);
    signal exe2reg_val         : std_logic_vector(15 downto 0);
@@ -127,10 +130,12 @@ begin
          reg_src_val_i   => dec2reg_src_val,
          reg_dst_addr_o  => dec2reg_dst_reg,
          reg_dst_val_i   => dec2reg_dst_val,
+         reg_flags_i     => dec2reg_flags,
          exe_valid_o     => dec2exe_valid,
          exe_ready_i     => dec2exe_ready,
          exe_microop_o   => dec2exe_microop,
          exe_opcode_o    => dec2exe_opcode,
+         exe_flags_o     => dec2exe_flags,
          exe_src_val_o   => dec2exe_src_val,
          exe_dst_val_o   => dec2exe_dst_val,
          exe_reg_addr_o  => dec2exe_reg_addr,
@@ -146,6 +151,9 @@ begin
          src_val_o     => dec2reg_src_val,
          dst_reg_i     => dec2reg_dst_reg,
          dst_val_o     => dec2reg_dst_val,
+         flags_o       => dec2reg_flags,
+         flags_we_i    => exe2reg_flags_we,
+         flags_i       => exe2reg_flags,
          reg_we_i      => exe2reg_we,
          reg_addr_i    => exe2reg_addr,
          reg_val_i     => exe2reg_val
@@ -192,6 +200,8 @@ begin
          wb_dat_o        => wbd_dat_o,
          wb_ack_i        => wbd_ack_i,
          wb_data_i       => wbd_data_i,
+         reg_flags_we_o  => exe2reg_flags_we,
+         reg_flags_o     => exe2reg_flags,
          reg_we_o        => exe2reg_we,
          reg_addr_o      => exe2reg_addr,
          reg_val_o       => exe2reg_val

@@ -12,6 +12,9 @@ entity registers is
       src_val_o     : out std_logic_vector(15 downto 0);
       dst_reg_i     : in  std_logic_vector(3 downto 0);
       dst_val_o     : out std_logic_vector(15 downto 0);
+      flags_o       : out std_logic_vector(15 downto 0);
+      flags_we_i    : in  std_logic;
+      flags_i       : in  std_logic_vector(15 downto 0);
       reg_we_i      : in  std_logic;
       reg_addr_i    : in  std_logic_vector(3 downto 0);
       reg_val_i     : in  std_logic_vector(15 downto 0)
@@ -31,6 +34,8 @@ architecture synthesis of registers is
    signal sp : std_logic_vector(15 downto 0);
 
 begin
+
+   flags_o <= sr;
 
    src_val_o <= pc when to_integer(src_reg_i) = C_REG_PC else
                 sr when to_integer(src_reg_i) = C_REG_SR else
@@ -77,6 +82,14 @@ begin
                lower_regs(to_integer(sr(15 downto 8))*8+to_integer(reg_addr_i)) <= reg_val_i;
             end if;
          end if;
+
+-- pragma synthesis_off
+         if rst_i = '1' then
+            for i in 0 to 15 loop
+               lower_regs(i) <= X"111" * to_std_logic_vector(i, 4);
+            end loop;
+         end if;
+-- pragma synthesis_on
       end if;
    end process p_write;
 

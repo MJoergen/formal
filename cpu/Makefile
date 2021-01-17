@@ -11,31 +11,38 @@ SOURCES += decode.vhd
 SOURCES += execute.vhd
 SOURCES += registers.vhd
 SOURCES += cpu.vhd
+SOURCES += ../wb_mem/wb_mem.vhd
 SOURCES += system.vhd
-TB_SOURCES += ../wb_mem/wb_mem.vhd
-TB_SOURCES += tb_cpu.vhd
-TB   = tb_cpu
-WAVE = $(TB).ghw
-SAVE = $(TB).gtkw
+TOP = system
+
+ASM  = prog.asm
 ROM  = prog.rom
+
+TB      = tb_cpu
+TB_SRC += $(TB).vhd
+WAVE    = $(TB).ghw
+SAVE    = $(TB).gtkw
 
 ASSEMBLER = /home/mike/git/sy2002/QNICE-FPGA/assembler/asm
 
-$(WAVE): $(SOURCES) $(TB_SOURCES) $(ROM)
-	ghdl -i --std=08 $(SOURCES) $(TB_SOURCES)
+$(WAVE): $(SOURCES) $(TB_SRC) $(ROM)
+	ghdl -i --std=08 $(SOURCES) $(TB_SRC)
 	ghdl -m --std=08 $(TB)
 	ghdl -r --std=08 $(TB) --wave=$(WAVE) --stop-time=1us
 	gtkwave $(WAVE) $(SAVE)
 
-test%:
-	$(ASSEMBLER) $@.asm
-	mv $@.rom $(ROM)
-	make $(WAVE)
+$(ROM): $(ASM)
+	$(ASSEMBLER) $(ASM)
+
+synth: $(SOURCES) $(ROM)
+	ghdl -a --std=08 $(SOURCES)
+	yosys -m ghdl -p 'ghdl --std=08 $(TOP); synth_xilinx -top $(TOP) -edif $(TOP).edif' > yosys.log
 
 clean:
-	rm -rf test1.lis
-	rm -rf test1.out
+	rm -rf prog.lis
+	rm -rf prog.out
 	rm -rf work-obj08.cf
 	rm -rf $(WAVE)
 	rm -rf $(ROM)
+	rm -rf yosys.log
 
