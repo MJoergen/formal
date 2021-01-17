@@ -37,7 +37,7 @@ entity decode is
       -- Execute stage
       exe_valid_o     : out std_logic;
       exe_ready_i     : in  std_logic;
-      exe_microop_o   : out std_logic_vector(1 downto 0);
+      exe_microop_o   : out std_logic_vector(3 downto 0);
       exe_opcode_o    : out std_logic_vector(3 downto 0);
       exe_src_val_o   : out std_logic_vector(15 downto 0);
       exe_dst_val_o   : out std_logic_vector(15 downto 0);
@@ -86,7 +86,32 @@ architecture synthesis of decode is
    signal count        : std_logic_vector(1 downto 0);
    signal fetch_data_d : std_logic_vector(15 downto 0);
 
+
+   -- microcode address bitmap:
+   -- bit  5   : read from dst
+   -- bit  4   : write to dst
+   -- bit  3   : src mem
+   -- bit  2   : dst mem
+   -- bits 1-0 : count
+   signal microcode_addr  : std_logic_vector(5 downto 0);
+
+   -- microcode value bitmap
+   -- bit 4 : last
+   -- bit 3 : mem read to src
+   -- bit 2 : mem read to dst
+   -- bit 1 : mem write
+   -- bit 0 : reg write
+   signal microcode_value : std_logic_vector(4 downto 0);
+
+   signal opcode   : std_logic_vector(3 downto 0);
+   signal src_mode : std_logic_vector(1 downto 0);
+   signal dst_mode : std_logic_vector(1 downto 0);
+
 begin
+
+   opcode   <= fetch_data_i(R_OPCODE);
+   src_mode <= fetch_data_i(R_SRC_MODE);
+   dst_mode <= fetch_data_i(R_DST_MODE);
 
    -- Special case when src = @R15++, i.e. 11-8 = "1111" and 7-6 = "10".
 
@@ -103,6 +128,29 @@ begin
    fetch_ready_o <= exe_ready_i when count = 0
                else '0';
 
+   -- bit  5   : read from dst
+   -- bit  4   : write to dst
+   -- bit  3   : src mem
+   -- bit  2   : dst mem
+   -- bits 1-0 : count
+   microcode_addr(5) <= '0' when opcode = C_OPCODE_MOVE or
+                                 opcode = C_OPCODE_SWAP or
+                                 opcode = C_OPCODE_NOT
+                   else '1';
+   microcode_addr(4) <= '0' when opcode = C_OPCODE_CMP
+                   else '1';
+   microcode_addr(3) <= '0' when src_mode = C_MODE_REG
+                   else '1';
+   microcode_addr(2) <= '0' when dst_mode = C_MODE_REG
+                   else '1';
+   microcode_addr(1 downto 0) <= count;
+
+   i_microcode : entity work.microcode
+      port map (
+         addr_i  => microcode_addr,
+         value_o => microcode_value
+      ); -- i_microcode
+
    p_fsm : process (clk_i)
    begin
       if rising_edge(clk_i) then
@@ -114,36 +162,16 @@ begin
          fetch_addr_o  <= (others => '0');
          fetch_data_d  <= fetch_data_i;
 
-         case to_integer(count) is
-            when 0 =>
-               if fetch_valid_i = '1' and fetch_ready_o = '1' then
-                  if fetch_data_i(R_SRC_MODE) /= C_MODE_REG then
-                     exe_microop_o <= C_MICRO_MEM_READ_SRC;
-                     exe_valid_o   <= '1';
-                     count <= to_stdlogicvector(1, 2);
-                  elsif fetch_data_i(R_DST_MODE) /= C_MODE_REG then
-                     exe_microop_o <= C_MICRO_MEM_READ_DST;
-                     exe_valid_o   <= '1';
-                     count <= to_stdlogicvector(1, 2);
-                  end if;
-               end if;
+         if count > 0 or (fetch_valid_i = '1' and fetch_ready_o = '1') then
+            exe_microop_o <= microcode_value(3 downto 0);
+            exe_valid_o   <= '1';
 
-            when 1 =>
-               count <= to_stdlogicvector(0, 2);
-               if fetch_data_d(R_DST_MODE) /= C_MODE_REG then
-                  exe_microop_o <= C_MICRO_MEM_READ_DST;
-                  exe_valid_o   <= '1';
-                  count <= to_stdlogicvector(2, 2);
-               end if;
-
-            when 2 =>
-               count <= to_stdlogicvector(0, 2);
-               exe_mem_addr_o <= reg_dst_val_i;
-               exe_microop_o  <= C_MICRO_MEM_WRITE;
-               exe_valid_o    <= '1';
-
-            when others => null;
-         end case;
+            if microcode_value(4) = '1' then
+               count <= "00";
+            else
+               count <= count + 1;
+            end if;
+         end if;
 
          if rst_i = '1' then
             fetch_valid_o <= '1';
@@ -154,20 +182,4 @@ begin
    end process p_fsm;
 
 end architecture synthesis;
-
---              MICROOP      OPCODE  REG_ADDR  MEM_ADDR
--- MOVE R0,R1   REG_WRITE     MOVE    1          --
--- MOVE R0,@R1  MEM_WRITE     MOVE    --         R1
--- MOVE @R0,R1  MEM_READ_SRC  --      --         R0
---              REG_WRITE     MOVE    1          --
--- MOVE @R0,@R1 MEM_READ_SRC  --      --         R0
---              MEM_WRITE     MOVE    --         R1
---
--- ADD  R0,R1   REG_WRITE     ADD     1          --
--- ADD  R0,@R1  MEM_WRITE     ADD     --         R1
--- ADD  @R0,R1  MEM_READ_SRC  --      --         R0
---              REG_WRITE     ADD     1          --
--- ADD  @R0,@R1 MEM_READ_SRC  --      --         R0
---              MEM_READ_DST  --      --         R1
---              MEM_WRITE     ADD     --         R1
 

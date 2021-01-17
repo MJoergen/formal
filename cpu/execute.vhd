@@ -22,7 +22,7 @@ entity execute is
       -- From decode
       dec_valid_i     : in  std_logic;
       dec_ready_o     : out std_logic;
-      dec_microop_i   : in  std_logic_vector(1 downto 0);
+      dec_microop_i   : in  std_logic_vector(3 downto 0);
       dec_opcode_i    : in  std_logic_vector(3 downto 0);
       reg_flags_i     : in  std_logic_vector(15 downto 0);
       reg_src_val_i   : in  std_logic_vector(15 downto 0);
@@ -80,45 +80,49 @@ begin
          end if;
 
          if dec_valid_i = '1' and dec_ready_o = '1' then
-            case dec_microop_i is
-               when C_MICRO_MEM_READ_SRC => 
-                  wb_cyc_o  <= '1';
-                  wb_stb_o  <= '1';
-                  wb_addr_o <= mem_addr_i;
-                  wb_we_o   <= '0';
-                  wb_dat_o  <= (others => '0');
+            if dec_microop_i(3) = '1' then
+               wb_cyc_o  <= '1';
+               wb_stb_o  <= '1';
+               wb_addr_o <= mem_addr_i;
+               wb_we_o   <= '0';
+               wb_dat_o  <= (others => '0');
+            end if;
 
-               when C_MICRO_MEM_READ_DST => 
-                  wb_cyc_o  <= '1';
-                  wb_stb_o  <= '1';
-                  wb_addr_o <= mem_addr_i;
-                  wb_we_o   <= '0';
-                  wb_dat_o  <= (others => '0');
+            if dec_microop_i(2) = '1' then
+               wb_cyc_o  <= '1';
+               wb_stb_o  <= '1';
+               wb_addr_o <= mem_addr_i;
+               wb_we_o   <= '0';
+               wb_dat_o  <= (others => '0');
+            end if;
 
-               when C_MICRO_MEM_WRITE => 
-                  wb_cyc_o  <= '1';
-                  wb_stb_o  <= '1';
-                  wb_addr_o <= mem_addr_i;
-                  wb_we_o   <= '1';
-                  wb_dat_o  <= alu_res_val_i;
+            if dec_microop_i(1) = '1' then
+               wb_cyc_o  <= '1';
+               wb_stb_o  <= '1';
+               wb_addr_o <= mem_addr_i;
+               wb_we_o   <= '1';
+               wb_dat_o  <= alu_res_val_i;
+            end if;
 
-               when C_MICRO_REG_WRITE => 
-                  reg_we_o   <= '1';
-                  reg_addr_o <= reg_addr_i;
-                  reg_val_o  <= alu_res_val_i;
-
-               when others =>
-                  null;
-
-            end case;
+            if dec_microop_i(0) = '1' then
+               reg_we_o   <= '1';
+               reg_addr_o <= reg_addr_i;
+               reg_val_o  <= alu_res_val_i;
+            end if;
          end if;
 
+-- bit 3 : mem read to src
+-- bit 2 : mem read to dst
+-- bit 1 : mem write
+-- bit 0 : reg write
          if wb_ack_i = '1' then
-            case dec_microop_i is
-               when C_MICRO_MEM_READ_SRC => alu_src_val_o <= wb_data_i;
-               when C_MICRO_MEM_READ_DST => alu_dst_val_o <= wb_data_i;
-               when others => null;
-            end case;
+            if dec_microop_i(3) = '1' then
+               alu_src_val_o <= wb_data_i;
+            end if;
+
+            if dec_microop_i(2) = '1' then
+               alu_dst_val_o <= wb_data_i;
+            end if;
          end if;
 
          if rst_i = '1' then

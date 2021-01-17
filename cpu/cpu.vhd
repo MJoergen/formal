@@ -34,6 +34,11 @@ architecture synthesis of cpu is
    signal fetch2dec_addr      : std_logic_vector(15 downto 0);
    signal fetch2dec_data      : std_logic_vector(15 downto 0);
 
+   signal fetch2decp_valid    : std_logic;
+   signal fetch2decp_ready    : std_logic;
+   signal fetch2decp_addr     : std_logic_vector(15 downto 0);
+   signal fetch2decp_data     : std_logic_vector(15 downto 0);
+
    -- Decode to fetch
    signal dec2fetch_valid     : std_logic;
    signal dec2fetch_addr      : std_logic_vector(15 downto 0);
@@ -47,7 +52,7 @@ architecture synthesis of cpu is
    -- Decode to execute
    signal dec2exe_valid       : std_logic;
    signal dec2exe_ready       : std_logic;
-   signal dec2exe_microop     : std_logic_vector(1 downto 0);
+   signal dec2exe_microop     : std_logic_vector(3 downto 0);
    signal dec2exe_opcode      : std_logic_vector(3 downto 0);
    signal dec2exe_flags       : std_logic_vector(15 downto 0);
    signal dec2exe_src_val     : std_logic_vector(15 downto 0);
@@ -89,16 +94,35 @@ begin
       ); -- i_fetch
 
 
+   i_axi_pause : entity work.axi_pause
+      generic map (
+         G_TDATA_SIZE => 32,
+         G_PAUSE_SIZE => -5
+      )
+      port map (
+         clk_i      => clk_i,
+         rst_i      => rst_i,
+         s_tvalid_i => fetch2dec_valid,
+         s_tready_o => fetch2dec_ready,
+         s_tdata_i(31 downto 16)  => fetch2dec_addr,
+         s_tdata_i(15 downto 0)   => fetch2dec_data,
+         m_tvalid_o => fetch2decp_valid,
+         m_tready_i => fetch2decp_ready,
+         m_tdata_o(31 downto 16)  => fetch2decp_addr,
+         m_tdata_o(15 downto 0)   => fetch2decp_data
+      ); -- i_axi_pause
+
+
    i_decode : entity work.decode
       port map (
          clk_i           => clk_i,
          rst_i           => rst_i,
          fetch_valid_o   => dec2fetch_valid,
          fetch_addr_o    => dec2fetch_addr,
-         fetch_valid_i   => fetch2dec_valid,
-         fetch_ready_o   => fetch2dec_ready,
-         fetch_addr_i    => fetch2dec_addr,
-         fetch_data_i    => fetch2dec_data,
+         fetch_valid_i   => fetch2decp_valid,
+         fetch_ready_o   => fetch2decp_ready,
+         fetch_addr_i    => fetch2decp_addr,
+         fetch_data_i    => fetch2decp_data,
          reg_src_addr_o  => dec2reg_src_reg,
          reg_src_val_i   => dec2reg_src_val,
          reg_dst_addr_o  => dec2reg_dst_reg,
