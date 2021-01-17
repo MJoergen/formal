@@ -25,11 +25,13 @@ SAVE    = $(TB).gtkw
 
 ASSEMBLER = /home/mike/git/sy2002/QNICE-FPGA/assembler/asm
 
+show: $(WAVE)
+	gtkwave $(WAVE) $(SAVE)
+
 $(WAVE): $(SOURCES) $(TB_SRC) $(ROM)
 	ghdl -i --std=08 $(SOURCES) $(TB_SRC)
 	ghdl -m --std=08 $(TB)
 	ghdl -r --std=08 $(TB) --wave=$(WAVE) --stop-time=1us
-	gtkwave $(WAVE) $(SAVE)
 
 $(ROM): $(ASM)
 	$(ASSEMBLER) $(ASM)

@@ -74,10 +74,11 @@ architecture synthesis of decode is
    constant C_OPCODE_CTRL : std_logic_vector(3 downto 0) := X"E";
    constant C_OPCODE_JMP  : std_logic_vector(3 downto 0) := X"F";
 
-   constant C_MICRO_MEM_READ_SRC : std_logic_vector(1 downto 0) := "00";
-   constant C_MICRO_MEM_READ_DST : std_logic_vector(1 downto 0) := "01";
-   constant C_MICRO_MEM_WRITE    : std_logic_vector(1 downto 0) := "10";
-   constant C_MICRO_REG_WRITE    : std_logic_vector(1 downto 0) := "11";
+   constant C_LAST         : integer := 4;
+   constant C_MEM_READ_SRC : integer := 3;
+   constant C_MEM_READ_DST : integer := 2;
+   constant C_MEM_WRITE    : integer := 1;
+   constant C_REG_WRITE    : integer := 0;
 
    constant C_MODE_REG : std_logic_vector(1 downto 0) := "00"; -- R
    constant C_MODE_MEM : std_logic_vector(1 downto 0) := "01"; -- @R
@@ -165,13 +166,18 @@ begin
          exe_dst_val_o  <= reg_dst_val_i;
          exe_flags_o    <= reg_flags_i;
          exe_reg_addr_o <= fetch_data_i(R_DST_REG);
-         exe_mem_addr_o <= reg_dst_val_i;
+
+         if microcode_value(C_MEM_READ_SRC) = '1' then
+            exe_mem_addr_o <= reg_src_val_i;
+         else
+            exe_mem_addr_o <= reg_dst_val_i;
+         end if;
 
          if count > 0 or (fetch_valid_i = '1' and fetch_ready_o = '1') then
             exe_microop_o <= microcode_value(3 downto 0);
             exe_valid_o   <= '1';
 
-            if microcode_value(4) = '1' then
+            if microcode_value(C_LAST) = '1' then
                count <= "00";
             else
                count <= count + 1;

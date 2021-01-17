@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Sun Jan 17 06:58:40 2021
+[*] Sun Jan 17 13:48:09 2021
 [*]
 [dumpfile] "/home/mike/git/MJoergen/formal/cpu/tb_cpu.ghw"
-[dumpfile_mtime] "Sun Jan 17 06:57:07 2021"
-[dumpfile_size] 168869
+[dumpfile_mtime] "Sun Jan 17 13:47:51 2021"
+[dumpfile_size] 169763
 [savefile] "/home/mike/git/MJoergen/formal/cpu/tb_cpu.gtkw"
-[timestart] 80500000
+[timestart] 128700000
 [size] 1920 1132
-[pos] -1 -1
-*-25.158585 166400000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[pos] -1921 -12
+*-25.158585 167000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
 [treeopen] top.tb_cpu.
 [treeopen] top.tb_cpu.i_system.
@@ -67,7 +67,7 @@ top.tb_cpu.i_system.i_cpu.i_decode.i_microcode.addr_i[0]
 #{top.tb_cpu.i_system.i_cpu.i_decode.i_microcode.value_o[4:0]} top.tb_cpu.i_system.i_cpu.i_decode.i_microcode.value_o[4] top.tb_cpu.i_system.i_cpu.i_decode.i_microcode.value_o[3] top.tb_cpu.i_system.i_cpu.i_decode.i_microcode.value_o[2] top.tb_cpu.i_system.i_cpu.i_decode.i_microcode.value_o[1] top.tb_cpu.i_system.i_cpu.i_decode.i_microcode.value_o[0]
 @1401200
 -microcode
-@800200
+@c00200
 -decode
 @28
 [color] 2
@@ -95,9 +95,9 @@ top.tb_cpu.i_system.i_cpu.i_decode.exe_ready_i
 #{top.tb_cpu.i_system.i_cpu.i_decode.exe_dst_val_o[15:0]} top.tb_cpu.i_system.i_cpu.i_decode.exe_dst_val_o[15] top.tb_cpu.i_system.i_cpu.i_decode.exe_dst_val_o[14] top.tb_cpu.i_system.i_cpu.i_decode.exe_dst_val_o[13] top.tb_cpu.i_system.i_cpu.i_decode.exe_dst_val_o[12] top.tb_cpu.i_system.i_cpu.i_decode.exe_dst_val_o[11] top.tb_cpu.i_system.i_cpu.i_decode.exe_dst_val_o[10] top.tb_cpu.i_system.i_cpu.i_decode.exe_dst_val_o[9] top.tb_cpu.i_system.i_cpu.i_decode.exe_dst_val_o[8] top.tb_cpu.i_system.i_cpu.i_decode.exe_dst_val_o[7] top.tb_cpu.i_system.i_cpu.i_decode.exe_dst_val_o[6] top.tb_cpu.i_system.i_cpu.i_decode.exe_dst_val_o[5] top.tb_cpu.i_system.i_cpu.i_decode.exe_dst_val_o[4] top.tb_cpu.i_system.i_cpu.i_decode.exe_dst_val_o[3] top.tb_cpu.i_system.i_cpu.i_decode.exe_dst_val_o[2] top.tb_cpu.i_system.i_cpu.i_decode.exe_dst_val_o[1] top.tb_cpu.i_system.i_cpu.i_decode.exe_dst_val_o[0]
 #{top.tb_cpu.i_system.i_cpu.i_decode.exe_reg_addr_o[3:0]} top.tb_cpu.i_system.i_cpu.i_decode.exe_reg_addr_o[3] top.tb_cpu.i_system.i_cpu.i_decode.exe_reg_addr_o[2] top.tb_cpu.i_system.i_cpu.i_decode.exe_reg_addr_o[1] top.tb_cpu.i_system.i_cpu.i_decode.exe_reg_addr_o[0]
 #{top.tb_cpu.i_system.i_cpu.i_decode.exe_mem_addr_o[15:0]} top.tb_cpu.i_system.i_cpu.i_decode.exe_mem_addr_o[15] top.tb_cpu.i_system.i_cpu.i_decode.exe_mem_addr_o[14] top.tb_cpu.i_system.i_cpu.i_decode.exe_mem_addr_o[13] top.tb_cpu.i_system.i_cpu.i_decode.exe_mem_addr_o[12] top.tb_cpu.i_system.i_cpu.i_decode.exe_mem_addr_o[11] top.tb_cpu.i_system.i_cpu.i_decode.exe_mem_addr_o[10] top.tb_cpu.i_system.i_cpu.i_decode.exe_mem_addr_o[9] top.tb_cpu.i_system.i_cpu.i_decode.exe_mem_addr_o[8] top.tb_cpu.i_system.i_cpu.i_decode.exe_mem_addr_o[7] top.tb_cpu.i_system.i_cpu.i_decode.exe_mem_addr_o[6] top.tb_cpu.i_system.i_cpu.i_decode.exe_mem_addr_o[5] top.tb_cpu.i_system.i_cpu.i_decode.exe_mem_addr_o[4] top.tb_cpu.i_system.i_cpu.i_decode.exe_mem_addr_o[3] top.tb_cpu.i_system.i_cpu.i_decode.exe_mem_addr_o[2] top.tb_cpu.i_system.i_cpu.i_decode.exe_mem_addr_o[1] top.tb_cpu.i_system.i_cpu.i_decode.exe_mem_addr_o[0]
-@1000200
+@1401200
 -decode
-@c00200
+@800200
 -execute
 @28
 [color] 2
@@ -131,7 +131,7 @@ top.tb_cpu.i_system.i_cpu.i_execute.reg_we_o
 @22
 #{top.tb_cpu.i_system.i_cpu.i_execute.reg_addr_o[3:0]} top.tb_cpu.i_system.i_cpu.i_execute.reg_addr_o[3] top.tb_cpu.i_system.i_cpu.i_execute.reg_addr_o[2] top.tb_cpu.i_system.i_cpu.i_execute.reg_addr_o[1] top.tb_cpu.i_system.i_cpu.i_execute.reg_addr_o[0]
 #{top.tb_cpu.i_system.i_cpu.i_execute.reg_val_o[15:0]} top.tb_cpu.i_system.i_cpu.i_execute.reg_val_o[15] top.tb_cpu.i_system.i_cpu.i_execute.reg_val_o[14] top.tb_cpu.i_system.i_cpu.i_execute.reg_val_o[13] top.tb_cpu.i_system.i_cpu.i_execute.reg_val_o[12] top.tb_cpu.i_system.i_cpu.i_execute.reg_val_o[11] top.tb_cpu.i_system.i_cpu.i_execute.reg_val_o[10] top.tb_cpu.i_system.i_cpu.i_execute.reg_val_o[9] top.tb_cpu.i_system.i_cpu.i_execute.reg_val_o[8] top.tb_cpu.i_system.i_cpu.i_execute.reg_val_o[7] top.tb_cpu.i_system.i_cpu.i_execute.reg_val_o[6] top.tb_cpu.i_system.i_cpu.i_execute.reg_val_o[5] top.tb_cpu.i_system.i_cpu.i_execute.reg_val_o[4] top.tb_cpu.i_system.i_cpu.i_execute.reg_val_o[3] top.tb_cpu.i_system.i_cpu.i_execute.reg_val_o[2] top.tb_cpu.i_system.i_cpu.i_execute.reg_val_o[1] top.tb_cpu.i_system.i_cpu.i_execute.reg_val_o[0]
-@1401200
+@1000200
 -execute
 @c00200
 -alu

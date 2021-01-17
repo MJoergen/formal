@@ -59,21 +59,21 @@ end entity execute;
 
 architecture synthesis of execute is
 
-   constant C_MICRO_MEM_READ_SRC : std_logic_vector(1 downto 0) := "00";
-   constant C_MICRO_MEM_READ_DST : std_logic_vector(1 downto 0) := "01";
-   constant C_MICRO_MEM_WRITE    : std_logic_vector(1 downto 0) := "10";
-   constant C_MICRO_REG_WRITE    : std_logic_vector(1 downto 0) := "11";
+   constant C_MEM_READ_SRC : integer := 3;
+   constant C_MEM_READ_DST : integer := 2;
+   constant C_MEM_WRITE    : integer := 1;
+   constant C_REG_WRITE    : integer := 0;
 
-   signal alu_src_val : std_logic_vector(15 downto 0);
-   signal alu_dst_val : std_logic_vector(15 downto 0);
+   signal alu_src_val : std_logic_vector(15 downto 0) := (others => '0');
+   signal alu_dst_val : std_logic_vector(15 downto 0) := (others => '0');
 
 begin
 
    dec_ready_o   <= not wb_stall_i;
    alu_oper_o    <= dec_opcode_i;
    alu_flags_o   <= reg_flags_i;
-   alu_src_val_o <= reg_src_val_i or alu_src_val;
-   alu_dst_val_o <= reg_dst_val_i or alu_dst_val;
+   alu_src_val_o <= alu_src_val when dec_microop_i(C_MEM_READ_SRC) = '1' else reg_src_val_i;
+   alu_dst_val_o <= alu_dst_val when dec_microop_i(C_MEM_READ_DST) = '1' else reg_dst_val_i;
 
    reg_flags_o    <= alu_res_flags_i;
    reg_flags_we_o <= '1';
@@ -86,11 +86,22 @@ begin
          reg_val_o  <= (others => '0');
 
          if wb_stall_i = '0' then
-            wb_stb_o <= '0';
+            wb_stb_o  <= '0';
+            wb_we_o   <= '0';
+            wb_addr_o <= (others => '0');
+            wb_dat_o  <= (others => '0');
+         end if;
+
+         if wb_ack_i = '1' then
+            wb_cyc_o  <= '0';
+            wb_stb_o  <= '0';
+            wb_we_o   <= '0';
+            wb_addr_o <= (others => '0');
+            wb_dat_o  <= (others => '0');
          end if;
 
          if dec_valid_i = '1' and dec_ready_o = '1' then
-            if dec_microop_i(3) = '1' then
+            if dec_microop_i(C_MEM_READ_SRC) = '1' then
                wb_cyc_o  <= '1';
                wb_stb_o  <= '1';
                wb_addr_o <= mem_addr_i;
@@ -98,7 +109,7 @@ begin
                wb_dat_o  <= (others => '0');
             end if;
 
-            if dec_microop_i(2) = '1' then
+            if dec_microop_i(C_MEM_READ_DST) = '1' then
                wb_cyc_o  <= '1';
                wb_stb_o  <= '1';
                wb_addr_o <= mem_addr_i;
@@ -106,7 +117,7 @@ begin
                wb_dat_o  <= (others => '0');
             end if;
 
-            if dec_microop_i(1) = '1' then
+            if dec_microop_i(C_MEM_WRITE) = '1' then
                wb_cyc_o  <= '1';
                wb_stb_o  <= '1';
                wb_addr_o <= mem_addr_i;
@@ -114,24 +125,29 @@ begin
                wb_dat_o  <= alu_res_val_i;
             end if;
 
-            if dec_microop_i(0) = '1' then
+            if dec_microop_i(C_REG_WRITE)    = '1' and
+               dec_microop_i(C_MEM_READ_SRC) = '0' and
+               dec_microop_i(C_MEM_READ_DST) = '0'
+            then
                reg_we_o   <= '1';
                reg_addr_o <= reg_addr_i;
                reg_val_o  <= alu_res_val_i;
             end if;
          end if;
 
--- bit 3 : mem read to src
--- bit 2 : mem read to dst
--- bit 1 : mem write
--- bit 0 : reg write
          if wb_ack_i = '1' then
-            if dec_microop_i(3) = '1' then
+            if dec_microop_i(C_MEM_READ_SRC) = '1' then
                alu_src_val <= wb_data_i;
             end if;
 
-            if dec_microop_i(2) = '1' then
+            if dec_microop_i(C_MEM_READ_DST) = '1' then
                alu_dst_val <= wb_data_i;
+            end if;
+
+            if dec_microop_i(C_REG_WRITE) = '1' then
+               reg_we_o   <= '1';
+               reg_addr_o <= reg_addr_i;
+               reg_val_o  <= alu_res_val_i;
             end if;
          end if;
 
