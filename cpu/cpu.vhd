@@ -34,6 +34,11 @@ architecture synthesis of cpu is
    signal fetch2dec_addr      : std_logic_vector(15 downto 0);
    signal fetch2dec_data      : std_logic_vector(15 downto 0);
 
+   signal fetch2dect_valid    : std_logic;
+   signal fetch2dect_ready    : std_logic;
+   signal fetch2dect_addr     : std_logic_vector(15 downto 0);
+   signal fetch2dect_data     : std_logic_vector(15 downto 0);
+
    signal fetch2decp_valid    : std_logic;
    signal fetch2decp_ready    : std_logic;
    signal fetch2decp_addr     : std_logic_vector(15 downto 0);
@@ -89,6 +94,25 @@ begin
       ); -- i_fetch
 
 
+   -- Inserted for better timing
+   i_axi_pipe_small : entity work.axi_pipe_small
+      generic map (
+         G_TDATA_SIZE => 32
+      )
+      port map (
+         clk_i      => clk_i,
+         rst_i      => rst_i,
+         s_tvalid_i => fetch2dec_valid,
+         s_tready_o => fetch2dec_ready,
+         s_tdata_i(31 downto 16) => fetch2dec_addr,
+         s_tdata_i(15 downto 0)  => fetch2dec_data,
+         m_tvalid_o => fetch2dect_valid,
+         m_tready_i => fetch2dect_ready,
+         m_tdata_o(31 downto 16) => fetch2dect_addr,
+         m_tdata_o(15 downto 0)  => fetch2dect_data
+      ); -- i_axi_pipe_small
+
+
    i_axi_pause : entity work.axi_pause
       generic map (
          G_TDATA_SIZE => 32,
@@ -97,10 +121,10 @@ begin
       port map (
          clk_i      => clk_i,
          rst_i      => rst_i,
-         s_tvalid_i => fetch2dec_valid,
-         s_tready_o => fetch2dec_ready,
-         s_tdata_i(31 downto 16)  => fetch2dec_addr,
-         s_tdata_i(15 downto 0)   => fetch2dec_data,
+         s_tvalid_i => fetch2dect_valid,
+         s_tready_o => fetch2dect_ready,
+         s_tdata_i(31 downto 16)  => fetch2dect_addr,
+         s_tdata_i(15 downto 0)   => fetch2dect_data,
          m_tvalid_o => fetch2decp_valid,
          m_tready_i => fetch2decp_ready,
          m_tdata_o(31 downto 16)  => fetch2decp_addr,

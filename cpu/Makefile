@@ -5,6 +5,7 @@
 
 XILINX_DIR = /opt/Xilinx/Vivado/2019.2
 
+SOURCES += axi_pipe_small.vhd
 SOURCES += axi_pause.vhd
 SOURCES += cpu_constants.vhd
 SOURCES += ../two_stage_fifo/two_stage_fifo.vhd
