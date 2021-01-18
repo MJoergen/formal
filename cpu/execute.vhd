@@ -24,11 +24,11 @@ entity execute is
       dec_ready_o     : out std_logic;
       dec_microop_i   : in  std_logic_vector(3 downto 0);
       dec_opcode_i    : in  std_logic_vector(3 downto 0);
-      reg_flags_i     : in  std_logic_vector(15 downto 0);
-      reg_src_val_i   : in  std_logic_vector(15 downto 0);
-      reg_dst_val_i   : in  std_logic_vector(15 downto 0);
-      reg_addr_i      : in  std_logic_vector(3 downto 0);
-      mem_addr_i      : in  std_logic_vector(15 downto 0);
+      dec_flags_i     : in  std_logic_vector(15 downto 0);
+      dec_src_val_i   : in  std_logic_vector(15 downto 0);
+      dec_dst_val_i   : in  std_logic_vector(15 downto 0);
+      dec_reg_addr_i  : in  std_logic_vector(3 downto 0);
+      dec_mem_addr_i  : in  std_logic_vector(15 downto 0);
 
       -- Memory
       wb_cyc_o        : out std_logic;
@@ -71,9 +71,9 @@ begin
 
    dec_ready_o   <= not wb_stall_i;
    alu_oper      <= dec_opcode_i;
-   alu_flags     <= reg_flags_i;
-   alu_src_val   <= mem_src_val when dec_microop_i(C_MEM_READ_SRC) = '1' else reg_src_val_i;
-   alu_dst_val   <= mem_dst_val when dec_microop_i(C_MEM_READ_DST) = '1' else reg_dst_val_i;
+   alu_flags     <= dec_flags_i;
+   alu_src_val   <= mem_src_val when dec_microop_i(C_MEM_READ_SRC) = '1' else dec_src_val_i;
+   alu_dst_val   <= mem_dst_val when dec_microop_i(C_MEM_READ_DST) = '1' else dec_dst_val_i;
 
    reg_flags_o    <= alu_res_flags;
    reg_flags_we_o <= '1';
@@ -104,7 +104,7 @@ begin
             if dec_microop_i(C_MEM_READ_SRC) = '1' then
                wb_cyc_o  <= '1';
                wb_stb_o  <= '1';
-               wb_addr_o <= mem_addr_i;
+               wb_addr_o <= dec_mem_addr_i;
                wb_we_o   <= '0';
                wb_dat_o  <= (others => '0');
             end if;
@@ -112,7 +112,7 @@ begin
             if dec_microop_i(C_MEM_READ_DST) = '1' then
                wb_cyc_o  <= '1';
                wb_stb_o  <= '1';
-               wb_addr_o <= mem_addr_i;
+               wb_addr_o <= dec_mem_addr_i;
                wb_we_o   <= '0';
                wb_dat_o  <= (others => '0');
             end if;
@@ -120,7 +120,7 @@ begin
             if dec_microop_i(C_MEM_WRITE) = '1' then
                wb_cyc_o  <= '1';
                wb_stb_o  <= '1';
-               wb_addr_o <= mem_addr_i;
+               wb_addr_o <= dec_mem_addr_i;
                wb_we_o   <= '1';
                wb_dat_o  <= alu_res_val;
             end if;
@@ -130,7 +130,7 @@ begin
                dec_microop_i(C_MEM_READ_DST) = '0'
             then
                reg_we_o   <= '1';
-               reg_addr_o <= reg_addr_i;
+               reg_addr_o <= dec_reg_addr_i;
                reg_val_o  <= alu_res_val;
             end if;
          end if;
@@ -146,7 +146,7 @@ begin
 
             if dec_microop_i(C_REG_WRITE) = '1' then
                reg_we_o   <= '1';
-               reg_addr_o <= reg_addr_i;
+               reg_addr_o <= dec_reg_addr_i;
                reg_val_o  <= alu_res_val;
             end if;
          end if;
