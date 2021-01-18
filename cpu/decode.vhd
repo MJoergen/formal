@@ -20,9 +20,11 @@ entity decode is
       clk_i           : in  std_logic;
       rst_i           : in  std_logic;
 
-      -- Instruction fetch
+      -- To Instruction fetch
       fetch_valid_o   : out std_logic;
       fetch_addr_o    : out std_logic_vector(15 downto 0);
+
+      -- From Instruction fetch
       fetch_valid_i   : in  std_logic;
       fetch_ready_o   : out std_logic;
       fetch_addr_i    : in  std_logic_vector(15 downto 0);
@@ -35,7 +37,7 @@ entity decode is
       reg_dst_val_i   : in  std_logic_vector(15 downto 0);
       reg_flags_i     : in  std_logic_vector(15 downto 0);
 
-      -- Execute stage
+      -- To Execute stage
       exe_valid_o     : out std_logic;
       exe_ready_i     : in  std_logic;
       exe_microop_o   : out std_logic_vector(3 downto 0);

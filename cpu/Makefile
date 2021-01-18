@@ -1,3 +1,10 @@
+# Available make targets:
+# 'make' runs the simulation
+# 'make system.bit' runs Vivado synthesis and bitfile generation
+# 'make synth' runs Yosys synthesis
+
+XILINX_DIR = /opt/Xilinx/Vivado/2019.2
+
 SOURCES += axi_pause.vhd
 SOURCES += cpu_constants.vhd
 SOURCES += ../two_stage_fifo/two_stage_fifo.vhd
@@ -36,6 +43,22 @@ $(WAVE): $(SOURCES) $(TB_SRC) $(ROM)
 $(ROM): $(ASM)
 	$(ASSEMBLER) $(ASM)
 
+$(TOP).bit: $(TOP).tcl $(SOURCES) $(TOP).xdc
+	bash -c "source $(XILINX_DIR)/settings64.sh ; vivado -mode tcl -source $<"
+
+$(TOP).tcl:
+	echo "# This is a tcl command script for the Vivado tool chain" > $@
+	echo "read_vhdl -vhdl2008 { $(SOURCES)  }" >> $@
+	echo "read_xdc $(TOP).xdc" >> $@
+	echo "synth_design -top $(TOP) -part xc7a100tcsg324-1 -flatten_hierarchy none" >> $@
+	echo "write_checkpoint -force post_synth.dcp" >> $@
+	echo "opt_design -directive NoBramPowerOpt" >> $@
+	echo "place_design" >> $@
+	echo "route_design" >> $@
+	echo "write_checkpoint -force post_route.dcp" >> $@
+	echo "write_bitstream -force $(TOP).bit" >> $@
+	echo "exit" >> $@
+
 synth: $(SOURCES) $(ROM)
 	ghdl -a --std=08 $(SOURCES)
 	yosys -m ghdl -p 'ghdl --std=08 $(TOP); synth_xilinx -top $(TOP) -edif $(TOP).edif' > yosys.log
@@ -47,4 +70,9 @@ clean:
 	rm -rf $(WAVE)
 	rm -rf $(ROM)
 	rm -rf yosys.log
+	rm -rf $(TOP).tcl
+	rm -rf post_synth.dcp
+	rm -rf post_route.dcp
+	rm -rf $(TOP).bit
+	rm -rf vivado*
 

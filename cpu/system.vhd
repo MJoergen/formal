@@ -3,9 +3,9 @@ use ieee.std_logic_1164.all;
 
 entity system is
    port (
-      clk_i : in  std_logic;
-      rst_i : in  std_logic;
-      led_o : out std_logic_vector(15 downto 0)
+      clk_i  : in  std_logic;
+      rstn_i : in  std_logic;
+      led_o  : out std_logic_vector(15 downto 0)
    );
 end entity system;
 
@@ -33,7 +33,7 @@ begin
    i_cpu : entity work.cpu
       port map (
          clk_i       => clk_i,
-         rst_i       => rst_i,
+         rst_i       => not rstn_i,
          wbi_cyc_o   => wbi_cyc,
          wbi_stb_o   => wbi_stb,
          wbi_stall_i => wbi_stall,
@@ -58,7 +58,7 @@ begin
       )
       port map (
          clk_i      => clk_i,
-         rst_i      => rst_i,
+         rst_i      => not rstn_i,
          wb_cyc_i   => wbi_cyc,
          wb_stb_i   => wbi_stb,
          wb_stall_o => wbi_stall,
@@ -76,7 +76,7 @@ begin
       )
       port map (
          clk_i      => clk_i,
-         rst_i      => rst_i,
+         rst_i      => not rstn_i,
          wb_cyc_i   => wbd_cyc,
          wb_stb_i   => wbd_stb,
          wb_stall_o => wbd_stall,
