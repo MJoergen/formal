@@ -61,14 +61,6 @@ architecture synthesis of cpu is
    signal dec2exe_reg_addr    : std_logic_vector(3 downto 0);
    signal dec2exe_mem_addr    : std_logic_vector(15 downto 0);
 
-   -- ALU
-   signal alu_oper            : std_logic_vector(3 downto 0);
-   signal alu_flags           : std_logic_vector(15 downto 0);
-   signal alu_src_val         : std_logic_vector(15 downto 0);
-   signal alu_dst_val         : std_logic_vector(15 downto 0);
-   signal alu_res_val         : std_logic_vector(15 downto 0);
-   signal alu_res_flags       : std_logic_vector(15 downto 0);
-
    -- Execute to registers
    signal exe2reg_flags_we    : std_logic;
    signal exe2reg_flags       : std_logic_vector(15 downto 0);
@@ -160,19 +152,6 @@ begin
       ); -- i_registers
 
 
-   i_alu : entity work.alu
-      port map (
-         clk_i       => clk_i,
-         rst_i       => rst_i,
-         opcode_i    => alu_oper,
-         sr_i        => alu_flags,
-         src_data_i  => alu_src_val,
-         dst_data_i  => alu_dst_val,
-         res_data_o  => alu_res_val,
-         sr_o        => alu_res_flags
-      ); -- i_alu
-
-
    i_execute : entity work.execute
       port map (
          clk_i           => clk_i,
@@ -186,12 +165,6 @@ begin
          reg_dst_val_i   => dec2exe_dst_val,
          reg_addr_i      => dec2exe_reg_addr,
          mem_addr_i      => dec2exe_mem_addr,
-         alu_oper_o      => alu_oper,
-         alu_flags_o     => alu_flags,
-         alu_src_val_o   => alu_src_val,
-         alu_dst_val_o   => alu_dst_val,
-         alu_res_val_i   => alu_res_val,
-         alu_res_flags_i => alu_res_flags,
          wb_cyc_o        => wbd_cyc_o,
          wb_stb_o        => wbd_stb_o,
          wb_stall_i      => wbd_stall_i,

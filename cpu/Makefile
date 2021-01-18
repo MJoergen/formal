@@ -23,7 +23,7 @@ TB_SRC += $(TB).vhd
 WAVE    = $(TB).ghw
 SAVE    = $(TB).gtkw
 
-ASSEMBLER = /home/mike/git/sy2002/QNICE-FPGA/assembler/asm
+ASSEMBLER = $(HOME)/git/sy2002/QNICE-FPGA/assembler/asm
 
 show: $(WAVE)
 	gtkwave $(WAVE) $(SAVE)
