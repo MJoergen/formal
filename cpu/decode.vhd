@@ -40,7 +40,7 @@ entity decode is
       -- To Execute stage
       exe_valid_o     : out std_logic;
       exe_ready_i     : in  std_logic;
-      exe_microop_o   : out std_logic_vector(3 downto 0);
+      exe_microop_o   : out std_logic_vector(5 downto 0);
       exe_opcode_o    : out std_logic_vector(3 downto 0);
       exe_flags_o     : out std_logic_vector(15 downto 0);
       exe_src_val_o   : out std_logic_vector(15 downto 0);
@@ -76,7 +76,9 @@ architecture synthesis of decode is
    constant C_OPCODE_CTRL : std_logic_vector(3 downto 0) := X"E";
    constant C_OPCODE_JMP  : std_logic_vector(3 downto 0) := X"F";
 
-   constant C_LAST         : integer := 4;
+   constant C_LAST         : integer := 6;
+   constant C_MEM_ALU_SRC  : integer := 5;
+   constant C_MEM_ALU_DST  : integer := 4;
    constant C_MEM_READ_SRC : integer := 3;
    constant C_MEM_READ_DST : integer := 2;
    constant C_MEM_WRITE    : integer := 1;
@@ -90,6 +92,7 @@ architecture synthesis of decode is
    signal immediate    : std_logic;
    signal count        : std_logic_vector(1 downto 0);
    signal fetch_data_d : std_logic_vector(15 downto 0);
+   signal fetch_data   : std_logic_vector(15 downto 0);
 
 
    -- microcode address bitmap:
@@ -106,7 +109,7 @@ architecture synthesis of decode is
    -- bit 2 : mem read to dst
    -- bit 1 : mem write
    -- bit 0 : reg write
-   signal microcode_value : std_logic_vector(4 downto 0);
+   signal microcode_value : std_logic_vector(6 downto 0);
 
    signal opcode   : std_logic_vector(3 downto 0);
    signal src_mode : std_logic_vector(1 downto 0);
@@ -114,17 +117,28 @@ architecture synthesis of decode is
 
 begin
 
-   opcode   <= fetch_data_i(R_OPCODE);
-   src_mode <= fetch_data_i(R_SRC_MODE);
-   dst_mode <= fetch_data_i(R_DST_MODE);
+   p_fetch_data : process (clk_i)
+   begin
+      if rising_edge(clk_i) then
+         if count = 0 then
+            fetch_data_d <= fetch_data_i;
+         end if;
+      end if;
+   end process p_fetch_data;
+
+   fetch_data <= fetch_data_i when count = 0 else fetch_data_d;
+
+   opcode   <= fetch_data(R_OPCODE);
+   src_mode <= fetch_data(R_SRC_MODE);
+   dst_mode <= fetch_data(R_DST_MODE);
 
    -- Special case when src = @R15++, i.e. 11-8 = "1111" and 7-6 = "10".
 
-   immediate <= '1' when fetch_data_i(R_SRC_REG) = "1111" and fetch_data_i(R_SRC_MODE) = C_MODE_INC
+   immediate <= '1' when fetch_data(R_SRC_REG) = "1111" and fetch_data(R_SRC_MODE) = C_MODE_INC
            else '0';
 
-   reg_src_addr_o <= fetch_data_i(R_SRC_REG);
-   reg_dst_addr_o <= fetch_data_i(R_DST_REG);
+   reg_src_addr_o <= fetch_data(R_SRC_REG);
+   reg_dst_addr_o <= fetch_data(R_DST_REG);
 
    fetch_ready_o <= exe_ready_i when count = 0
                else '0';
@@ -156,27 +170,32 @@ begin
    begin
       if rising_edge(clk_i) then
          if exe_ready_i = '1' then
-            exe_valid_o <= '0';
+            exe_valid_o    <= '0';
+            exe_microop_o  <= (others => '0');
+            exe_opcode_o   <= (others => '0');
+            exe_src_val_o  <= (others => '0');
+            exe_dst_val_o  <= (others => '0');
+            exe_reg_addr_o <= (others => '0');
+            exe_mem_addr_o <= (others => '0');
          end if;
 
          fetch_valid_o <= '0';
          fetch_addr_o  <= (others => '0');
-         fetch_data_d  <= fetch_data_i;
-
-         exe_opcode_o   <= fetch_data_i(R_OPCODE);
-         exe_src_val_o  <= reg_src_val_i;
-         exe_dst_val_o  <= reg_dst_val_i;
-         exe_flags_o    <= reg_flags_i;
-         exe_reg_addr_o <= fetch_data_i(R_DST_REG);
-
-         if microcode_value(C_MEM_READ_SRC) = '1' then
-            exe_mem_addr_o <= reg_src_val_i;
-         else
-            exe_mem_addr_o <= reg_dst_val_i;
-         end if;
 
          if count > 0 or (fetch_valid_i = '1' and fetch_ready_o = '1') then
-            exe_microop_o <= microcode_value(3 downto 0);
+            exe_opcode_o   <= fetch_data(R_OPCODE);
+            exe_src_val_o  <= reg_src_val_i;
+            exe_dst_val_o  <= reg_dst_val_i;
+            exe_flags_o    <= reg_flags_i;
+            exe_reg_addr_o <= fetch_data(R_DST_REG);
+
+            if microcode_value(C_MEM_READ_SRC) = '1' then
+               exe_mem_addr_o <= reg_src_val_i;
+            else
+               exe_mem_addr_o <= reg_dst_val_i;
+            end if;
+
+            exe_microop_o <= microcode_value(5 downto 0);
             exe_valid_o   <= '1';
 
             if microcode_value(C_LAST) = '1' then

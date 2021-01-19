@@ -57,6 +57,7 @@ begin
          -- Reset empties the FIFO
          if rst_i = '1' then
             m_valid_r <= '0';
+            m_data_r  <= (others => '0');
          end if;
       end if;
    end process p_fifo;

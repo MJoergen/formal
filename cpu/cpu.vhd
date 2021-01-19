@@ -58,7 +58,7 @@ architecture synthesis of cpu is
    -- Decode to execute
    signal dec2exe_valid       : std_logic;
    signal dec2exe_ready       : std_logic;
-   signal dec2exe_microop     : std_logic_vector(3 downto 0);
+   signal dec2exe_microop     : std_logic_vector(5 downto 0);
    signal dec2exe_opcode      : std_logic_vector(3 downto 0);
    signal dec2exe_flags       : std_logic_vector(15 downto 0);
    signal dec2exe_src_val     : std_logic_vector(15 downto 0);
@@ -94,42 +94,42 @@ begin
       ); -- i_fetch
 
 
-   -- Inserted for better timing
-   i_axi_pipe_small : entity work.axi_pipe_small
+   i_axi_pause : entity work.axi_pause
       generic map (
-         G_TDATA_SIZE => 32
+         G_TDATA_SIZE => 32,
+         G_PAUSE_SIZE => -8
       )
       port map (
          clk_i      => clk_i,
          rst_i      => rst_i,
          s_tvalid_i => fetch2dec_valid,
          s_tready_o => fetch2dec_ready,
-         s_tdata_i(31 downto 16) => fetch2dec_addr,
-         s_tdata_i(15 downto 0)  => fetch2dec_data,
-         m_tvalid_o => fetch2dect_valid,
-         m_tready_i => fetch2dect_ready,
-         m_tdata_o(31 downto 16) => fetch2dect_addr,
-         m_tdata_o(15 downto 0)  => fetch2dect_data
-      ); -- i_axi_pipe_small
-
-
-   i_axi_pause : entity work.axi_pause
-      generic map (
-         G_TDATA_SIZE => 32,
-         G_PAUSE_SIZE => -5
-      )
-      port map (
-         clk_i      => clk_i,
-         rst_i      => rst_i,
-         s_tvalid_i => fetch2dect_valid,
-         s_tready_o => fetch2dect_ready,
-         s_tdata_i(31 downto 16)  => fetch2dect_addr,
-         s_tdata_i(15 downto 0)   => fetch2dect_data,
+         s_tdata_i(31 downto 16)  => fetch2dec_addr,
+         s_tdata_i(15 downto 0)   => fetch2dec_data,
          m_tvalid_o => fetch2decp_valid,
          m_tready_i => fetch2decp_ready,
          m_tdata_o(31 downto 16)  => fetch2decp_addr,
          m_tdata_o(15 downto 0)   => fetch2decp_data
       ); -- i_axi_pause
+
+
+   -- Inserted for better timing
+   i_one_stage_fifo : entity work.one_stage_fifo
+      generic map (
+         G_DATA_SIZE => 32
+      )
+      port map (
+         clk_i     => clk_i,
+         rst_i     => rst_i,
+         s_valid_i => fetch2decp_valid,
+         s_ready_o => fetch2decp_ready,
+         s_data_i(31 downto 16) => fetch2decp_addr,
+         s_data_i(15 downto 0)  => fetch2decp_data,
+         m_valid_o => fetch2dect_valid,
+         m_ready_i => fetch2dect_ready,
+         m_data_o(31 downto 16) => fetch2dect_addr,
+         m_data_o(15 downto 0)  => fetch2dect_data
+      ); -- i_axi_pipe_small
 
 
    i_decode : entity work.decode
@@ -138,10 +138,10 @@ begin
          rst_i           => rst_i,
          fetch_valid_o   => dec2fetch_valid,
          fetch_addr_o    => dec2fetch_addr,
-         fetch_valid_i   => fetch2decp_valid,
-         fetch_ready_o   => fetch2decp_ready,
-         fetch_addr_i    => fetch2decp_addr,
-         fetch_data_i    => fetch2decp_data,
+         fetch_valid_i   => fetch2dect_valid,
+         fetch_ready_o   => fetch2dect_ready,
+         fetch_addr_i    => fetch2dect_addr,
+         fetch_data_i    => fetch2dect_data,
          reg_src_addr_o  => dec2reg_src_reg,
          reg_src_val_i   => dec2reg_src_val,
          reg_dst_addr_o  => dec2reg_dst_reg,

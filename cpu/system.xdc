@@ -23,7 +23,7 @@ set_property -dict { PACKAGE_PIN V12 IOSTANDARD LVCMOS33 } [get_ports { led_o[14
 set_property -dict { PACKAGE_PIN V11 IOSTANDARD LVCMOS33 } [get_ports { led_o[15] }];    # LED15
 
 # Clock definition
-create_clock -name sys_clk -period 10.00 [get_ports {clk_i}];
+create_clock -name sys_clk -period 9.00 [get_ports {clk_i}];
 
 # Configuration Bank Voltage Select
 set_property CFGBVS VCCO [current_design]

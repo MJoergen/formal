@@ -5,9 +5,9 @@
 
 XILINX_DIR = /opt/Xilinx/Vivado/2019.2
 
-SOURCES += axi_pipe_small.vhd
 SOURCES += axi_pause.vhd
 SOURCES += cpu_constants.vhd
+SOURCES += ../one_stage_fifo/one_stage_fifo.vhd
 SOURCES += ../two_stage_fifo/two_stage_fifo.vhd
 SOURCES += ../one_stage_buffer/one_stage_buffer.vhd
 SOURCES += ../two_stage_buffer/two_stage_buffer.vhd
@@ -16,6 +16,7 @@ SOURCES += ../fetch2/fetch.vhd
 SOURCES += alu.vhd
 SOURCES += microcode.vhd
 SOURCES += decode.vhd
+SOURCES += memory.vhd
 SOURCES += execute.vhd
 SOURCES += registers.vhd
 SOURCES += cpu.vhd
@@ -44,7 +45,7 @@ $(WAVE): $(SOURCES) $(TB_SRC) $(ROM)
 $(ROM): $(ASM)
 	$(ASSEMBLER) $(ASM)
 
-$(TOP).bit: $(TOP).tcl $(SOURCES) $(TOP).xdc
+$(TOP).bit: $(TOP).tcl $(SOURCES) $(TOP).xdc $(ROM)
 	bash -c "source $(XILINX_DIR)/settings64.sh ; vivado -mode tcl -source $<"
 
 $(TOP).tcl:
@@ -76,4 +77,5 @@ clean:
 	rm -rf post_route.dcp
 	rm -rf $(TOP).bit
 	rm -rf vivado*
+	rm -rf usage_statistics_webtalk*
 
