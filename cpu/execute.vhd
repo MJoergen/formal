@@ -82,7 +82,9 @@ begin
 
    wait_for_mem_src    <= dec_valid_i and dec_microop_i(C_MEM_ALU_SRC) and not mem_src_valid;
    wait_for_mem_dst    <= dec_valid_i and dec_microop_i(C_MEM_ALU_DST) and not mem_dst_valid;
-   wait_for_mem_access <= dec_valid_i and (dec_microop_i(C_MEM_ALU_DST) or dec_microop_i(C_MEM_READ_SRC) or dec_microop_i(C_MEM_READ_DST)) and not mem_ready;
+   wait_for_mem_access <= dec_valid_i and (dec_microop_i(C_MEM_ALU_DST) or
+                                           dec_microop_i(C_MEM_READ_SRC) or
+                                           dec_microop_i(C_MEM_READ_DST)) and not mem_ready;
 
    alu_oper       <= dec_opcode_i;
    alu_flags      <= dec_flags_i;

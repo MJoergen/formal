@@ -85,8 +85,11 @@ begin
 
 -- pragma synthesis_off
          if rst_i = '1' then
-            for i in 0 to 15 loop
+            for i in 0 to 7 loop
                lower_regs(i) <= X"111" * to_std_logic_vector(i, 4);
+            end loop;
+            for i in 8 to 15 loop
+               upper_regs(i) <= X"111" * to_std_logic_vector(i, 4);
             end loop;
          end if;
 -- pragma synthesis_on

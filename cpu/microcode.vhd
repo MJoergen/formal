@@ -117,20 +117,20 @@ architecture synthesis of microcode is
 
       -- ADD R, @R
       C_MEM_READ_DST,
-      C_LAST or C_MEM_WRITE,
+      C_LAST or C_MEM_ALU_DST or C_MEM_WRITE,
       C_LAST,
       C_LAST,
 
       -- ADD @R, R
-      C_LAST or C_MEM_READ_SRC or C_REG_WRITE,
-      C_LAST,
+      C_MEM_READ_SRC,
+      C_LAST or C_MEM_ALU_SRC or C_REG_WRITE,
       C_LAST,
       C_LAST,
 
       -- ADD @R, @R
       C_MEM_READ_SRC,
-      C_MEM_READ_DST,
-      C_MEM_WRITE,
+      C_MEM_ALU_SRC or C_MEM_READ_DST,
+      C_LAST or C_MEM_ALU_DST or C_MEM_WRITE,
       C_LAST
    ); --  constant C_MICROCODE : microcode_t := (
 

@@ -1,20 +1,21 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Tue Jan 19 06:12:45 2021
+[*] Thu Jan 28 22:39:07 2021
 [*]
 [dumpfile] "/home/mike/git/MJoergen/formal/cpu/tb_cpu.ghw"
-[dumpfile_mtime] "Tue Jan 19 06:10:28 2021"
-[dumpfile_size] 174070
+[dumpfile_mtime] "Thu Jan 28 21:58:31 2021"
+[dumpfile_size] 172692
 [savefile] "/home/mike/git/MJoergen/formal/cpu/tb_cpu.gtkw"
-[timestart] 78100000
+[timestart] 351800000
 [size] 1920 1132
-[pos] 1917 -1
-*-25.158585 155900000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[pos] -3 0
+*-25.158585 456400000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
 [treeopen] top.tb_cpu.
 [treeopen] top.tb_cpu.i_system.
 [treeopen] top.tb_cpu.i_system.i_cpu.
 [treeopen] top.tb_cpu.i_system.i_cpu.i_decode.i_microcode.
+[treeopen] top.tb_cpu.i_system.i_cpu.i_execute.
 [treeopen] top.tb_cpu.i_system.i_cpu.i_execute.i_memory.
 [sst_width] 374
 [signals_width] 289
@@ -168,7 +169,7 @@ top.tb_cpu.i_system.i_cpu.i_execute.wait_for_mem_dst
 -alu
 @1401200
 -alu
-@c00200
+@800200
 -memory
 @28
 top.tb_cpu.i_system.i_cpu.i_execute.i_memory.dec_valid_i
@@ -201,7 +202,10 @@ top.tb_cpu.i_system.i_cpu.i_execute.i_memory.wb_we_o
 top.tb_cpu.i_system.i_cpu.i_execute.i_memory.wb_ack_i
 @22
 #{top.tb_cpu.i_system.i_cpu.i_execute.i_memory.wb_data_i[15:0]} top.tb_cpu.i_system.i_cpu.i_execute.i_memory.wb_data_i[15] top.tb_cpu.i_system.i_cpu.i_execute.i_memory.wb_data_i[14] top.tb_cpu.i_system.i_cpu.i_execute.i_memory.wb_data_i[13] top.tb_cpu.i_system.i_cpu.i_execute.i_memory.wb_data_i[12] top.tb_cpu.i_system.i_cpu.i_execute.i_memory.wb_data_i[11] top.tb_cpu.i_system.i_cpu.i_execute.i_memory.wb_data_i[10] top.tb_cpu.i_system.i_cpu.i_execute.i_memory.wb_data_i[9] top.tb_cpu.i_system.i_cpu.i_execute.i_memory.wb_data_i[8] top.tb_cpu.i_system.i_cpu.i_execute.i_memory.wb_data_i[7] top.tb_cpu.i_system.i_cpu.i_execute.i_memory.wb_data_i[6] top.tb_cpu.i_system.i_cpu.i_execute.i_memory.wb_data_i[5] top.tb_cpu.i_system.i_cpu.i_execute.i_memory.wb_data_i[4] top.tb_cpu.i_system.i_cpu.i_execute.i_memory.wb_data_i[3] top.tb_cpu.i_system.i_cpu.i_execute.i_memory.wb_data_i[2] top.tb_cpu.i_system.i_cpu.i_execute.i_memory.wb_data_i[1] top.tb_cpu.i_system.i_cpu.i_execute.i_memory.wb_data_i[0]
-@1401200
+@28
+top.tb_cpu.i_system.i_cpu.i_execute.i_memory.osf_mem_valid
+top.tb_cpu.i_system.i_cpu.i_execute.i_memory.osf_mem_data
+@1000200
 -memory
 @c00200
 -axi_pause

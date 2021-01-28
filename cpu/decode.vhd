@@ -182,7 +182,7 @@ begin
          fetch_valid_o <= '0';
          fetch_addr_o  <= (others => '0');
 
-         if count > 0 or (fetch_valid_i = '1' and fetch_ready_o = '1') then
+         if (count > 0 and exe_ready_i = '1') or (fetch_valid_i = '1' and fetch_ready_o = '1') then
             exe_opcode_o   <= fetch_data(R_OPCODE);
             exe_src_val_o  <= reg_src_val_i;
             exe_dst_val_o  <= reg_dst_val_i;

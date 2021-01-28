@@ -131,7 +131,7 @@ begin
       port map (
          clk_i     => clk_i,
          rst_i     => rst_i,
-         s_valid_i => wb_ack_i and osf_mem_data,
+         s_valid_i => wb_ack_i and osf_mem_valid and osf_mem_data,
          s_ready_o => osf_src_ready,
          s_data_i  => wb_data_i,
          m_valid_o => mem_src_valid_o,
@@ -147,7 +147,7 @@ begin
       port map (
          clk_i     => clk_i,
          rst_i     => rst_i,
-         s_valid_i => wb_ack_i and not osf_mem_data,
+         s_valid_i => wb_ack_i and osf_mem_valid and not osf_mem_data,
          s_ready_o => osf_dst_ready,
          s_data_i  => wb_data_i,
          m_valid_o => mem_dst_valid_o,
