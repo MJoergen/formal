@@ -23,8 +23,8 @@ entity memory is
       mdst_data_o  : out std_logic_vector(15 downto 0);
 
       -- Memory
-      wb_cyc_o     : out std_logic;
-      wb_stb_o     : out std_logic;
+      wb_cyc_o     : out std_logic := '0';
+      wb_stb_o     : out std_logic := '0';
       wb_stall_i   : in  std_logic;
       wb_addr_o    : out std_logic_vector(15 downto 0);
       wb_we_o      : out std_logic;
@@ -54,15 +54,17 @@ begin
    p_memory : process (clk_i)
    begin
       if rising_edge(clk_i) then
-         wb_we_o   <= '0';
-         wb_addr_o <= (others => '0');
-         wb_dat_o  <= (others => '0');
 
          if wb_stall_i = '0' then
+            -- Reqeust is accepted
             wb_stb_o  <= '0';
+            wb_we_o   <= '0';
+            wb_addr_o <= (others => '0');
+            wb_dat_o  <= (others => '0');
          end if;
 
          if wb_ack_i = '1' then
+            -- Response is received
             wb_cyc_o  <= '0';
             wb_stb_o  <= '0';
          end if;

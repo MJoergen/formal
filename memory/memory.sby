@@ -1,0 +1,24 @@
+[tasks]
+bmc
+cover
+
+[options]
+bmc: mode bmc
+bmc: depth 10
+cover: mode cover
+cover: depth 10
+cover: append 3
+
+[engines]
+smtbmc
+
+[script]
+ghdl --std=08 memory.vhd memory.psl one_stage_fifo.vhd one_stage_fifo.psl -e memory
+prep -top memory
+
+[files]
+memory.vhd
+memory.psl
+../one_stage_fifo/one_stage_fifo.vhd
+../one_stage_fifo/one_stage_fifo.psl
+
