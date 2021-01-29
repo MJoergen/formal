@@ -66,6 +66,19 @@ architecture synthesis of cpu is
    signal dec2exe_reg_addr    : std_logic_vector(3 downto 0);
    signal dec2exe_mem_addr    : std_logic_vector(15 downto 0);
 
+   -- Execute to memory
+   signal exe2mem_valid       : std_logic;
+   signal exe2mem_ready       : std_logic;
+   signal exe2mem_op          : std_logic_vector(2 downto 0);
+   signal exe2mem_addr        : std_logic_vector(15 downto 0);
+   signal exe2mem_wr_data     : std_logic_vector(15 downto 0);
+   signal exe2mem_src_valid   : std_logic;
+   signal exe2mem_src_ready   : std_logic;
+   signal exe2mem_src_data    : std_logic_vector(15 downto 0);
+   signal exe2mem_dst_valid   : std_logic;
+   signal exe2mem_dst_ready   : std_logic;
+   signal exe2mem_dst_data    : std_logic_vector(15 downto 0);
+
    -- Execute to registers
    signal exe2reg_flags_we    : std_logic;
    signal exe2reg_flags       : std_logic_vector(15 downto 0);
@@ -189,6 +202,40 @@ begin
          dec_dst_val_i   => dec2exe_dst_val,
          dec_reg_addr_i  => dec2exe_reg_addr,
          dec_mem_addr_i  => dec2exe_mem_addr,
+         mem_valid_o     => exe2mem_valid,
+         mem_ready_i     => exe2mem_ready,
+         mem_op_o        => exe2mem_op,
+         mem_addr_o      => exe2mem_addr,
+         mem_wr_data_o   => exe2mem_wr_data,
+         mem_src_valid_i => exe2mem_src_valid,
+         mem_src_ready_o => exe2mem_src_ready,
+         mem_src_data_i  => exe2mem_src_data,
+         mem_dst_valid_i => exe2mem_dst_valid,
+         mem_dst_ready_o => exe2mem_dst_ready,
+         mem_dst_data_i  => exe2mem_dst_data,
+         reg_flags_we_o  => exe2reg_flags_we,
+         reg_flags_o     => exe2reg_flags,
+         reg_we_o        => exe2reg_we,
+         reg_addr_o      => exe2reg_addr,
+         reg_val_o       => exe2reg_val
+      ); -- i_execute
+
+
+   i_memory : entity work.memory
+      port map (
+         clk_i           => clk_i,
+         rst_i           => rst_i,
+         dec_valid_i     => exe2mem_valid,
+         dec_ready_o     => exe2mem_ready,
+         dec_microop_i   => exe2mem_op,
+         dec_mem_addr_i  => exe2mem_addr,
+         alu_res_val_i   => exe2mem_wr_data,
+         mem_src_valid_o => exe2mem_src_valid,
+         mem_src_ready_i => exe2mem_src_ready,
+         mem_src_data_o  => exe2mem_src_data,
+         mem_dst_valid_o => exe2mem_dst_valid,
+         mem_dst_ready_i => exe2mem_dst_ready,
+         mem_dst_data_o  => exe2mem_dst_data,
          wb_cyc_o        => wbd_cyc_o,
          wb_stb_o        => wbd_stb_o,
          wb_stall_i      => wbd_stall_i,
@@ -196,13 +243,8 @@ begin
          wb_we_o         => wbd_we_o,
          wb_dat_o        => wbd_dat_o,
          wb_ack_i        => wbd_ack_i,
-         wb_data_i       => wbd_data_i,
-         reg_flags_we_o  => exe2reg_flags_we,
-         reg_flags_o     => exe2reg_flags,
-         reg_we_o        => exe2reg_we,
-         reg_addr_o      => exe2reg_addr,
-         reg_val_o       => exe2reg_val
-      ); -- i_execute
+         wb_data_i       => wbd_data_i
+      ); -- i_memory
 
 end architecture synthesis;
 

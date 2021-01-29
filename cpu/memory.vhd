@@ -9,7 +9,7 @@ entity memory is
       -- From decode
       dec_valid_i     : in  std_logic;
       dec_ready_o     : out std_logic;
-      dec_microop_i   : in  std_logic_vector(5 downto 0);
+      dec_microop_i   : in  std_logic_vector(2 downto 0);
       dec_mem_addr_i  : in  std_logic_vector(15 downto 0);
 
       -- From alu
@@ -37,12 +37,9 @@ end entity memory;
 
 architecture synthesis of memory is
 
-   constant C_MEM_ALU_SRC  : integer := 5;
-   constant C_MEM_ALU_DST  : integer := 4;
-   constant C_MEM_READ_SRC : integer := 3;
-   constant C_MEM_READ_DST : integer := 2;
-   constant C_MEM_WRITE    : integer := 1;
-   constant C_REG_WRITE    : integer := 0;
+   constant C_MEM_READ_SRC : integer := 2;
+   constant C_MEM_READ_DST : integer := 1;
+   constant C_MEM_WRITE    : integer := 0;
 
    signal osf_mem_valid : std_logic;
    signal osf_mem_ready : std_logic;

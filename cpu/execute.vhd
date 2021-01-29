@@ -31,14 +31,17 @@ entity execute is
       dec_mem_addr_i  : in  std_logic_vector(15 downto 0);
 
       -- Memory
-      wb_cyc_o        : out std_logic;
-      wb_stb_o        : out std_logic;
-      wb_stall_i      : in  std_logic;
-      wb_addr_o       : out std_logic_vector(15 downto 0);
-      wb_we_o         : out std_logic;
-      wb_dat_o        : out std_logic_vector(15 downto 0);
-      wb_ack_i        : in  std_logic;
-      wb_data_i       : in  std_logic_vector(15 downto 0);
+      mem_valid_o     : out std_logic;
+      mem_ready_i     : in  std_logic;
+      mem_op_o        : out std_logic_vector(2 downto 0);
+      mem_addr_o      : out std_logic_vector(15 downto 0);
+      mem_wr_data_o   : out std_logic_vector(15 downto 0);
+      mem_src_valid_i : in  std_logic;
+      mem_src_ready_o : out std_logic;
+      mem_src_data_i  : in  std_logic_vector(15 downto 0);
+      mem_dst_valid_i : in  std_logic;
+      mem_dst_ready_o : out std_logic;
+      mem_dst_data_i  : in  std_logic_vector(15 downto 0);
 
       -- Register file
       reg_flags_we_o  : out std_logic;
@@ -66,36 +69,28 @@ architecture synthesis of execute is
    signal alu_res_val   : std_logic_vector(15 downto 0);
    signal alu_res_flags : std_logic_vector(15 downto 0);
 
-   signal mem_ready     : std_logic;
-   signal mem_src_valid : std_logic;
-   signal mem_src_ready : std_logic;
-   signal mem_src_data  : std_logic_vector(15 downto 0);
-   signal mem_dst_valid : std_logic;
-   signal mem_dst_ready : std_logic;
-   signal mem_dst_data  : std_logic_vector(15 downto 0);
-
    signal wait_for_mem_access : std_logic;
    signal wait_for_mem_src    : std_logic;
    signal wait_for_mem_dst    : std_logic;
 
 begin
 
-   wait_for_mem_src    <= dec_valid_i and dec_microop_i(C_MEM_ALU_SRC) and not mem_src_valid;
-   wait_for_mem_dst    <= dec_valid_i and dec_microop_i(C_MEM_ALU_DST) and not mem_dst_valid;
+   wait_for_mem_src    <= dec_valid_i and dec_microop_i(C_MEM_ALU_SRC) and not mem_src_valid_i;
+   wait_for_mem_dst    <= dec_valid_i and dec_microop_i(C_MEM_ALU_DST) and not mem_dst_valid_i;
    wait_for_mem_access <= dec_valid_i and (dec_microop_i(C_MEM_ALU_DST) or
                                            dec_microop_i(C_MEM_READ_SRC) or
-                                           dec_microop_i(C_MEM_READ_DST)) and not mem_ready;
+                                           dec_microop_i(C_MEM_READ_DST)) and not mem_ready_i;
 
    alu_oper       <= dec_opcode_i;
    alu_flags      <= dec_flags_i;
 
-   alu_src_val    <= mem_src_data when dec_microop_i(C_MEM_ALU_SRC) = '1' else dec_src_val_i;
-   alu_dst_val    <= mem_dst_data when dec_microop_i(C_MEM_ALU_DST) = '1' else dec_dst_val_i;
+   alu_src_val    <= mem_src_data_i when dec_microop_i(C_MEM_ALU_SRC) = '1' else dec_src_val_i;
+   alu_dst_val    <= mem_dst_data_i when dec_microop_i(C_MEM_ALU_DST) = '1' else dec_dst_val_i;
 
    dec_ready_o    <= not (wait_for_mem_src or wait_for_mem_dst or wait_for_mem_access);
 
-   mem_src_ready  <= dec_microop_i(C_MEM_ALU_SRC);
-   mem_dst_ready  <= dec_microop_i(C_MEM_ALU_DST);
+   mem_src_ready_o <= dec_microop_i(C_MEM_ALU_SRC);
+   mem_dst_ready_o <= dec_microop_i(C_MEM_ALU_DST);
 
    reg_flags_o    <= alu_res_flags;
 
@@ -118,6 +113,7 @@ begin
       end if;
    end process p_reg;
 
+
    i_alu : entity work.alu
       port map (
          clk_i       => clk_i,
@@ -130,30 +126,24 @@ begin
          sr_o        => alu_res_flags
       ); -- i_alu
 
-   i_memory : entity work.memory
-      port map (
-         clk_i           => clk_i,
-         rst_i           => rst_i,
-         dec_valid_i     => dec_valid_i and not (wait_for_mem_src or wait_for_mem_dst),
-         dec_ready_o     => mem_ready,
-         dec_microop_i   => dec_microop_i,
-         dec_mem_addr_i  => dec_mem_addr_i,
-         alu_res_val_i   => alu_res_val,
-         mem_src_valid_o => mem_src_valid,
-         mem_src_ready_i => mem_src_ready,
-         mem_src_data_o  => mem_src_data,
-         mem_dst_valid_o => mem_dst_valid,
-         mem_dst_ready_i => mem_dst_ready,
-         mem_dst_data_o  => mem_dst_data,
-         wb_cyc_o        => wb_cyc_o,
-         wb_stb_o        => wb_stb_o,
-         wb_stall_i      => wb_stall_i,
-         wb_addr_o       => wb_addr_o,
-         wb_we_o         => wb_we_o,
-         wb_dat_o        => wb_dat_o,
-         wb_ack_i        => wb_ack_i,
-         wb_data_i       => wb_data_i
-      ); -- i_memory
+
+   mem_valid_o    <= dec_valid_i and not (wait_for_mem_src or wait_for_mem_dst);
+   mem_op_o       <= dec_microop_i(3 downto 1);
+   mem_addr_o     <= dec_mem_addr_i;
+   mem_wr_data_o  <= alu_res_val;
+
+   p_debug : process (clk_i)
+   begin
+      if rising_edge(clk_i) then
+         if mem_valid_o = '1' and mem_op_o(0) = '1' then
+            report "MEMORY   WRITE value : " & to_hstring(mem_wr_data_o) & " to address " & to_hstring(mem_addr_o);
+         end if;
+
+         if reg_we_o = '1' then
+            report "REGISTER WRITE value : " & to_hstring(reg_val_o) & " to register " & to_hstring(reg_addr_o);
+         end if;
+      end if;
+   end process p_debug;
 
 end architecture synthesis;
 
