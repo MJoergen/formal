@@ -72,12 +72,14 @@ architecture synthesis of cpu is
    signal exe2mem_op          : std_logic_vector(2 downto 0);
    signal exe2mem_addr        : std_logic_vector(15 downto 0);
    signal exe2mem_wr_data     : std_logic_vector(15 downto 0);
-   signal exe2mem_src_valid   : std_logic;
-   signal exe2mem_src_ready   : std_logic;
-   signal exe2mem_src_data    : std_logic_vector(15 downto 0);
-   signal exe2mem_dst_valid   : std_logic;
-   signal exe2mem_dst_ready   : std_logic;
-   signal exe2mem_dst_data    : std_logic_vector(15 downto 0);
+
+   -- Memory to execute
+   signal mem2exe_src_valid   : std_logic;
+   signal mem2exe_src_ready   : std_logic;
+   signal mem2exe_src_data    : std_logic_vector(15 downto 0);
+   signal mem2exe_dst_valid   : std_logic;
+   signal mem2exe_dst_ready   : std_logic;
+   signal mem2exe_dst_data    : std_logic_vector(15 downto 0);
 
    -- Execute to registers
    signal exe2reg_flags_we    : std_logic;
@@ -207,12 +209,12 @@ begin
          mem_op_o        => exe2mem_op,
          mem_addr_o      => exe2mem_addr,
          mem_wr_data_o   => exe2mem_wr_data,
-         mem_src_valid_i => exe2mem_src_valid,
-         mem_src_ready_o => exe2mem_src_ready,
-         mem_src_data_i  => exe2mem_src_data,
-         mem_dst_valid_i => exe2mem_dst_valid,
-         mem_dst_ready_o => exe2mem_dst_ready,
-         mem_dst_data_i  => exe2mem_dst_data,
+         mem_src_valid_i => mem2exe_src_valid,
+         mem_src_ready_o => mem2exe_src_ready,
+         mem_src_data_i  => mem2exe_src_data,
+         mem_dst_valid_i => mem2exe_dst_valid,
+         mem_dst_ready_o => mem2exe_dst_ready,
+         mem_dst_data_i  => mem2exe_dst_data,
          reg_flags_we_o  => exe2reg_flags_we,
          reg_flags_o     => exe2reg_flags,
          reg_we_o        => exe2reg_we,
@@ -230,12 +232,12 @@ begin
          s_op_i          => exe2mem_op,
          s_addr_i        => exe2mem_addr,
          s_data_i        => exe2mem_wr_data,
-         msrc_valid_o    => exe2mem_src_valid,
-         msrc_ready_i    => exe2mem_src_ready,
-         msrc_data_o     => exe2mem_src_data,
-         mdst_valid_o    => exe2mem_dst_valid,
-         mdst_ready_i    => exe2mem_dst_ready,
-         mdst_data_o     => exe2mem_dst_data,
+         msrc_valid_o    => mem2exe_src_valid,
+         msrc_ready_i    => mem2exe_src_ready,
+         msrc_data_o     => mem2exe_src_data,
+         mdst_valid_o    => mem2exe_dst_valid,
+         mdst_ready_i    => mem2exe_dst_ready,
+         mdst_data_o     => mem2exe_dst_data,
          wb_cyc_o        => wbd_cyc_o,
          wb_stb_o        => wbd_stb_o,
          wb_stall_i      => wbd_stall_i,
