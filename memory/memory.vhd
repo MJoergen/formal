@@ -40,11 +40,11 @@ architecture synthesis of memory is
    constant C_READ_DST : integer := 1;
    constant C_WRITE    : integer := 0;
 
-   signal osb_mem_in_valid  : std_logic;
-   signal osb_mem_in_ready  : std_logic;
-   signal osb_mem_out_valid : std_logic;
-   signal osb_mem_out_ready : std_logic;
-   signal osb_mem_data      : std_logic;
+   signal osf_mem_in_valid  : std_logic;
+   signal osf_mem_in_ready  : std_logic;
+   signal osf_mem_out_valid : std_logic;
+   signal osf_mem_out_ready : std_logic;
+   signal osf_mem_data      : std_logic;
 
    signal osb_src_valid     : std_logic;
    signal osb_src_ready     : std_logic;
@@ -55,7 +55,7 @@ architecture synthesis of memory is
 
 begin
 
-   s_ready_o <= osb_mem_in_ready and not wb_stall_i and (wb_ack_i or not wait_for_ack) and osb_src_ready and osb_dst_ready and
+   s_ready_o <= osf_mem_in_ready and not wb_stall_i and (wb_ack_i or not wait_for_ack) and osb_src_ready and osb_dst_ready and
                 (msrc_ready_i or not msrc_valid_o or not s_op_i(C_READ_SRC)) and (mdst_ready_i or not mdst_valid_o or not s_op_i(C_READ_DST));
 
    -- WISHBONE request interface is combinatorial
@@ -87,29 +87,29 @@ begin
    -- Store the request
    ----------------------
 
-   osb_mem_in_valid <= s_valid_i and s_ready_o and (s_op_i(C_READ_SRC) or s_op_i(C_READ_DST));
+   osf_mem_in_valid <= s_valid_i and s_ready_o and (s_op_i(C_READ_SRC) or s_op_i(C_READ_DST));
 
-   i_one_stage_buffer_mem : entity work.one_stage_buffer
+   i_one_stage_fifo_mem : entity work.one_stage_fifo
       generic map (
          G_DATA_SIZE => 1
       )
       port map (
          clk_i       => clk_i,
          rst_i       => rst_i,
-         s_valid_i   => osb_mem_in_valid,
-         s_ready_o   => osb_mem_in_ready,
+         s_valid_i   => osf_mem_in_valid,
+         s_ready_o   => osf_mem_in_ready,
          s_data_i(0) => s_op_i(C_READ_SRC),
-         m_valid_o   => osb_mem_out_valid,
+         m_valid_o   => osf_mem_out_valid,
          m_ready_i   => wb_ack_i,
-         m_data_o(0) => osb_mem_data
-      ); -- i_one_stage_buffer_mem
+         m_data_o(0) => osf_mem_data
+      ); -- i_one_stage_fifo_mem
 
-   osb_src_valid <= wb_ack_i and osb_mem_out_valid and osb_mem_data;
-   osb_dst_valid <= wb_ack_i and osb_mem_out_valid and not osb_mem_data;
 
    ------------------------------------------
    -- Store the response for the SRC output
    ------------------------------------------
+
+   osb_src_valid <= wb_ack_i and osf_mem_out_valid and osf_mem_data;
 
    i_one_stage_buffer_src : entity work.one_stage_buffer
       generic map (
@@ -130,6 +130,8 @@ begin
    ------------------------------------------
    -- Store the response for the DST output
    ------------------------------------------
+
+   osb_dst_valid <= wb_ack_i and osf_mem_out_valid and not osf_mem_data;
 
    i_one_stage_buffer_dst : entity work.one_stage_buffer
       generic map (

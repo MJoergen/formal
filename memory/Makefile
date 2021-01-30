@@ -27,6 +27,7 @@ clean:
 # Synthesis
 
 SOURCES += ../one_stage_buffer/one_stage_buffer.vhd
+SOURCES += ../one_stage_fifo/one_stage_fifo.vhd
 SOURCES += $(DUT).vhd
 
 work-obj08.cf: $(SOURCES)

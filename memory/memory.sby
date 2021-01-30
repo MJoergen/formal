@@ -12,11 +12,12 @@ cover: depth 10
 smtbmc
 
 [script]
-ghdl --std=08 memory.vhd memory.psl one_stage_buffer.vhd -e memory
+ghdl --std=08 memory.vhd memory.psl one_stage_buffer.vhd one_stage_fifo.vhd -e memory
 prep -top memory
 
 [files]
 memory.vhd
 memory.psl
 ../one_stage_buffer/one_stage_buffer.vhd
+../one_stage_fifo/one_stage_fifo.vhd
 
