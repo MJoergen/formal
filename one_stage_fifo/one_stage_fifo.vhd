@@ -8,6 +8,9 @@ use ieee.numeric_std.all;
 -- but the ready signal in the upstream direction is still combinatorial.
 -- The FIFO supports simultaneous read and write, both when the FIFO is full
 -- and when it is empty.
+--
+-- For additional information, see:
+-- https://www.itdev.co.uk/blog/pipelining-axi-buses-registered-ready-signals
 
 entity one_stage_fifo is
    generic (
@@ -43,21 +46,14 @@ begin
    p_fifo : process (clk_i)
    begin
       if rising_edge(clk_i) then
-         -- Downstream has consumed the output
-         if m_ready_i = '1' then
-            m_valid_r <= '0';
-         end if;
-
-         -- Valid data on the input
-         if s_ready_o = '1' and s_valid_i = '1' then
+         if s_ready_s then
             m_data_r  <= s_data_i;
-            m_valid_r <= '1';
+            m_valid_r <= s_valid_i;
          end if;
 
          -- Reset empties the FIFO
          if rst_i = '1' then
             m_valid_r <= '0';
-            m_data_r  <= (others => '0');
          end if;
       end if;
    end process p_fifo;
