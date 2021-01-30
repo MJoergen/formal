@@ -2,7 +2,6 @@ vunit i_memory(memory(synthesis))
 {
 
    signal f_wb_req_count      : integer range 0 to 3 := 0;
-   signal f_wb_rd_req_count   : integer range 0 to 3 := 0;
    signal f_wb_stall_delay    : integer range 0 to 3 := 0;
    signal f_wb_ack_delay      : integer range 0 to 3 := 0;
    signal f_exe_src_req_count : integer range 0 to 3 := 0;
@@ -16,9 +15,12 @@ vunit i_memory(memory(synthesis))
    -- INTERNAL ASSERTIONS
    --------------------------------------------
 
-   -- The two output fifos should never overflow.
-   f_osf_src_full : assert always {wb_ack_i and osf_mem_valid and osf_mem_data}     |-> {osf_src_ready};
-   f_osf_dst_full : assert always {wb_ack_i and osf_mem_valid and not osf_mem_data} |-> {osf_dst_ready};
+   -- The two output buffers should never overflow.
+   f_osb_full : assert always {wb_ack_i and osb_mem_out_valid} |-> {osb_src_ready};
+
+   -- The input to the buffers should be stable.
+--   f_osb_src_stable : assert always {osb_src_valid and not osb_src_ready} |=> {stable(osb_src_valid) and stable (wb_data_i)};
+--   f_osb_dst_stable : assert always {osb_dst_valid and not osb_dst_ready} |=> {stable(osb_dst_valid) and stable (wb_data_i)};
 
 
    ------------------------------------------------
@@ -47,39 +49,14 @@ vunit i_memory(memory(synthesis))
    end process p_wb_req_count;
 
 
-   -- Count the number of outstanding WISHBONE read requests
-   p_wb_rd_req_count : process (clk_i)
-   begin
-      if rising_edge(clk_i) then
-         -- Request without response
-         if (wb_cyc_o and wb_stb_o and not wb_stall_i and not wb_we_o) and not (wb_cyc_o and wb_ack_i) then
-            f_wb_rd_req_count <= f_wb_rd_req_count + 1;
-         end if;
-
-         -- Reponse without request
-         if not(wb_cyc_o and wb_stb_o and not wb_stall_i and not wb_we_o) and (wb_cyc_o and wb_ack_i) then
-            f_wb_rd_req_count <= f_wb_rd_req_count - 1;
-         end if;
-
-         -- If CYC goes low mid-transaction, the transaction is aborted.
-         if rst_i or not wb_cyc_o then
-            f_wb_rd_req_count <= 0;
-         end if;
-      end if;
-   end process p_wb_rd_req_count;
-
-
-   -- WISHBONE MASTER: Clear all requests after a reset
-   f_wb_master_reset : assert always {rst_i} |=> {not wb_cyc_o and not wb_stb_o};
+   -- WISHBONE MASTER: Clear all requests while in reset
+   f_wb_master_reset : assert always {rst_i} |-> {not wb_cyc_o and not wb_stb_o};
 
    -- WISHBONE MASTER: STB must be low when CYC is low.
    f_wb_master_stb_low : assert always {not wb_cyc_o} |-> {not wb_stb_o};
 
    -- WISHBONE MASTER: While a request is stalled it cannot change, except on reset or abort.
-   f_wb_master_stable : assert always {wb_stb_o and wb_stall_i and not rst_i} |=> {stable(wb_stb_o) and stable(wb_addr_o)};
-
-   -- WISHBONE MASTER: At most one outstanding read requests
-   f_wb_master_rd_req_count_max : assert always {f_wb_rd_req_count >= 1} |-> {not wb_stb_o};
+--   f_wb_master_stable : assert always {wb_stb_o and wb_stall_i and not rst_i} |=> {stable(wb_stb_o) and stable(wb_addr_o)};
 
 
    -----------------------------
@@ -152,7 +129,7 @@ vunit i_memory(memory(synthesis))
    begin
       if rising_edge(clk_i) then
          -- Transaction without response
-         if (f_wb_rd_req_count > 0 or (wb_cyc_o = '1' and wb_stb_o = '1' and wb_stall_i = '0')) and wb_cyc_o = '1' and wb_ack_i = '0' then
+         if (f_wb_req_count > 0 or (wb_cyc_o = '1' and wb_stb_o = '1' and wb_stall_i = '0')) and wb_cyc_o = '1' and wb_ack_i = '0' then
             f_wb_ack_delay <= f_wb_ack_delay + 1;
          else
             f_wb_ack_delay <= 0;
@@ -190,6 +167,11 @@ vunit i_memory(memory(synthesis))
 
    -- OUTPUT dst data
    f_cover_out_dst : cover {mdst_valid_o};
+
+   f_cover_burst : cover {rst_i = '0';
+                          s_valid_i = '1' and s_ready_o = '1' and s_op_i = "100";
+                          s_valid_i = '1' and s_ready_o = '1' and s_op_i = "010";
+                          s_valid_i = '1' and s_ready_o = '1' and s_op_i = "001"};
 
 
    ----------------------------------------------

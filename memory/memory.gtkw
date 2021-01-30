@@ -1,20 +1,20 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Sat Jan 30 09:15:26 2021
+[*] Sat Jan 30 18:51:40 2021
 [*]
-[dumpfile] "/home/mike/git/MJoergen/formal/memory/memory_bmc/engine_0/trace.vcd"
-[dumpfile_mtime] "Sat Jan 30 09:15:11 2021"
-[dumpfile_size] 6753
+[dumpfile] "/home/mike/git/MJoergen/formal/memory/memory_cover/engine_0/trace4.vcd"
+[dumpfile_mtime] "Sat Jan 30 18:51:09 2021"
+[dumpfile_size] 6451
 [savefile] "/home/mike/git/MJoergen/formal/memory/memory.gtkw"
 [timestart] 0
-[size] 1412 919
-[pos] -1836 -13
-*-3.758234 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[size] 1512 1050
+[pos] 0 11
+*-3.688748 16 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] memory.
-[sst_width] 460
-[signals_width] 299
+[sst_width] 275
+[signals_width] 331
 [sst_expanded] 1
-[sst_vpaned_height] 254
+[sst_vpaned_height] 298
 @28
 memory.clk_i
 memory.rst_i
@@ -59,10 +59,25 @@ memory.msrc_data_o[15:0]
 @200
 -
 @28
-memory.i_memory.f_wb_req_count[1:0]
-@29
-memory.i_memory.f_wb_rd_req_count[1:0]
+memory.wait_for_ack
+[color] 2
+memory.osb_mem_in_valid
+[color] 6
+memory.osb_mem_in_ready
+[color] 2
+memory.osb_mem_out_valid
+[color] 2
+memory.osb_src_valid
+[color] 6
+memory.osb_src_ready
+[color] 2
+memory.osb_dst_valid
+[color] 6
+memory.osb_dst_ready
+@200
+-
 @28
+memory.i_memory.f_wb_req_count[1:0]
 memory.i_memory.f_wb_stall_delay[1:0]
 memory.i_memory.f_wb_ack_delay[1:0]
 memory.i_memory.f_exe_src_req_count[1:0]

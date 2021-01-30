@@ -132,18 +132,5 @@ begin
    mem_addr_o     <= dec_mem_addr_i;
    mem_wr_data_o  <= alu_res_val;
 
-   p_debug : process (clk_i)
-   begin
-      if rising_edge(clk_i) then
-         if mem_valid_o = '1' and mem_op_o(0) = '1' then
-            report "MEMORY   WRITE value : " & to_hstring(mem_wr_data_o) & " to address " & to_hstring(mem_addr_o);
-         end if;
-
-         if reg_we_o = '1' then
-            report "REGISTER WRITE value : " & to_hstring(reg_val_o) & " to register " & to_hstring(reg_addr_o);
-         end if;
-      end if;
-   end process p_debug;
-
 end architecture synthesis;
 

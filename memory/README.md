@@ -52,19 +52,17 @@ memory, in case the EXECUTE module is not ready to receive it yet.
 
 ## Synthesis
 ```
-Number of cells:                229
+Number of cells:                223
   BUFG                            1
-  FDRE                           71
+  FDRE                           37
   IBUF                           58
-  LUT2                            9
-  LUT3                            8
-  LUT4                            2
-  LUT5                            2
+  LUT2                            8
+  LUT3                           43
+  LUT4                            1
+  LUT5                            3
   LUT6                            2
-  MUXF7                           4
-  MUXF8                           2
   OBUF                           70
 
-Estimated number of LCs:         14
+Estimated number of LCs:         49
 ```
 

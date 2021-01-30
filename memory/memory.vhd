@@ -23,8 +23,8 @@ entity memory is
       mdst_data_o  : out std_logic_vector(15 downto 0);
 
       -- Memory
-      wb_cyc_o     : out std_logic := '0';
-      wb_stb_o     : out std_logic := '0';
+      wb_cyc_o     : out std_logic;
+      wb_stb_o     : out std_logic;
       wb_stall_i   : in  std_logic;
       wb_addr_o    : out std_logic_vector(15 downto 0);
       wb_we_o      : out std_logic;
@@ -40,123 +40,110 @@ architecture synthesis of memory is
    constant C_READ_DST : integer := 1;
    constant C_WRITE    : integer := 0;
 
-   signal osf_mem_valid : std_logic;
-   signal osf_mem_ready : std_logic;
-   signal osf_mem_data  : std_logic;
+   signal osb_mem_in_valid  : std_logic;
+   signal osb_mem_in_ready  : std_logic;
+   signal osb_mem_out_valid : std_logic;
+   signal osb_mem_out_ready : std_logic;
+   signal osb_mem_data      : std_logic;
 
-   signal osf_src_ready : std_logic;
-   signal osf_dst_ready : std_logic;
+   signal osb_src_valid     : std_logic;
+   signal osb_src_ready     : std_logic;
+   signal osb_dst_valid     : std_logic;
+   signal osb_dst_ready     : std_logic;
+
+   signal wait_for_ack      : std_logic;
 
 begin
 
-   s_ready_o <= osf_mem_ready and not wb_stall_i;
+   s_ready_o <= osb_mem_in_ready and not wb_stall_i and (wb_ack_i or not wait_for_ack) and osb_src_ready and osb_dst_ready and (msrc_ready_i or not msrc_valid_o) and (mdst_ready_i or not mdst_valid_o);
 
-   p_memory : process (clk_i)
+   -- WISHBONE request interface is combinatorial
+   wb_cyc_o  <= ((s_valid_i and s_ready_o) or wait_for_ack) and not rst_i;
+   wb_stb_o  <= wb_cyc_o and s_valid_i and s_ready_o;
+   wb_addr_o <= s_addr_i;
+   wb_we_o   <= s_op_i(C_WRITE);
+   wb_dat_o  <= s_data_i;
+
+   p_wait_for_ack : process (clk_i)
    begin
       if rising_edge(clk_i) then
-
-         if wb_stall_i = '0' then
-            -- Reqeust is accepted
-            wb_stb_o  <= '0';
-            wb_we_o   <= '0';
+         if wb_cyc_o and wb_ack_i then
+            wait_for_ack <= '0';
          end if;
 
-         if wb_ack_i = '1' then
-            -- Response is received
-            wb_cyc_o  <= '0';
-            wb_stb_o  <= '0';
-         end if;
-
-         if s_valid_i = '1' and s_ready_o = '1' then
-            if s_op_i(C_READ_SRC) = '1' then
-               wb_cyc_o  <= '1';
-               wb_stb_o  <= '1';
-               wb_addr_o <= s_addr_i;
-               wb_we_o   <= '0';
-            end if;
-
-            if s_op_i(C_READ_DST) = '1' then
-               wb_cyc_o  <= '1';
-               wb_stb_o  <= '1';
-               wb_addr_o <= s_addr_i;
-               wb_we_o   <= '0';
-            end if;
-
-            if s_op_i(C_WRITE) = '1' then
-               wb_cyc_o  <= '1';
-               wb_stb_o  <= '1';
-               wb_addr_o <= s_addr_i;
-               wb_we_o   <= '1';
-               wb_dat_o  <= s_data_i;
-            end if;
+         if wb_cyc_o and wb_stb_o and not wb_stall_i then
+            wait_for_ack <= '1';
          end if;
 
          if rst_i = '1' then
-            wb_cyc_o  <= '0';
-            wb_stb_o  <= '0';
+            wait_for_ack <= '0';
          end if;
       end if;
-   end process p_memory;
+   end process p_wait_for_ack;
 
 
    ----------------------
    -- Store the request
    ----------------------
 
-   i_one_stage_fifo_mem : entity work.one_stage_fifo
+   osb_mem_in_valid <= s_valid_i and s_ready_o and (s_op_i(C_READ_SRC) or s_op_i(C_READ_DST));
+
+   i_one_stage_buffer_mem : entity work.one_stage_buffer
       generic map (
          G_DATA_SIZE => 1
       )
       port map (
          clk_i       => clk_i,
          rst_i       => rst_i,
-         s_valid_i   => s_valid_i and s_ready_o and (s_op_i(C_READ_SRC) or s_op_i(C_READ_DST)),
-         s_ready_o   => osf_mem_ready,
+         s_valid_i   => osb_mem_in_valid,
+         s_ready_o   => osb_mem_in_ready,
          s_data_i(0) => s_op_i(C_READ_SRC),
-         m_valid_o   => osf_mem_valid,
+         m_valid_o   => osb_mem_out_valid,
          m_ready_i   => wb_ack_i,
-         m_data_o(0) => osf_mem_data
-      ); -- i_one_stage_fifo_mem
+         m_data_o(0) => osb_mem_data
+      ); -- i_one_stage_buffer_mem
 
+   osb_src_valid <= wb_ack_i and osb_mem_out_valid and osb_mem_data;
+   osb_dst_valid <= wb_ack_i and osb_mem_out_valid and not osb_mem_data;
 
    ------------------------------------------
    -- Store the response for the SRC output
    ------------------------------------------
 
-   i_one_stage_fifo_src : entity work.one_stage_fifo
+   i_one_stage_buffer_src : entity work.one_stage_buffer
       generic map (
          G_DATA_SIZE => 16
       )
       port map (
          clk_i     => clk_i,
          rst_i     => rst_i,
-         s_valid_i => wb_ack_i and osf_mem_valid and osf_mem_data,
-         s_ready_o => osf_src_ready,
+         s_valid_i => osb_src_valid,
+         s_ready_o => osb_src_ready,
          s_data_i  => wb_data_i,
          m_valid_o => msrc_valid_o,
          m_ready_i => msrc_ready_i,
          m_data_o  => msrc_data_o
-      ); -- i_one_stage_fifo_src
+      ); -- i_one_stage_buffer_src
 
 
    ------------------------------------------
    -- Store the response for the DST output
    ------------------------------------------
 
-   i_one_stage_fifo_dst : entity work.one_stage_fifo
+   i_one_stage_buffer_dst : entity work.one_stage_buffer
       generic map (
          G_DATA_SIZE => 16
       )
       port map (
          clk_i     => clk_i,
          rst_i     => rst_i,
-         s_valid_i => wb_ack_i and osf_mem_valid and not osf_mem_data,
-         s_ready_o => osf_dst_ready,
+         s_valid_i => osb_dst_valid,
+         s_ready_o => osb_dst_ready,
          s_data_i  => wb_data_i,
          m_valid_o => mdst_valid_o,
          m_ready_i => mdst_ready_i,
          m_data_o  => mdst_data_o
-      ); -- i_one_stage_fifo_dst
+      ); -- i_one_stage_buffer_dst
 
 end architecture synthesis;
 
