@@ -59,8 +59,6 @@ begin
             -- Reqeust is accepted
             wb_stb_o  <= '0';
             wb_we_o   <= '0';
-            wb_addr_o <= (others => '0');
-            wb_dat_o  <= (others => '0');
          end if;
 
          if wb_ack_i = '1' then
@@ -75,7 +73,6 @@ begin
                wb_stb_o  <= '1';
                wb_addr_o <= s_addr_i;
                wb_we_o   <= '0';
-               wb_dat_o  <= (others => '0');
             end if;
 
             if s_op_i(C_READ_DST) = '1' then
@@ -83,7 +80,6 @@ begin
                wb_stb_o  <= '1';
                wb_addr_o <= s_addr_i;
                wb_we_o   <= '0';
-               wb_dat_o  <= (others => '0');
             end if;
 
             if s_op_i(C_WRITE) = '1' then
@@ -98,13 +94,14 @@ begin
          if rst_i = '1' then
             wb_cyc_o  <= '0';
             wb_stb_o  <= '0';
-            wb_addr_o <= (others => '0');
-            wb_we_o   <= '0';
-            wb_dat_o  <= (others => '0');
          end if;
       end if;
    end process p_memory;
 
+
+   ----------------------
+   -- Store the request
+   ----------------------
 
    i_one_stage_fifo_mem : entity work.one_stage_fifo
       generic map (
@@ -122,6 +119,10 @@ begin
       ); -- i_one_stage_fifo_mem
 
 
+   ------------------------------------------
+   -- Store the response for the SRC output
+   ------------------------------------------
+
    i_one_stage_fifo_src : entity work.one_stage_fifo
       generic map (
          G_DATA_SIZE => 16
@@ -137,6 +138,10 @@ begin
          m_data_o  => msrc_data_o
       ); -- i_one_stage_fifo_src
 
+
+   ------------------------------------------
+   -- Store the response for the DST output
+   ------------------------------------------
 
    i_one_stage_fifo_dst : entity work.one_stage_fifo
       generic map (

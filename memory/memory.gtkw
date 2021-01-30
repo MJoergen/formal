@@ -1,14 +1,14 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Fri Jan 29 11:30:29 2021
+[*] Sat Jan 30 09:15:26 2021
 [*]
-[dumpfile] "/home/mike/git/MJoergen/formal/cpu/memory_bmc/engine_0/trace.vcd"
-[dumpfile_mtime] "Fri Jan 29 11:28:14 2021"
-[dumpfile_size] 5747
-[savefile] "/home/mike/git/MJoergen/formal/cpu/memory.gtkw"
+[dumpfile] "/home/mike/git/MJoergen/formal/memory/memory_bmc/engine_0/trace.vcd"
+[dumpfile_mtime] "Sat Jan 30 09:15:11 2021"
+[dumpfile_size] 6753
+[savefile] "/home/mike/git/MJoergen/formal/memory/memory.gtkw"
 [timestart] 0
 [size] 1412 919
-[pos] -2030 -47
+[pos] -1836 -13
 *-3.758234 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] memory.
 [sst_width] 460
@@ -60,7 +60,12 @@ memory.msrc_data_o[15:0]
 -
 @28
 memory.i_memory.f_wb_req_count[1:0]
+@29
+memory.i_memory.f_wb_rd_req_count[1:0]
+@28
 memory.i_memory.f_wb_stall_delay[1:0]
 memory.i_memory.f_wb_ack_delay[1:0]
+memory.i_memory.f_exe_src_req_count[1:0]
+memory.i_memory.f_exe_dst_req_count[1:0]
 [pattern_trace] 1
 [pattern_trace] 0

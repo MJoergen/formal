@@ -1,13 +1,9 @@
 [tasks]
 bmc
-cover
 
 [options]
 bmc: mode bmc
 bmc: depth 10
-cover: mode cover
-cover: depth 10
-cover: append 3
 
 [engines]
 smtbmc
