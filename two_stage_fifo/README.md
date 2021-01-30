@@ -38,8 +38,7 @@ Number of cells:                 55
   FDRE                           17
   FDSE                            1
   IBUF                           12
-  INV                             1
-  LUT2                            1
+  LUT2                            2
   LUT3                            2
   LUT6                            8
   OBUF                           12
@@ -47,5 +46,5 @@ Number of cells:                 55
 Estimated number of LCs:         10
 ```
 
-As expected, we see a total of 18 registers. The total LUT count is 14.
+As expected, we see a total of 18 registers. The total LUT count is 12.
 
