@@ -50,42 +50,31 @@ begin
       if rising_edge(clk_i) then
          case s_fill_o is
             when "00" =>
-               if s_valid_i = '1' then
-                  -- Ready is already asserted, so we have to accept the data
-                  m_data_r  <= s_data_i;
-
-                  m_valid_r <= '1';
-               end if;
+               -- m_valid_r = '0' and s_ready_r = '1'
+               m_data_r  <= s_data_i;
+               m_valid_r <= s_valid_i;
+               s_data_r  <= s_data_i;
 
             when "01" =>
-               -- The pipe has valid data in m_*
-               case std_logic_vector'(m_ready_i & s_valid_i) is
-                  when "00" =>
-                     null;
+               -- m_valid_r = '1' and s_ready_r = '1'
 
-                  when "01" =>
-                     -- Increase pipeline
-                     s_data_r  <= s_data_i;
-                     s_ready_r <= '0';
+               if m_ready_i = '1' then
+                  m_valid_r <= s_valid_i;
+                  m_data_r  <= s_data_i;
+               end if;
 
-                  when "10" =>
-                     -- Decrease pipeline
-                     m_valid_r <= '0';
-
-                  when "11" =>
-                     m_data_r  <= s_data_i;
-
-                  when others => null;
-               end case;
+               s_data_r  <= s_data_i;
+               s_ready_r <= m_ready_i or not s_valid_i;
 
             when "10" =>
+               -- m_valid_r = '1' and s_ready_r = '0'
+
                -- The pipe has valid data in both s_* and m_*
                if m_ready_i = '1' then
                   -- Valid is asserted, so data has been accepted
                   m_data_r  <= s_data_r;
-
-                  s_ready_r <= '1';
                end if;
+               s_ready_r <= m_ready_i;
 
             when others =>
                s_ready_r <= '1';
