@@ -9,6 +9,8 @@ the WISHBONE response signal `wb_ack_i` can not be delayed.
 Therefore, I find it convenient to introduce the MEMORY module, which acts as
 an "adapter" from the WISHBONE interface to the "elastic pipeline" interface.
 
+## Interface
+
 The MEMORY module exposes a source interface (connected to the EXECUTE module)
 as follows:
 ```
@@ -35,7 +37,7 @@ mdst_ready_i : in  std_logic;
 mdst_data_o  : out std_logic_vector(15 downto 0);
 ```
 
-The idea is that the EXECUTE blocks issues requests and reads back the results
+The idea is that the EXECUTE block issues requests and reads back the results
 at a later time.
 
 The main benefit of this module is that it stores the results read back from
