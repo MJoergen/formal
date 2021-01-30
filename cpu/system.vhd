@@ -53,7 +53,7 @@ begin
    i_mem_inst : entity work.wb_mem
       generic map (
          G_ROM_FILE  => "../cpu/prog.rom",
-         G_ADDR_SIZE => 8,
+         G_ADDR_SIZE => 12,
          G_DATA_SIZE => 16
       )
       port map (
@@ -62,7 +62,7 @@ begin
          wb_cyc_i   => wbi_cyc,
          wb_stb_i   => wbi_stb,
          wb_stall_o => wbi_stall,
-         wb_addr_i  => wbi_addr(7 downto 0),
+         wb_addr_i  => wbi_addr(11 downto 0),
          wb_we_i    => '0',
          wb_data_i  => X"0000",
          wb_ack_o   => wbi_ack,
@@ -71,7 +71,7 @@ begin
 
    i_mem_data : entity work.wb_mem
       generic map (
-         G_ADDR_SIZE => 8,
+         G_ADDR_SIZE => 12,
          G_DATA_SIZE => 16
       )
       port map (
@@ -80,7 +80,7 @@ begin
          wb_cyc_i   => wbd_cyc,
          wb_stb_i   => wbd_stb,
          wb_stall_o => wbd_stall,
-         wb_addr_i  => wbd_addr(7 downto 0),
+         wb_addr_i  => wbd_addr(11 downto 0),
          wb_we_i    => wbd_we,
          wb_data_i  => wbd_data_wr,
          wb_ack_o   => wbd_ack,
