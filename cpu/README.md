@@ -5,26 +5,26 @@
 
 ## Synthesis
 ```
-Number of cells:               3569
+Number of cells:               3439
   BUFG                            1
   CARRY4                         36
-  FDRE                          392
+  FDRE                          358
   FDSE                            1
   IBUF                            2
-  INV                            52
-  LUT1                           86
-  LUT2                          142
-  LUT3                          212
-  LUT4                          170
-  LUT5                          363
-  LUT6                          763
-  MUXF7                         582
-  MUXF8                         167
+  INV                            51
+  LUT1                           58
+  LUT2                          136
+  LUT3                          240
+  LUT4                          148
+  LUT5                          365
+  LUT6                          761
+  MUXF7                         542
+  MUXF8                         140
   OBUF                           16
   RAM128X1D                      64
   RAM32M                          8
   RAM64M                        512
 
-Estimated number of LCs:       1508
+Estimated number of LCs:       1514
 ```
 

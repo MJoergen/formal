@@ -16,7 +16,8 @@ vunit i_memory(memory(synthesis))
    --------------------------------------------
 
    -- The two output buffers should never overflow.
-   f_osb_full : assert always {wb_ack_i and osb_mem_out_valid} |-> {osb_src_ready};
+   f_osb_src_full : assert always {osb_src_valid} |-> {osb_src_ready};
+   f_osb_dst_full : assert always {osb_dst_valid} |-> {osb_dst_ready};
 
    -- The input to the buffers should be stable.
 --   f_osb_src_stable : assert always {osb_src_valid and not osb_src_ready} |=> {stable(osb_src_valid) and stable (wb_data_i)};
@@ -182,6 +183,8 @@ vunit i_memory(memory(synthesis))
    ----------------------------------------------
    -- ADDITIONAL ASSUMES HELPFUL WHEN DEBUGGING
    ----------------------------------------------
+
+--   assume always {not rst_i} |=> {not rst_i};
 
 } -- vunit i_memory(memory(synthesis))
 
