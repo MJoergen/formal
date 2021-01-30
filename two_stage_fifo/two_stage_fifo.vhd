@@ -36,10 +36,9 @@ architecture synthesis of two_stage_fifo is
 
 begin
 
-   s_fill_o <= "00" when m_valid_o = '0' and s_ready_o = '1' else
+   s_fill_o <= "00" when m_valid_o = '0' else
                "01" when m_valid_o = '1' and s_ready_o = '1' else
-               "10" when m_valid_o = '1' and s_ready_o = '0' else
-               "11";
+               "10"; --  when m_valid_o = '1' and s_ready_o = '0'
 
 
    p_s_data : process (clk_i)
