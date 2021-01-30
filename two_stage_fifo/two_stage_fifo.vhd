@@ -41,53 +41,50 @@ begin
                "10" when m_valid_o = '1' and s_ready_o = '0' else
                "11";
 
-   -----------------
-   -- State machine
-   -----------------
 
-   p_fsm : process (clk_i)
+   p_s_data : process (clk_i)
    begin
       if rising_edge(clk_i) then
-         case s_fill_o is
-            when "00" =>
-               -- m_valid_r = '0' and s_ready_r = '1'
-               m_data_r  <= s_data_i;
-               m_valid_r <= s_valid_i;
-               s_data_r  <= s_data_i;
+         if s_ready_r = '1' then
+            s_data_r  <= s_data_i;
+         end if;
+      end if;
+   end process p_s_data;
 
-            when "01" =>
-               -- m_valid_r = '1' and s_ready_r = '1'
 
-               if m_ready_i = '1' then
-                  m_valid_r <= s_valid_i;
-                  m_data_r  <= s_data_i;
-               end if;
-
-               s_data_r  <= s_data_i;
-               s_ready_r <= m_ready_i or not s_valid_i;
-
-            when "10" =>
-               -- m_valid_r = '1' and s_ready_r = '0'
-
-               -- The pipe has valid data in both s_* and m_*
-               if m_ready_i = '1' then
-                  -- Valid is asserted, so data has been accepted
-                  m_data_r  <= s_data_r;
-               end if;
-               s_ready_r <= m_ready_i;
-
-            when others =>
-               s_ready_r <= '1';
-               m_valid_r <= '0';
-
-         end case;
+   p_s_ready : process (clk_i)
+   begin
+      if rising_edge(clk_i) then
+         if m_valid_r = '1' then
+            s_ready_r <= m_ready_i or (s_ready_r and not s_valid_i);
+         end if;
 
          if rst_i = '1' then
             s_ready_r <= '1';
+         end if;
+      end if;
+   end process p_s_ready;
+
+
+   p_m : process (clk_i)
+   begin
+      if rising_edge(clk_i) then
+         if s_ready_r = '1' then
+            if m_valid_r = '0' or m_ready_i = '1' then
+               m_valid_r <= s_valid_i;
+               m_data_r  <= s_data_i;
+            end if;
+         else
+            if m_ready_i = '1' then
+               m_data_r  <= s_data_r;
+            end if;
+         end if;
+
+         if rst_i = '1' then
             m_valid_r <= '0';
          end if;
       end if;
-   end process p_fsm;
+   end process p_m;
 
 
    --------------------------

@@ -33,16 +33,18 @@ The result of running formal verification (by typing `make') is shown in this wa
 ## Synthesis
 Running `make synth` shows the following resource utilization:
 ```
-Number of cells:                 57
+Number of cells:                 55
   BUFG                            1
   FDRE                           17
   FDSE                            1
   IBUF                           12
-  LUT2                            2
-  LUT4                           12
+  INV                             1
+  LUT2                            1
+  LUT3                            2
+  LUT6                            8
   OBUF                           12
 
-Estimated number of LCs:         12
+Estimated number of LCs:         10
 ```
 
 As expected, we see a total of 18 registers. The total LUT count is 14.
