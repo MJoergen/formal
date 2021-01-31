@@ -75,14 +75,6 @@ architecture synthesis of decode is
    constant C_OPCODE_CTRL : std_logic_vector(3 downto 0) := X"E";
    constant C_OPCODE_JMP  : std_logic_vector(3 downto 0) := X"F";
 
-   constant C_LAST         : integer := 6;
-   constant C_MEM_ALU_SRC  : integer := 5;
-   constant C_MEM_ALU_DST  : integer := 4;
-   constant C_MEM_READ_SRC : integer := 3;
-   constant C_MEM_READ_DST : integer := 2;
-   constant C_MEM_WRITE    : integer := 1;
-   constant C_REG_WRITE    : integer := 0;
-
    constant C_MODE_REG : std_logic_vector(1 downto 0) := "00"; -- R
    constant C_MODE_MEM : std_logic_vector(1 downto 0) := "01"; -- @R
    constant C_MODE_INC : std_logic_vector(1 downto 0) := "10"; -- @R++
@@ -102,17 +94,29 @@ architecture synthesis of decode is
    -- bits 1-0 : count
    signal microcode_addr  : std_logic_vector(5 downto 0);
 
+   constant C_READ_DST  : integer := 5;
+   constant C_WRITE_DST : integer := 4;
+   constant C_MEM_SRC   : integer := 3;
+   constant C_MEM_DST   : integer := 2;
+   subtype R_COUNT is natural range 1 downto 0;
+
    -- microcode value bitmap
-   -- bit 4 : last
+   -- bit 6 : last
+   -- bit 5 : mem to alu src
+   -- bit 4 : mem to alu dst
    -- bit 3 : mem read to src
    -- bit 2 : mem read to dst
    -- bit 1 : mem write
    -- bit 0 : reg write
    signal microcode_value : std_logic_vector(6 downto 0);
 
-   signal opcode   : std_logic_vector(3 downto 0);
-   signal src_mode : std_logic_vector(1 downto 0);
-   signal dst_mode : std_logic_vector(1 downto 0);
+   constant C_LAST         : integer := 6;
+   constant C_MEM_ALU_SRC  : integer := 5;
+   constant C_MEM_ALU_DST  : integer := 4;
+   constant C_MEM_READ_SRC : integer := 3;
+   constant C_MEM_READ_DST : integer := 2;
+   constant C_MEM_WRITE    : integer := 1;
+   constant C_REG_WRITE    : integer := 0;
 
 begin
 
@@ -127,12 +131,8 @@ begin
 
    fetch_data <= fetch_data_i when count = 0 else fetch_data_d;
 
-   opcode   <= fetch_data(R_OPCODE);
-   src_mode <= fetch_data(R_SRC_MODE);
-   dst_mode <= fetch_data(R_DST_MODE);
 
    -- Special case when src = @R15++, i.e. 11-8 = "1111" and 7-6 = "10".
-
    immediate <= '1' when fetch_data(R_SRC_REG) = "1111" and fetch_data(R_SRC_MODE) = C_MODE_INC
            else '0';
 
@@ -142,22 +142,14 @@ begin
    fetch_ready_o <= exe_ready_i when count = 0
                else '0';
 
-   -- bit  5   : read from dst
-   -- bit  4   : write to dst
-   -- bit  3   : src mem
-   -- bit  2   : dst mem
-   -- bits 1-0 : count
-   microcode_addr(5) <= '0' when opcode = C_OPCODE_MOVE or
-                                 opcode = C_OPCODE_SWAP or
-                                 opcode = C_OPCODE_NOT
-                   else '1';
-   microcode_addr(4) <= '0' when opcode = C_OPCODE_CMP
-                   else '1';
-   microcode_addr(3) <= '0' when src_mode = C_MODE_REG
-                   else '1';
-   microcode_addr(2) <= '0' when dst_mode = C_MODE_REG
-                   else '1';
-   microcode_addr(1 downto 0) <= count;
+
+   microcode_addr(C_READ_DST)  <= '0' when fetch_data(R_OPCODE) = C_OPCODE_MOVE or
+                                           fetch_data(R_OPCODE) = C_OPCODE_SWAP or
+                                           fetch_data(R_OPCODE) = C_OPCODE_NOT else '1';
+   microcode_addr(C_WRITE_DST) <= '0' when fetch_data(R_OPCODE) = C_OPCODE_CMP else '1';
+   microcode_addr(C_MEM_SRC)   <= '0' when fetch_data(R_SRC_MODE) = C_MODE_REG else '1';
+   microcode_addr(C_MEM_DST)   <= '0' when fetch_data(R_DST_MODE) = C_MODE_REG else '1';
+   microcode_addr(R_COUNT)     <= count;
 
    i_microcode : entity work.microcode
       port map (
