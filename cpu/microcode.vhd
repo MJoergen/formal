@@ -92,21 +92,21 @@ architecture synthesis of microcode is
       C_LAST,
 
       -- CMP R, @R
-      C_LAST or C_MEM_READ_DST,
-      C_LAST,
+      C_MEM_READ_DST,
+      C_LAST or C_MEM_ALU_DST,
       C_LAST,
       C_LAST,
 
       -- CMP @R, R
-      C_LAST or C_MEM_READ_SRC,
-      C_LAST,
+      C_MEM_READ_SRC,
+      C_LAST or C_MEM_ALU_SRC,
       C_LAST,
       C_LAST,
 
       -- CMP @R, @R
       C_MEM_READ_SRC,
-      C_LAST or C_MEM_READ_DST,
-      C_LAST,
+      C_MEM_READ_DST,
+      C_LAST or C_MEM_ALU_SRC or C_MEM_ALU_DST,
       C_LAST,
 
       -- ADD R, R
