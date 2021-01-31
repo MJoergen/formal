@@ -80,7 +80,14 @@ architecture synthesis of decode is
    constant C_MODE_INC : std_logic_vector(1 downto 0) := "10"; -- @R++
    constant C_MODE_DEC : std_logic_vector(1 downto 0) := "11"; -- @--R
 
+   constant C_JMPMODE_ABRA : std_logic_vector(1 downto 0) := "00";
+   constant C_JMPMODE_ASUB : std_logic_vector(1 downto 0) := "01";
+   constant C_JMPMODE_RBRA : std_logic_vector(1 downto 0) := "10";
+   constant C_JMPMODE_RSUB : std_logic_vector(1 downto 0) := "11";
+
    signal immediate    : std_logic;
+   signal wait_src_val : std_logic;
+
    signal count        : std_logic_vector(1 downto 0);
    signal fetch_data_d : std_logic_vector(15 downto 0);
    signal fetch_data   : std_logic_vector(15 downto 0);
@@ -118,6 +125,13 @@ architecture synthesis of decode is
    constant C_MEM_WRITE    : integer := 1;
    constant C_REG_WRITE    : integer := 0;
 
+   constant C_FLAGS_ONE   : integer := 0;
+   constant C_FLAGS_X     : integer := 1;
+   constant C_FLAGS_CARRY : integer := 2;
+   constant C_FLAGS_ZERO  : integer := 3;
+   constant C_FLAGS_NEG   : integer := 4;
+   constant C_FLAGS_OVERF : integer := 5;
+
 begin
 
    p_fetch_data : process (clk_i)
@@ -140,13 +154,15 @@ begin
    reg_dst_addr_o <= fetch_data(R_DST_REG);
 
    fetch_ready_o <= exe_ready_i when count = 0
-               else '0';
+               else wait_src_val;
 
 
    microcode_addr(C_READ_DST)  <= '0' when fetch_data(R_OPCODE) = C_OPCODE_MOVE or
                                            fetch_data(R_OPCODE) = C_OPCODE_SWAP or
-                                           fetch_data(R_OPCODE) = C_OPCODE_NOT else '1';
-   microcode_addr(C_WRITE_DST) <= '0' when fetch_data(R_OPCODE) = C_OPCODE_CMP else '1';
+                                           fetch_data(R_OPCODE) = C_OPCODE_NOT or
+                                           fetch_data(R_OPCODE) = C_OPCODE_JMP else '1';
+   microcode_addr(C_WRITE_DST) <= '0' when fetch_data(R_OPCODE) = C_OPCODE_CMP or
+                                           fetch_data(R_OPCODE) = C_OPCODE_JMP else '1';
    microcode_addr(C_MEM_SRC)   <= '0' when fetch_data(R_SRC_MODE) = C_MODE_REG else '1';
    microcode_addr(C_MEM_DST)   <= '0' when fetch_data(R_DST_MODE) = C_MODE_REG else '1';
    microcode_addr(R_COUNT)     <= count;
@@ -156,6 +172,7 @@ begin
          addr_i  => microcode_addr,
          value_o => microcode_value
       ); -- i_microcode
+
 
    p_fsm : process (clk_i)
    begin
@@ -170,7 +187,7 @@ begin
             exe_mem_addr_o <= (others => '0');
          end if;
 
-         if (count > 0 and exe_ready_i = '1') or (fetch_valid_i = '1' and fetch_ready_o = '1') then
+         if (count > 0 and exe_ready_i = '1' and wait_src_val = '0') or (fetch_valid_i = '1' and fetch_ready_o = '1') then
             exe_opcode_o   <= fetch_data(R_OPCODE);
             exe_src_val_o  <= reg_src_val_i;
             exe_dst_val_o  <= reg_dst_val_i;
@@ -187,8 +204,19 @@ begin
             exe_valid_o   <= '1';
 
             if fetch_data(R_OPCODE) = C_OPCODE_JMP then
+               exe_microop_o <= (others => '0');
                exe_microop_o(C_REG_WRITE) <= reg_flags_i(to_integer(fetch_data(R_JMP_COND))) xor fetch_data(R_JMP_NEG);
                exe_reg_addr_o <= "1111"; -- R15 = PC
+
+               if fetch_data(R_JMP_MODE) = C_JMPMODE_RBRA or fetch_data(R_JMP_MODE) = C_JMPMODE_RSUB then
+                  exe_opcode_o  <= C_OPCODE_ADDC;
+                  exe_dst_val_o <= fetch_addr_i;
+                  exe_flags_o(C_FLAGS_CARRY) <= '1';
+               end if;
+            end if;
+
+            if fetch_data(R_OPCODE) = C_OPCODE_CTRL then
+               assert false report "CTRL instruction at address " & to_hstring(fetch_addr_i) severity failure;
             end if;
 
             if microcode_value(C_LAST) = '1' then
@@ -196,9 +224,25 @@ begin
             else
                count <= count + 1;
             end if;
+
+            if count = 0 and immediate = '1' then
+               exe_valid_o    <= '0';
+               exe_microop_o  <= (others => '0');
+               exe_opcode_o   <= (others => '0');
+               exe_src_val_o  <= (others => '0');
+               exe_dst_val_o  <= (others => '0');
+               exe_reg_addr_o <= (others => '0');
+               exe_mem_addr_o <= (others => '0');
+               wait_src_val   <= '1';
+            elsif wait_src_val = '1' then
+               wait_src_val  <= '0';
+               exe_src_val_o <= fetch_data_i;
+               exe_microop_o(C_MEM_ALU_SRC) <= '0';
+            end if;
          end if;
 
          if rst_i = '1' then
+            wait_src_val   <= '0';
             count          <= (others => '0');
             exe_valid_o    <= '0';
             exe_microop_o  <= (others => '0');

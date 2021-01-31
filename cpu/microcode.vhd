@@ -37,26 +37,26 @@ architecture synthesis of microcode is
 
    type microcode_t is array (0 to 63) of std_logic_vector(6 downto 0);
    constant C_MICROCODE : microcode_t := (
-      -- NOT USED R, R
+      -- JMP R, R
       C_LAST,
       C_LAST,
       C_LAST,
       C_LAST,
 
-      -- NOT USED R, @R
+      -- JMP R, @R
       C_LAST,
       C_LAST,
       C_LAST,
       C_LAST,
 
-      -- NOT USED @R, R
-      C_LAST,
+      -- JMP @R, R
+      C_MEM_READ_SRC,
       C_LAST,
       C_LAST,
       C_LAST,
 
-      -- NOT USED @R, @R
-      C_LAST,
+      -- JMP @R, @R
+      C_MEM_READ_SRC,
       C_LAST,
       C_LAST,
       C_LAST,
