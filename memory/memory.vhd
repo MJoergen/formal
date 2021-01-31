@@ -44,24 +44,20 @@ architecture synthesis of memory is
    signal osf_mem_in_ready  : std_logic;
    signal osf_mem_out_valid : std_logic;
    signal osf_mem_out_ready : std_logic;
-   signal osf_mem_data      : std_logic;
+   signal osf_mem_out_data  : std_logic;
 
-   signal osb_src_valid     : std_logic;
-   signal osb_src_ready     : std_logic;
-   signal osb_dst_valid     : std_logic;
-   signal osb_dst_ready     : std_logic;
+   signal osb_src_in_valid  : std_logic;
+   signal osb_src_in_ready  : std_logic;
+   signal osb_dst_in_valid  : std_logic;
+   signal osb_dst_in_ready  : std_logic;
 
    signal wait_for_ack      : std_logic;
 
 begin
 
-   s_ready_o <= not wb_stall_i
-            and (wb_ack_i or not wait_for_ack)
-            and osf_mem_in_ready
-            and osb_src_ready
-            and osb_dst_ready
-            and (msrc_ready_i or not msrc_valid_o or not s_op_i(C_READ_SRC))
-            and (mdst_ready_i or not mdst_valid_o or not s_op_i(C_READ_DST));
+   s_ready_o <= not (s_op_i(C_READ_SRC) and msrc_valid_o and not msrc_ready_i)
+            and not (s_op_i(C_READ_DST) and mdst_valid_o and not mdst_ready_i);
+
 
    -- WISHBONE request interface is combinatorial
    wb_cyc_o  <= ((s_valid_i and s_ready_o) or wait_for_ack) and not rst_i;
@@ -105,8 +101,8 @@ begin
          s_ready_o   => osf_mem_in_ready,
          s_data_i(0) => s_op_i(C_READ_SRC),
          m_valid_o   => osf_mem_out_valid,
-         m_ready_i   => wb_ack_i,
-         m_data_o(0) => osf_mem_data
+         m_ready_i   => wb_cyc_o and wb_ack_i,
+         m_data_o(0) => osf_mem_out_data
       ); -- i_one_stage_fifo_mem
 
 
@@ -114,7 +110,7 @@ begin
    -- Store the response for the SRC output
    ------------------------------------------
 
-   osb_src_valid <= wb_ack_i and osf_mem_out_valid and osf_mem_data;
+   osb_src_in_valid <= wb_cyc_o and wb_ack_i and osf_mem_out_valid and osf_mem_out_data;
 
    i_one_stage_buffer_src : entity work.one_stage_buffer
       generic map (
@@ -123,8 +119,8 @@ begin
       port map (
          clk_i     => clk_i,
          rst_i     => rst_i,
-         s_valid_i => osb_src_valid,
-         s_ready_o => osb_src_ready,
+         s_valid_i => osb_src_in_valid,
+         s_ready_o => osb_src_in_ready,
          s_data_i  => wb_data_i,
          m_valid_o => msrc_valid_o,
          m_ready_i => msrc_ready_i,
@@ -136,7 +132,7 @@ begin
    -- Store the response for the DST output
    ------------------------------------------
 
-   osb_dst_valid <= wb_ack_i and osf_mem_out_valid and not osf_mem_data;
+   osb_dst_in_valid <= wb_cyc_o and wb_ack_i and osf_mem_out_valid and not osf_mem_out_data;
 
    i_one_stage_buffer_dst : entity work.one_stage_buffer
       generic map (
@@ -145,8 +141,8 @@ begin
       port map (
          clk_i     => clk_i,
          rst_i     => rst_i,
-         s_valid_i => osb_dst_valid,
-         s_ready_o => osb_dst_ready,
+         s_valid_i => osb_dst_in_valid,
+         s_ready_o => osb_dst_in_ready,
          s_data_i  => wb_data_i,
          m_valid_o => mdst_valid_o,
          m_ready_i => mdst_ready_i,
