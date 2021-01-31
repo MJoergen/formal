@@ -57,6 +57,7 @@ architecture synthesis of cpu is
    signal dec2exe_microop     : std_logic_vector(5 downto 0);
    signal dec2exe_opcode      : std_logic_vector(3 downto 0);
    signal dec2exe_flags       : std_logic_vector(15 downto 0);
+   signal dec2exe_flags_we    : std_logic;
    signal dec2exe_src_val     : std_logic_vector(15 downto 0);
    signal dec2exe_dst_val     : std_logic_vector(15 downto 0);
    signal dec2exe_reg_addr    : std_logic_vector(3 downto 0);
@@ -165,6 +166,7 @@ begin
          exe_microop_o   => dec2exe_microop,
          exe_opcode_o    => dec2exe_opcode,
          exe_flags_o     => dec2exe_flags,
+         exe_flags_we_o  => dec2exe_flags_we,
          exe_src_val_o   => dec2exe_src_val,
          exe_dst_val_o   => dec2exe_dst_val,
          exe_reg_addr_o  => dec2exe_reg_addr,
@@ -201,6 +203,7 @@ begin
          dec_microop_i   => dec2exe_microop,
          dec_opcode_i    => dec2exe_opcode,
          dec_flags_i     => dec2exe_flags,
+         dec_flags_we_i  => dec2exe_flags_we,
          dec_src_val_i   => dec2exe_src_val,
          dec_dst_val_i   => dec2exe_dst_val,
          dec_reg_addr_i  => dec2exe_reg_addr,

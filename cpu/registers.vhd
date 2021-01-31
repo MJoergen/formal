@@ -60,6 +60,10 @@ begin
             sp <= reg_val_i;
          end if;
 
+         if flags_we_i = '1' then
+            sr <= flags_i;
+         end if;
+
          if reg_we_i = '1' and to_integer(reg_addr_i) = C_REG_SR then
             sr <= reg_val_i or X"0001";
          end if;

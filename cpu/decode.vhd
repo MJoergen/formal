@@ -39,6 +39,7 @@ entity decode is
       exe_microop_o   : out std_logic_vector(5 downto 0);
       exe_opcode_o    : out std_logic_vector(3 downto 0);
       exe_flags_o     : out std_logic_vector(15 downto 0);
+      exe_flags_we_o  : out std_logic;
       exe_src_val_o   : out std_logic_vector(15 downto 0);
       exe_dst_val_o   : out std_logic_vector(15 downto 0);
       exe_reg_addr_o  : out std_logic_vector(3 downto 0);
@@ -179,6 +180,8 @@ begin
       if rising_edge(clk_i) then
          if exe_ready_i = '1' then
             exe_valid_o    <= '0';
+            exe_flags_we_o <= '0';
+            exe_flags_o    <= (others => '0');
             exe_microop_o  <= (others => '0');
             exe_opcode_o   <= (others => '0');
             exe_src_val_o  <= (others => '0');
@@ -192,6 +195,7 @@ begin
             exe_src_val_o  <= reg_src_val_i;
             exe_dst_val_o  <= reg_dst_val_i;
             exe_flags_o    <= reg_flags_i;
+            exe_flags_we_o <= '1';
             exe_reg_addr_o <= fetch_data(R_DST_REG);
 
             if microcode_value(C_MEM_READ_SRC) = '1' then
@@ -207,6 +211,7 @@ begin
                exe_microop_o <= (others => '0');
                exe_microop_o(C_REG_WRITE) <= reg_flags_i(to_integer(fetch_data(R_JMP_COND))) xor fetch_data(R_JMP_NEG);
                exe_reg_addr_o <= "1111"; -- R15 = PC
+               exe_flags_we_o <= '0';
 
                if fetch_data(R_JMP_MODE) = C_JMPMODE_RBRA or fetch_data(R_JMP_MODE) = C_JMPMODE_RSUB then
                   exe_opcode_o  <= C_OPCODE_ADDC;
@@ -227,6 +232,8 @@ begin
 
             if count = 0 and immediate = '1' then
                exe_valid_o    <= '0';
+               exe_flags_we_o <= '0';
+               exe_flags_o    <= (others => '0');
                exe_microop_o  <= (others => '0');
                exe_opcode_o   <= (others => '0');
                exe_src_val_o  <= (others => '0');
@@ -245,6 +252,8 @@ begin
             wait_src_val   <= '0';
             count          <= (others => '0');
             exe_valid_o    <= '0';
+            exe_flags_we_o <= '0';
+            exe_flags_o    <= (others => '0');
             exe_microop_o  <= (others => '0');
             exe_opcode_o   <= (others => '0');
             exe_src_val_o  <= (others => '0');

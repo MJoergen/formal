@@ -25,6 +25,7 @@ entity execute is
       dec_microop_i   : in  std_logic_vector(5 downto 0);
       dec_opcode_i    : in  std_logic_vector(3 downto 0);
       dec_flags_i     : in  std_logic_vector(15 downto 0);
+      dec_flags_we_i  : in  std_logic;
       dec_src_val_i   : in  std_logic_vector(15 downto 0);
       dec_dst_val_i   : in  std_logic_vector(15 downto 0);
       dec_reg_addr_i  : in  std_logic_vector(3 downto 0);
@@ -92,7 +93,6 @@ begin
    mem_src_ready_o <= dec_microop_i(C_MEM_ALU_SRC);
    mem_dst_ready_o <= dec_microop_i(C_MEM_ALU_DST);
 
-   reg_flags_o    <= alu_res_flags;
 
    p_reg : process (clk_i)
    begin
@@ -100,11 +100,12 @@ begin
          reg_we_o       <= '0';
          reg_addr_o     <= (others => '0');
          reg_val_o      <= (others => '0');
-         reg_flags_we_o <= '0';
+
+         reg_flags_o    <= alu_res_flags;
+         reg_flags_we_o <= dec_flags_we_i and dec_valid_i and dec_ready_o;
 
          if dec_valid_i = '1' and dec_ready_o = '1' then
             if dec_microop_i(C_REG_WRITE) = '1' then
-               reg_flags_we_o <= '1';
                reg_we_o   <= '1';
                reg_addr_o <= dec_reg_addr_i;
                reg_val_o  <= alu_res_val;
