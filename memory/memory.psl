@@ -16,8 +16,8 @@ vunit i_memory(memory(synthesis))
    --------------------------------------------
 
    -- The two output buffers should never overflow.
-   f_osb_src_full : assert always {osb_src_valid} |-> {osb_src_ready};
-   f_osb_dst_full : assert always {osb_dst_valid} |-> {osb_dst_ready};
+   f_osb_src_overflow : assert always {osb_src_valid and not rst_i} |-> {osb_src_ready};
+   f_osb_dst_overflow : assert always {osb_dst_valid and not rst_i} |-> {osb_dst_ready};
 
    -- The input to the buffers should be stable.
 --   f_osb_src_stable : assert always {osb_src_valid and not osb_src_ready} |=> {stable(osb_src_valid) and stable (wb_data_i)};
@@ -162,6 +162,11 @@ vunit i_memory(memory(synthesis))
    --------------------------------------------
    -- COVER STATEMENTS TO VERIFY REACHABILITY
    --------------------------------------------
+
+   f_cover_burst2 : cover {msrc_valid_o and msrc_ready_i and not mdst_ready_i;
+                           mdst_valid_o and mdst_ready_i and not msrc_ready_i;
+                           msrc_valid_o and msrc_ready_i and not mdst_ready_i;
+                           mdst_valid_o and mdst_ready_i and not msrc_ready_i};
 
    -- OUTPUT src data
    f_cover_out_src : cover {msrc_valid_o};

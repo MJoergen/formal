@@ -55,8 +55,13 @@ architecture synthesis of memory is
 
 begin
 
-   s_ready_o <= osf_mem_in_ready and not wb_stall_i and (wb_ack_i or not wait_for_ack) and osb_src_ready and osb_dst_ready and
-                (msrc_ready_i or not msrc_valid_o or not s_op_i(C_READ_SRC)) and (mdst_ready_i or not mdst_valid_o or not s_op_i(C_READ_DST));
+   s_ready_o <= not wb_stall_i
+            and (wb_ack_i or not wait_for_ack)
+            and osf_mem_in_ready
+            and osb_src_ready
+            and osb_dst_ready
+            and (msrc_ready_i or not msrc_valid_o or not s_op_i(C_READ_SRC))
+            and (mdst_ready_i or not mdst_valid_o or not s_op_i(C_READ_DST));
 
    -- WISHBONE request interface is combinatorial
    wb_cyc_o  <= ((s_valid_i and s_ready_o) or wait_for_ack) and not rst_i;

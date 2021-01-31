@@ -22,9 +22,9 @@ s_data_i     : in  std_logic_vector(15 downto 0);
 ```
 
 The `s_op_i` is a one-hot encoding of the requested operation:
-* Write `data` to `addr`.
-* Read from `addr` and place result in `src`.
-* Read from `addr` and place result in `dst`.
+* `C_WRITE` : Write `data` to `addr`.
+* `C_READ_DST` : Read from `addr` and place result in `src`.
+* `C_READ_SRC` : Read from `addr` and place result in `dst`.
 
 The `src` and `dst` interfaces mentioned here are two output pipelines:
 ```
@@ -44,8 +44,170 @@ The main benefit of this module is that it stores the results read back from
 memory, in case the EXECUTE module is not ready to receive it yet.
 
 ## Implementation
+We want the module to have low latency - ideally a total latency of one clock
+cycle from `s_valid_i` to, say, `msrc_valid_o`. In fact, this is achieved in
+this implementation. We'll discuss the data path and the control path
+separately.
+
+### Data Path
+
+So first of all, the WISHBONE request interface is driven combinatorially, i.e.
+the address and data signals are simply connected directly:
+```
+wb_addr_o <= s_addr_i;
+wb_we_o   <= s_op_i(C_WRITE);
+wb_dat_o  <= s_data_i;
+```
+
+Secondly, the WISHBONE response interface is connected to two different
+`one_stage_buffer`s.
+
+```
+i_one_stage_buffer_src : entity work.one_stage_buffer
+   port map (
+      clk_i     => clk_i,
+      rst_i     => rst_i,
+      s_valid_i => osb_src_valid,
+      s_ready_o => osb_src_ready,
+      s_data_i  => wb_data_i,
+      m_valid_o => msrc_valid_o,
+      m_ready_i => msrc_ready_i,
+      m_data_o  => msrc_data_o
+   ); -- i_one_stage_buffer_src
+
+i_one_stage_buffer_dst : entity work.one_stage_buffer
+   port map (
+      clk_i     => clk_i,
+      rst_i     => rst_i,
+      s_valid_i => osb_dst_valid,
+      s_ready_o => osb_dst_ready,
+      s_data_i  => wb_data_i,
+      m_valid_o => mdst_valid_o,
+      m_ready_i => mdst_ready_i,
+      m_data_o  => mdst_data_o
+   ); -- i_one_stage_buffer_dst
+```
+
+Notice how the `wb_data_i` signal connects directly to both buffers, and that
+the output from these buffers are directly connected to the outputs of this
+module.
+
+We have to be careful though: When the data arrives we must make sure that the
+output buffers can accept the data. We'll get back to this in the section about
+formal verification.
+
+### Control Path
+The control path is responsible for the WISHBONE request control signals, the
+upstream ready signal, and controlling the two output buffers. Let's review
+the WISHBONE interface. Both read and write requests are always followed by
+a corresponding acknowledge signal. It's not possible to perform read and write
+simultaneously.
+
+Furthermore, when a request is made, the `wb_cyc_o` must be held high until the
+acknowledge is received. So we need a little flag to indicate whether we're
+waiting for an acknowledge. This is all achieved by the following:
+
+```
+wb_cyc_o  <= ((s_valid_i and s_ready_o) or wait_for_ack) and not rst_i;
+wb_stb_o  <= wb_cyc_o and s_valid_i and s_ready_o;
+
+p_wait_for_ack : process (clk_i)
+begin
+   if rising_edge(clk_i) then
+      if wb_cyc_o and wb_ack_i then
+         wait_for_ack <= '0';
+      end if;
+
+      if wb_cyc_o and wb_stb_o and not wb_stall_i then
+         wait_for_ack <= '1';
+      end if;
+
+      if rst_i = '1' then
+         wait_for_ack <= '0';
+      end if;
+   end if;
+end process p_wait_for_ack;
+```
+
+A complication is that when an acknowledge signal arrives there is no
+indication of which request it originated from.  This means we must keep track
+of the requests sent, in particular the read requests.  Therefore we
+instantiate a `one_stage_fifo` as well, to keep track of this information. This
+fifo only keeps track of read requests and only contains a single bit to
+distinguish whether the result should be in SRC or DST.
+
+```
+osf_mem_in_valid <= s_valid_i and s_ready_o and (s_op_i(C_READ_SRC) or s_op_i(C_READ_DST));
+
+i_one_stage_fifo_mem : entity work.one_stage_fifo
+   generic map (
+      G_DATA_SIZE => 1
+   )
+   port map (
+      clk_i       => clk_i,
+      rst_i       => rst_i,
+      s_valid_i   => osf_mem_in_valid,
+      s_ready_o   => osf_mem_in_ready,
+      s_data_i(0) => s_op_i(C_READ_SRC),
+      m_valid_o   => osf_mem_out_valid,
+      m_ready_i   => wb_ack_i,
+      m_data_o(0) => osf_mem_data
+   ); -- i_one_stage_fifo_mem
+```
+
+The above shows that whenever a read requests is accepted, the request is
+stored in the fifo.  Furthermore, when an acknowledge is received from the
+wishbone, then we read out the information from the fifo.
+
+Using this information we can now control writing into the two output buffers:
+
+```
+osb_src_valid <= wb_ack_i and osf_mem_out_valid and osf_mem_data;
+osb_dst_valid <= wb_ack_i and osf_mem_out_valid and not osf_mem_data;
+```
+
+The final part is to control the `s_ready_o` upstream signal.
+
+```
+s_ready_o <= not wb_stall_i
+         and (wb_ack_i or not wait_for_ack)
+         and osf_mem_in_ready
+         and osb_src_ready
+         and osb_dst_ready
+         and (msrc_ready_i or not msrc_valid_o or not s_op_i(C_READ_SRC))
+         and (mdst_ready_i or not mdst_valid_o or not s_op_i(C_READ_DST));
+```
 
 ## Formal verification
+
+### Internal assertions
+We mentioned above that a requirement for this design to work is that the
+output buffers are always ready to accept a response from the WISHBONE.
+Therefore, we being with the following two properties:
+
+```
+f_osb_src_overflow : assert always {osb_src_valid and not rst_i} |-> {osb_src_ready};
+f_osb_dst_overflow : assert always {osb_dst_valid and not rst_i} |-> {osb_dst_ready};
+```
+
+### Assumptions about inputs
+
+First of all we must ensure the correct format of the input operation:
+```
+f_exe_op : assume always {s_valid_i} |-> {s_op_i = "001" or s_op_i = "010" or s_op_i = "100"};
+```
+
+### Cover statements
+To demonstrate the correct functionality of the module, let's add a cover
+statement. This will verify that the module can output four values
+back-to-back, alternating on the SRC and DST interfaces. Additinally, we
+restrict the ready signals correspondingly:
+```
+f_cover_burst2 : cover {msrc_valid_o and msrc_ready_i and not mdst_ready_i;
+                        mdst_valid_o and mdst_ready_i and not msrc_ready_i;
+                        msrc_valid_o and msrc_ready_i and not mdst_ready_i;
+                        mdst_valid_o and mdst_ready_i and not msrc_ready_i};
+```
 
 ## Running formal verification
 ![Waveform](waveform.png)
