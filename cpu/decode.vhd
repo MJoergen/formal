@@ -20,10 +20,6 @@ entity decode is
       clk_i           : in  std_logic;
       rst_i           : in  std_logic;
 
-      -- To Instruction fetch
-      fetch_valid_o   : out std_logic;
-      fetch_addr_o    : out std_logic_vector(15 downto 0);
-
       -- From Instruction fetch
       fetch_valid_i   : in  std_logic;
       fetch_ready_o   : out std_logic;
@@ -179,9 +175,6 @@ begin
             exe_mem_addr_o <= (others => '0');
          end if;
 
-         fetch_valid_o <= '0';
-         fetch_addr_o  <= (others => '0');
-
          if (count > 0 and exe_ready_i = '1') or (fetch_valid_i = '1' and fetch_ready_o = '1') then
             exe_opcode_o   <= fetch_data(R_OPCODE);
             exe_src_val_o  <= reg_src_val_i;
@@ -206,8 +199,6 @@ begin
          end if;
 
          if rst_i = '1' then
-            fetch_valid_o  <= '1';
-            fetch_addr_o   <= (others => '0');
             count          <= (others => '0');
             exe_valid_o    <= '0';
             exe_microop_o  <= (others => '0');

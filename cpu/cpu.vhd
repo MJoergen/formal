@@ -44,10 +44,6 @@ architecture synthesis of cpu is
    signal fetch2decp_addr     : std_logic_vector(15 downto 0);
    signal fetch2decp_data     : std_logic_vector(15 downto 0);
 
-   -- Decode to fetch
-   signal dec2fetch_valid     : std_logic;
-   signal dec2fetch_addr      : std_logic_vector(15 downto 0);
-
    -- Decode to Register file
    signal dec2reg_src_reg     : std_logic_vector(3 downto 0);
    signal dec2reg_src_val     : std_logic_vector(15 downto 0);
@@ -88,6 +84,10 @@ architecture synthesis of cpu is
    signal exe2reg_addr        : std_logic_vector(3 downto 0);
    signal exe2reg_val         : std_logic_vector(15 downto 0);
 
+   -- Execute to fetch
+   signal exe2fetch_valid     : std_logic;
+   signal exe2fetch_addr      : std_logic_vector(15 downto 0);
+
 begin
 
    i_fetch : entity work.fetch
@@ -104,8 +104,8 @@ begin
          dc_ready_i => fetch2dec_ready,
          dc_addr_o  => fetch2dec_addr,
          dc_data_o  => fetch2dec_data,
-         dc_valid_i => dec2fetch_valid,
-         dc_addr_i  => dec2fetch_addr
+         dc_valid_i => exe2fetch_valid,
+         dc_addr_i  => exe2fetch_addr
       ); -- i_fetch
 
 
@@ -151,8 +151,6 @@ begin
       port map (
          clk_i           => clk_i,
          rst_i           => rst_i,
-         fetch_valid_o   => dec2fetch_valid,
-         fetch_addr_o    => dec2fetch_addr,
          fetch_valid_i   => fetch2dect_valid,
          fetch_ready_o   => fetch2dect_ready,
          fetch_addr_i    => fetch2dect_addr,
@@ -190,6 +188,9 @@ begin
          reg_val_i     => exe2reg_val
       ); -- i_registers
 
+   -- Writes to R15 are forwarded back to the fetch stage as well.
+   exe2fetch_valid <= '1'             when rst_i else and(exe2reg_addr) and exe2reg_we;
+   exe2fetch_addr  <= (others => '0') when rst_i else exe2reg_val;
 
    i_execute : entity work.execute
       port map (

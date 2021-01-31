@@ -13,5 +13,7 @@ CMP R3, @R8
 CMP @R4, R8
 CMP @R5, @R8
 
+ABRA R2, 1
+
 HALT
 
