@@ -54,6 +54,9 @@ architecture synthesis of decode is
    subtype R_SRC_MODE  is natural range  7 downto  6;
    subtype R_DST_REG   is natural range  5 downto  2;
    subtype R_DST_MODE  is natural range  1 downto  0;   
+   subtype R_JMP_MODE  is natural range  5 downto  4;
+   constant R_JMP_NEG  : integer := 3;
+   subtype R_JMP_COND  is natural range  2 downto  0;
 
    constant C_OPCODE_MOVE : std_logic_vector(3 downto 0) := X"0"; -- Does not read dst
    constant C_OPCODE_ADD  : std_logic_vector(3 downto 0) := X"1";
@@ -190,6 +193,11 @@ begin
 
             exe_microop_o <= microcode_value(5 downto 0);
             exe_valid_o   <= '1';
+
+            if fetch_data(R_OPCODE) = C_OPCODE_JMP then
+               exe_microop_o(C_REG_WRITE) <= reg_flags_i(to_integer(fetch_data(R_JMP_COND))) xor fetch_data(R_JMP_NEG);
+               exe_reg_addr_o <= "1111"; -- R15 = PC
+            end if;
 
             if microcode_value(C_LAST) = '1' then
                count <= "00";
