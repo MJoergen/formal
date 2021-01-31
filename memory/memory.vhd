@@ -110,7 +110,7 @@ begin
    -- Store the response for the SRC output
    ------------------------------------------
 
-   osb_src_in_valid <= wb_cyc_o and wb_ack_i and osf_mem_out_valid and osf_mem_out_data;
+   osb_src_in_valid <= wb_ack_i and osf_mem_out_valid and osf_mem_out_data;
 
    i_one_stage_buffer_src : entity work.one_stage_buffer
       generic map (
@@ -132,7 +132,7 @@ begin
    -- Store the response for the DST output
    ------------------------------------------
 
-   osb_dst_in_valid <= wb_cyc_o and wb_ack_i and osf_mem_out_valid and not osf_mem_out_data;
+   osb_dst_in_valid <= wb_ack_i and osf_mem_out_valid and not osf_mem_out_data;
 
    i_one_stage_buffer_dst : entity work.one_stage_buffer
       generic map (
