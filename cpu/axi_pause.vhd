@@ -77,7 +77,7 @@ begin
                      s_tvalid_i;
    end generate pause_negative_gen;
 
-   m_tdata_o <= s_tdata_i when m_tvalid_o = '1' else (others => '0');
+   m_tdata_o <= s_tdata_i;
 
 end architecture simulation;
 

@@ -145,7 +145,7 @@ begin
          m_ready_i => fetch2dect_ready,
          m_data_o(31 downto 16) => fetch2dect_addr,
          m_data_o(15 downto 0)  => fetch2dect_data
-      ); -- i_axi_pipe_small
+      ); -- i_one_stage_fifo
 
 
    i_decode : entity work.decode

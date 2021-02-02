@@ -14,10 +14,12 @@ SOURCES += ../two_stage_buffer/two_stage_buffer.vhd
 SOURCES += ../pipe_concat/pipe_concat.vhd
 SOURCES += ../fetch2/fetch.vhd
 SOURCES += ../memory/memory.vhd
-SOURCES += alu.vhd
+SOURCES += alu_data.vhd
+SOURCES += alu_flags.vhd
 SOURCES += microcode.vhd
 SOURCES += decode.vhd
 SOURCES += execute.vhd
+SOURCES += tdp_ram.vhd
 SOURCES += registers.vhd
 SOURCES += cpu.vhd
 SOURCES += ../wb_mem/wb_mem.vhd
@@ -40,7 +42,7 @@ show: $(WAVE)
 $(WAVE): $(SOURCES) $(TB_SRC) $(ROM)
 	ghdl -i --std=08 $(SOURCES) $(TB_SRC)
 	ghdl -m --std=08 $(TB)
-	ghdl -r --std=08 $(TB) --wave=$(WAVE) --stop-time=2us
+	ghdl -r --std=08 $(TB) --wave=$(WAVE) --stop-time=200us
 
 $(ROM): $(ASM)
 	$(ASSEMBLER) $(ASM)
@@ -48,7 +50,7 @@ $(ROM): $(ASM)
 $(TOP).bit: $(TOP).tcl $(SOURCES) $(TOP).xdc $(ROM)
 	bash -c "source $(XILINX_DIR)/settings64.sh ; vivado -mode tcl -source $<"
 
-$(TOP).tcl:
+$(TOP).tcl: Makefile
 	echo "# This is a tcl command script for the Vivado tool chain" > $@
 	echo "read_vhdl -vhdl2008 { $(SOURCES)  }" >> $@
 	echo "read_xdc $(TOP).xdc" >> $@
@@ -78,4 +80,6 @@ clean:
 	rm -rf $(TOP).bit
 	rm -rf vivado*
 	rm -rf usage_statistics_webtalk*
+	rm -rf tight_setup_hold_pins.txt
+	rm -rf system.edif
 
