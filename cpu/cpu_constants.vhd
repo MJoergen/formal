@@ -7,11 +7,11 @@ package cpu_constants is
    subtype R_OPCODE     is natural range 15 downto 12;
    subtype R_SRC_REG    is natural range 11 downto  8;
    subtype R_SRC_MODE   is natural range  7 downto  6;
-   subtype R_DEST_REG   is natural range  5 downto  2;
-   subtype R_DEST_MODE  is natural range  1 downto  0;
-   subtype R_BRA_MODE   is natural range  5 downto  4;
-   constant R_BRA_NEGATE : integer := 3;
-   subtype R_BRA_COND   is natural range  2 downto  0;
+   subtype R_DST_REG    is natural range  5 downto  2;
+   subtype R_DST_MODE   is natural range  1 downto  0;
+   subtype R_JMP_MODE   is natural range  5 downto  4;
+   constant R_JMP_NEG   : integer := 3;
+   subtype R_JMP_COND   is natural range  2 downto  0;
    subtype R_CTRL_CMD   is natural range 11 downto  6;
 
    -- Decode status bits
@@ -23,22 +23,22 @@ package cpu_constants is
    constant C_SR_1 : integer := 0;
 
    -- Opcodes
-   constant C_OP_MOVE : integer := 0;
-   constant C_OP_ADD  : integer := 1;
-   constant C_OP_ADDC : integer := 2;
-   constant C_OP_SUB  : integer := 3;
-   constant C_OP_SUBC : integer := 4;
-   constant C_OP_SHL  : integer := 5;
-   constant C_OP_SHR  : integer := 6;
-   constant C_OP_SWAP : integer := 7;
-   constant C_OP_NOT  : integer := 8;
-   constant C_OP_AND  : integer := 9;
-   constant C_OP_OR   : integer := 10;
-   constant C_OP_XOR  : integer := 11;
-   constant C_OP_CMP  : integer := 12;
-   constant C_OP_RES  : integer := 13;
-   constant C_OP_CTRL : integer := 14;
-   constant C_OP_BRA  : integer := 15;
+   constant C_OPCODE_MOVE : integer := 0;
+   constant C_OPCODE_ADD  : integer := 1;
+   constant C_OPCODE_ADDC : integer := 2;
+   constant C_OPCODE_SUB  : integer := 3;
+   constant C_OPCODE_SUBC : integer := 4;
+   constant C_OPCODE_SHL  : integer := 5;
+   constant C_OPCODE_SHR  : integer := 6;
+   constant C_OPCODE_SWAP : integer := 7;
+   constant C_OPCODE_NOT  : integer := 8;
+   constant C_OPCODE_AND  : integer := 9;
+   constant C_OPCODE_OR   : integer := 10;
+   constant C_OPCODE_XOR  : integer := 11;
+   constant C_OPCODE_CMP  : integer := 12;
+   constant C_OPCODE_RES  : integer := 13;
+   constant C_OPCODE_CTRL : integer := 14;
+   constant C_OPCODE_JMP  : integer := 15;
 
    constant C_CTRL_HALT  : integer := 0;
    constant C_CTRL_RTI   : integer := 1;
@@ -58,10 +58,10 @@ package cpu_constants is
    constant C_REG_SP : integer := 13;
 
    -- Branch modes
-   constant C_BRA_ABRA : integer := 0;
-   constant C_BRA_ASUB : integer := 1;
-   constant C_BRA_RBRA : integer := 2;
-   constant C_BRA_RSUB : integer := 3;
+   constant C_JMP_ABRA : integer := 0;
+   constant C_JMP_ASUB : integer := 1;
+   constant C_JMP_RBRA : integer := 2;
+   constant C_JMP_RSUB : integer := 3;
 
    procedure disassemble(pc : std_logic_vector; inst : std_logic_vector; operand : std_logic_vector);
 
@@ -78,9 +78,9 @@ package cpu_constants is
       inst_src_reg       : std_logic_vector(3 downto 0);
       inst_dst_mode      : std_logic_vector(1 downto 0);
       inst_dst_reg       : std_logic_vector(3 downto 0);
-      inst_bra_mode      : std_logic_vector(1 downto 0);
-      inst_bra_negate    : std_logic;
-      inst_bra_cond      : std_logic_vector(2 downto 0);
+      inst_jmp_mode      : std_logic_vector(1 downto 0);
+      inst_jmp_neg       : std_logic;
+      inst_jmp_cond      : std_logic_vector(2 downto 0);
       src_reg_valid      : std_logic;
       src_reg_wr_request : std_logic;
       src_reg_wr_value   : std_logic_vector(15 downto 0);
@@ -110,9 +110,9 @@ package cpu_constants is
       inst_src_reg       => (others => '0'),
       inst_dst_mode      => (others => '0'),
       inst_dst_reg       => (others => '0'),
-      inst_bra_mode      => (others => '0'),
-      inst_bra_negate    => '0',
-      inst_bra_cond      => (others => '0'),
+      inst_jmp_mode      => (others => '0'),
+      inst_jmp_neg       => '0',
+      inst_jmp_cond      => (others => '0'),
       src_reg_valid      => '0',
       src_reg_wr_request => '0',
       src_reg_wr_value   => (others => '0'),
@@ -151,22 +151,22 @@ package body cpu_constants is
       function inst_str(slv : std_logic_vector) return string is
       begin
          case to_integer(slv) is
-            when C_OP_MOVE => return "MOVE";
-            when C_OP_ADD  => return "ADD";
-            when C_OP_ADDC => return "ADDC";
-            when C_OP_SUB  => return "SUB";
-            when C_OP_SUBC => return "SUBC";
-            when C_OP_SHL  => return "SHL";
-            when C_OP_SHR  => return "SHR";
-            when C_OP_SWAP => return "SWAP";
-            when C_OP_NOT  => return "NOT";
-            when C_OP_AND  => return "AND";
-            when C_OP_OR   => return "OR";
-            when C_OP_XOR  => return "XOR";
-            when C_OP_CMP  => return "CMP";
-            when C_OP_RES  => return "???";
-            when C_OP_CTRL => return "CTRL";
-            when C_OP_BRA  => return "BRA";
+            when C_OPCODE_MOVE => return "MOVE";
+            when C_OPCODE_ADD  => return "ADD";
+            when C_OPCODE_ADDC => return "ADDC";
+            when C_OPCODE_SUB  => return "SUB";
+            when C_OPCODE_SUBC => return "SUBC";
+            when C_OPCODE_SHL  => return "SHL";
+            when C_OPCODE_SHR  => return "SHR";
+            when C_OPCODE_SWAP => return "SWAP";
+            when C_OPCODE_NOT  => return "NOT";
+            when C_OPCODE_AND  => return "AND";
+            when C_OPCODE_OR   => return "OR";
+            when C_OPCODE_XOR  => return "XOR";
+            when C_OPCODE_CMP  => return "CMP";
+            when C_OPCODE_RES  => return "???";
+            when C_OPCODE_CTRL => return "CTRL";
+            when C_OPCODE_JMP  => return "BRA";
             when others => return "???";
          end case;
          return "???";
@@ -193,10 +193,10 @@ package body cpu_constants is
       function mode_str(mode : std_logic_vector) return string is
       begin
          case to_integer(mode) is
-            when C_BRA_ABRA => return "ABRA";
-            when C_BRA_ASUB => return "ASUB";
-            when C_BRA_RBRA => return "RBRA";
-            when C_BRA_RSUB => return "RSUB";
+            when C_JMP_ABRA => return "ABRA";
+            when C_JMP_ASUB => return "ASUB";
+            when C_JMP_RBRA => return "RBRA";
+            when C_JMP_RSUB => return "RSUB";
             when others => return "???";
          end case;
          return "???";
@@ -215,9 +215,9 @@ package body cpu_constants is
          return "???";
       end function ctrl_str;
 
-      function neg_str(negate : std_logic) return string is
+      function neg_str(neg : std_logic) return string is
       begin
-         if negate = '1' then
+         if neg = '1' then
             return "!";
          else
             return "";
@@ -239,33 +239,33 @@ package body cpu_constants is
       end function cond_str;
 
    begin
-      if to_integer(inst(R_OPCODE)) = C_OP_CTRL then
+      if to_integer(inst(R_OPCODE)) = C_OPCODE_CTRL then
          if to_integer(inst(R_CTRL_CMD)) = C_CTRL_INT then
             report to_hstring(pc) & " " &
                "(" & to_hstring(inst) & ") " &
                ctrl_str(inst(R_CTRL_CMD)) & " " &
-               reg_str(inst(R_DEST_REG), inst(R_DEST_MODE), operand);
+               reg_str(inst(R_DST_REG), inst(R_DST_MODE), operand);
          else
             report to_hstring(pc) & " " &
                "(" & to_hstring(inst) & ") " &
                ctrl_str(inst(R_CTRL_CMD));
          end if;
-      elsif to_integer(inst(R_OPCODE)) = C_OP_BRA then
+      elsif to_integer(inst(R_OPCODE)) = C_OPCODE_JMP then
          report to_hstring(pc) & " " &
                "(" & to_hstring(inst) & ") " &
-               mode_str(inst(R_BRA_MODE)) & " " &
+               mode_str(inst(R_JMP_MODE)) & " " &
                reg_str(inst(R_SRC_REG), inst(R_SRC_MODE), operand) & ", " &
-               neg_str(inst(R_BRA_NEGATE)) &
-               cond_str(inst(R_BRA_COND));
+               neg_str(inst(R_JMP_NEG)) &
+               cond_str(inst(R_JMP_COND));
       else
          report to_hstring(pc) & " " &
                "(" & to_hstring(inst) & ") " &
                inst_str(inst(R_OPCODE)) & " " &
                reg_str(inst(R_SRC_REG), inst(R_SRC_MODE), operand) & ", " &
-               reg_str(inst(R_DEST_REG), inst(R_DEST_MODE), operand);
+               reg_str(inst(R_DST_REG), inst(R_DST_MODE), operand);
       end if;
 
-      if to_integer(inst(R_OPCODE)) = C_OP_CTRL and to_integer(inst(R_CTRL_CMD)) = C_CTRL_HALT then
+      if to_integer(inst(R_OPCODE)) = C_OPCODE_CTRL and to_integer(inst(R_CTRL_CMD)) = C_CTRL_HALT then
          report "HALT" severity failure;
       end if;
    end procedure disassemble;
