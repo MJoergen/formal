@@ -67,8 +67,8 @@ architecture synthesis of execute is
    signal alu_flags     : std_logic_vector(15 downto 0);
    signal alu_src_val   : std_logic_vector(15 downto 0);
    signal alu_dst_val   : std_logic_vector(15 downto 0);
-   signal alu_res_val   : std_logic_vector(15 downto 0);
    signal alu_res_flags : std_logic_vector(15 downto 0);
+   signal alu_res_data  : std_logic_vector(16 downto 0);
 
    signal wait_for_mem_access : std_logic;
    signal wait_for_mem_src    : std_logic;
@@ -94,13 +94,36 @@ begin
    mem_dst_ready_o <= dec_microop_i(C_MEM_ALU_DST);
 
 
+   i_alu_data : entity work.alu_data
+      port map (
+         clk_i      => clk_i,
+         rst_i      => rst_i,
+         opcode_i   => alu_oper,
+         sr_i       => alu_flags,
+         src_data_i => alu_src_val,
+         dst_data_i => alu_dst_val,
+         res_data_o => alu_res_data
+      ); -- i_alu_data
+
+   i_alu_flags : entity work.alu_flags
+      port map (
+         clk_i      => clk_i,
+         rst_i      => rst_i,
+         opcode_i   => alu_oper,
+         sr_i       => alu_flags,
+         src_data_i => alu_src_val,
+         dst_data_i => alu_dst_val,
+         res_data_i => alu_res_data,
+         sr_o       => alu_res_flags
+      ); -- i_alu_flags
+
+
    p_reg : process (clk_i)
    begin
       if rising_edge(clk_i) then
          reg_we_o       <= '0';
          reg_addr_o     <= (others => '0');
          reg_val_o      <= (others => '0');
-
          reg_flags_o    <= alu_res_flags;
          reg_flags_we_o <= dec_flags_we_i and dec_valid_i and dec_ready_o;
 
@@ -108,30 +131,17 @@ begin
             if dec_microop_i(C_REG_WRITE) = '1' then
                reg_we_o   <= '1';
                reg_addr_o <= dec_reg_addr_i;
-               reg_val_o  <= alu_res_val;
+               reg_val_o  <= alu_res_data(15 downto 0);
             end if;
          end if;
       end if;
    end process p_reg;
 
 
-   i_alu : entity work.alu
-      port map (
-         clk_i       => clk_i,
-         rst_i       => rst_i,
-         opcode_i    => alu_oper,
-         sr_i        => alu_flags,
-         src_data_i  => alu_src_val,
-         dst_data_i  => alu_dst_val,
-         res_data_o  => alu_res_val,
-         sr_o        => alu_res_flags
-      ); -- i_alu
-
-
    mem_valid_o    <= dec_valid_i and not (wait_for_mem_src or wait_for_mem_dst);
    mem_op_o       <= dec_microop_i(3 downto 1);
    mem_addr_o     <= dec_mem_addr_i;
-   mem_wr_data_o  <= alu_res_val;
+   mem_wr_data_o  <= alu_res_data(15 downto 0);
 
 end architecture synthesis;
 
