@@ -42,10 +42,11 @@ entity decode is
       exe_opcode_o    : out std_logic_vector(3 downto 0);
       exe_flags_o     : out std_logic_vector(15 downto 0);
       exe_flags_we_o  : out std_logic;
+      exe_src_addr_o  : out std_logic_vector(3 downto 0);
       exe_src_val_o   : out std_logic_vector(15 downto 0);
+      exe_dst_addr_o  : out std_logic_vector(3 downto 0);
       exe_dst_val_o   : out std_logic_vector(15 downto 0);
-      exe_reg_addr_o  : out std_logic_vector(3 downto 0);
-      exe_mem_addr_o  : out std_logic_vector(15 downto 0)
+      exe_reg_addr_o  : out std_logic_vector(3 downto 0)
    );
 end entity decode;
 
@@ -146,6 +147,15 @@ begin
    reg_src_addr_o <= instruction(R_SRC_REG);
    reg_dst_addr_o <= instruction(R_DST_REG);
 
+   p_addr : process (clk_i)
+   begin
+      if rising_edge(clk_i) then
+         exe_src_addr_o <= instruction(R_SRC_REG);
+         exe_dst_addr_o <= instruction(R_DST_REG);
+      end if;
+   end process p_addr;
+
+
 
    microcode_addr(C_READ_DST)  <= '0' when instruction(R_OPCODE) = C_OPCODE_MOVE or
                                            instruction(R_OPCODE) = C_OPCODE_SWAP or
@@ -162,8 +172,6 @@ begin
          addr_i  => microcode_addr,
          value_o => microcode_value
       ); -- i_microcode
-
-   exe_mem_addr_o <= exe_src_val_o when microcode_value_d(C_MEM_READ_SRC) = '1' else exe_dst_val_o;
 
 
    -- Special case when src = @R15++, i.e. 11-8 = "1111" and 7-6 = "10".

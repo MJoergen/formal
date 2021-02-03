@@ -26,10 +26,11 @@ entity execute is
       dec_opcode_i    : in  std_logic_vector(3 downto 0);
       dec_flags_i     : in  std_logic_vector(15 downto 0);
       dec_flags_we_i  : in  std_logic;
+      dec_src_addr_i  : in  std_logic_vector(3 downto 0);
       dec_src_val_i   : in  std_logic_vector(15 downto 0);
+      dec_dst_addr_i  : in  std_logic_vector(3 downto 0);
       dec_dst_val_i   : in  std_logic_vector(15 downto 0);
       dec_reg_addr_i  : in  std_logic_vector(3 downto 0);
-      dec_mem_addr_i  : in  std_logic_vector(15 downto 0);
 
       -- Memory
       mem_valid_o     : out std_logic;
@@ -62,6 +63,9 @@ architecture synthesis of execute is
    constant C_MEM_WRITE    : integer := 1;
    constant C_REG_WRITE    : integer := 0;
 
+   signal dec_src_val   : std_logic_vector(15 downto 0);
+   signal dec_dst_val   : std_logic_vector(15 downto 0);
+
    -- ALU
    signal alu_oper      : std_logic_vector(3 downto 0);
    signal alu_flags     : std_logic_vector(15 downto 0);
@@ -85,8 +89,11 @@ begin
    alu_oper       <= dec_opcode_i;
    alu_flags      <= dec_flags_i;
 
-   alu_src_val    <= mem_src_data_i when dec_microop_i(C_MEM_ALU_SRC) = '1' else dec_src_val_i;
-   alu_dst_val    <= mem_dst_data_i when dec_microop_i(C_MEM_ALU_DST) = '1' else dec_dst_val_i;
+   dec_src_val    <= reg_val_o when reg_we_o = '1' and reg_addr_o = dec_src_addr_i else dec_src_val_i;
+   dec_dst_val    <= reg_val_o when reg_we_o = '1' and reg_addr_o = dec_dst_addr_i else dec_dst_val_i;
+
+   alu_src_val    <= mem_src_data_i when dec_microop_i(C_MEM_ALU_SRC) = '1' else dec_src_val;
+   alu_dst_val    <= mem_dst_data_i when dec_microop_i(C_MEM_ALU_DST) = '1' else dec_dst_val;
 
    dec_ready_o    <= not (wait_for_mem_src or wait_for_mem_dst or wait_for_mem_access);
 
@@ -138,9 +145,9 @@ begin
    end process p_reg;
 
 
-   mem_valid_o    <= dec_valid_i and not (wait_for_mem_src or wait_for_mem_dst);
+   mem_valid_o    <= dec_valid_i and not (wait_for_mem_src or wait_for_mem_dst) and or(dec_microop_i(3 downto 1));
    mem_op_o       <= dec_microop_i(3 downto 1);
-   mem_addr_o     <= dec_mem_addr_i;
+   mem_addr_o     <= dec_src_val when dec_microop_i(3) = '1' else dec_dst_val;
    mem_wr_data_o  <= alu_res_data(15 downto 0);
 
 end architecture synthesis;

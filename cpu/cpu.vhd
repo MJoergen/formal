@@ -34,11 +34,6 @@ architecture synthesis of cpu is
    signal fetch2dec_addr      : std_logic_vector(15 downto 0);
    signal fetch2dec_data      : std_logic_vector(15 downto 0);
 
-   signal fetch2dect_valid    : std_logic;
-   signal fetch2dect_ready    : std_logic;
-   signal fetch2dect_addr     : std_logic_vector(15 downto 0);
-   signal fetch2dect_data     : std_logic_vector(15 downto 0);
-
    signal fetch2decp_valid    : std_logic;
    signal fetch2decp_ready    : std_logic;
    signal fetch2decp_addr     : std_logic_vector(15 downto 0);
@@ -58,10 +53,11 @@ architecture synthesis of cpu is
    signal dec2exe_opcode      : std_logic_vector(3 downto 0);
    signal dec2exe_flags       : std_logic_vector(15 downto 0);
    signal dec2exe_flags_we    : std_logic;
+   signal dec2exe_src_addr    : std_logic_vector(3 downto 0);
    signal dec2exe_src_val     : std_logic_vector(15 downto 0);
+   signal dec2exe_dst_addr    : std_logic_vector(3 downto 0);
    signal dec2exe_dst_val     : std_logic_vector(15 downto 0);
    signal dec2exe_reg_addr    : std_logic_vector(3 downto 0);
-   signal dec2exe_mem_addr    : std_logic_vector(15 downto 0);
 
    -- Execute to memory
    signal exe2mem_valid       : std_logic;
@@ -129,33 +125,14 @@ begin
       ); -- i_axi_pause
 
 
-   -- Inserted for better timing
-   i_one_stage_fifo : entity work.one_stage_fifo
-      generic map (
-         G_DATA_SIZE => 32
-      )
-      port map (
-         clk_i     => clk_i,
-         rst_i     => rst_i,
-         s_valid_i => fetch2decp_valid,
-         s_ready_o => fetch2decp_ready,
-         s_data_i(31 downto 16) => fetch2decp_addr,
-         s_data_i(15 downto 0)  => fetch2decp_data,
-         m_valid_o => fetch2dect_valid,
-         m_ready_i => fetch2dect_ready,
-         m_data_o(31 downto 16) => fetch2dect_addr,
-         m_data_o(15 downto 0)  => fetch2dect_data
-      ); -- i_one_stage_fifo
-
-
    i_decode : entity work.decode
       port map (
          clk_i           => clk_i,
          rst_i           => rst_i,
-         fetch_valid_i   => fetch2dect_valid,
-         fetch_ready_o   => fetch2dect_ready,
-         fetch_addr_i    => fetch2dect_addr,
-         fetch_data_i    => fetch2dect_data,
+         fetch_valid_i   => fetch2decp_valid,
+         fetch_ready_o   => fetch2decp_ready,
+         fetch_addr_i    => fetch2decp_addr,
+         fetch_data_i    => fetch2decp_data,
          reg_src_addr_o  => dec2reg_src_reg,
          reg_src_val_i   => dec2reg_src_val,
          reg_dst_addr_o  => dec2reg_dst_reg,
@@ -167,10 +144,11 @@ begin
          exe_opcode_o    => dec2exe_opcode,
          exe_flags_o     => dec2exe_flags,
          exe_flags_we_o  => dec2exe_flags_we,
+         exe_src_addr_o  => dec2exe_src_addr,
          exe_src_val_o   => dec2exe_src_val,
+         exe_dst_addr_o  => dec2exe_dst_addr,
          exe_dst_val_o   => dec2exe_dst_val,
-         exe_reg_addr_o  => dec2exe_reg_addr,
-         exe_mem_addr_o  => dec2exe_mem_addr
+         exe_reg_addr_o  => dec2exe_reg_addr
       ); -- i_decode
 
 
@@ -204,10 +182,11 @@ begin
          dec_opcode_i    => dec2exe_opcode,
          dec_flags_i     => dec2exe_flags,
          dec_flags_we_i  => dec2exe_flags_we,
+         dec_src_addr_i  => dec2exe_src_addr,
          dec_src_val_i   => dec2exe_src_val,
+         dec_dst_addr_i  => dec2exe_dst_addr,
          dec_dst_val_i   => dec2exe_dst_val,
          dec_reg_addr_i  => dec2exe_reg_addr,
-         dec_mem_addr_i  => dec2exe_mem_addr,
          mem_valid_o     => exe2mem_valid,
          mem_ready_i     => exe2mem_ready,
          mem_op_o        => exe2mem_op,
@@ -255,12 +234,12 @@ begin
    p_debug : process (clk_i)
    begin
       if rising_edge(clk_i) then
-         if wbd_stb_o = '1' and wbd_we_o = '1' and wbd_stall_i = '0' then
-            report "MEMORY   WRITE value : " & to_hstring(wbd_dat_o) & " to address " & to_hstring(wbd_addr_o);
-         end if;
-
          if exe2reg_we = '1' then
             report "REGISTER WRITE value : " & to_hstring(exe2reg_val) & " to register " & to_hstring(exe2reg_addr);
+         end if;
+
+         if wbd_stb_o = '1' and wbd_we_o = '1' and wbd_stall_i = '0' then
+            report "MEMORY   WRITE value : " & to_hstring(wbd_dat_o) & " to address " & to_hstring(wbd_addr_o);
          end if;
       end if;
    end process p_debug;
