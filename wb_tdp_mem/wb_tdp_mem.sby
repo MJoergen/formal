@@ -1,0 +1,24 @@
+[tasks]
+bmc
+cover
+prove
+
+[options]
+bmc: mode bmc
+bmc: depth 10
+cover: mode cover
+prove: mode prove
+prove: depth 4
+
+[engines]
+smtbmc
+
+[script]
+ghdl --std=08 -frelaxed wb_tdp_mem.vhd wb_tdp_mem.psl tdp_ram.vhd -e wb_tdp_mem
+prep -top wb_tdp_mem
+
+[files]
+tdp_ram.vhd
+wb_tdp_mem.vhd
+wb_tdp_mem.psl
+

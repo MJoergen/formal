@@ -50,42 +50,33 @@ begin
          wbd_data_i  => wbd_data_rd
       ); -- i_cpu
 
-   i_mem_inst : entity work.wb_mem
+   i_tdp_mem : entity work.wb_tdp_mem
       generic map (
-         G_ROM_FILE  => "../cpu/prog.rom",
+         G_INIT_FILE => "../cpu/prog.rom",
+         G_RAM_STYLE => "block",
          G_ADDR_SIZE => 12,
          G_DATA_SIZE => 16
       )
       port map (
-         clk_i      => clk_i,
-         rst_i      => not rstn_i,
-         wb_cyc_i   => wbi_cyc,
-         wb_stb_i   => wbi_stb,
-         wb_stall_o => wbi_stall,
-         wb_addr_i  => wbi_addr(11 downto 0),
-         wb_we_i    => '0',
-         wb_data_i  => X"0000",
-         wb_ack_o   => wbi_ack,
-         wb_data_o  => wbi_data_rd
-      ); -- i_mem_inst
-
-   i_mem_data : entity work.wb_mem
-      generic map (
-         G_ADDR_SIZE => 12,
-         G_DATA_SIZE => 16
-      )
-      port map (
-         clk_i      => clk_i,
-         rst_i      => not rstn_i,
-         wb_cyc_i   => wbd_cyc,
-         wb_stb_i   => wbd_stb,
-         wb_stall_o => wbd_stall,
-         wb_addr_i  => wbd_addr(11 downto 0),
-         wb_we_i    => wbd_we,
-         wb_data_i  => wbd_data_wr,
-         wb_ack_o   => wbd_ack,
-         wb_data_o  => wbd_data_rd
-      ); -- i_mem_data
+         clk_i        => clk_i,
+         rst_i        => not rstn_i,
+         wb_a_cyc_i   => wbi_cyc,
+         wb_a_stb_i   => wbi_stb,
+         wb_a_stall_o => wbi_stall,
+         wb_a_addr_i  => wbi_addr(11 downto 0),
+         wb_a_we_i    => '0',
+         wb_a_data_i  => X"0000",
+         wb_a_ack_o   => wbi_ack,
+         wb_a_data_o  => wbi_data_rd,
+         wb_b_cyc_i   => wbd_cyc,
+         wb_b_stb_i   => wbd_stb,
+         wb_b_stall_o => wbd_stall,
+         wb_b_addr_i  => wbd_addr(11 downto 0),
+         wb_b_we_i    => wbd_we,
+         wb_b_data_i  => wbd_data_wr,
+         wb_b_ack_o   => wbd_ack,
+         wb_b_data_o  => wbd_data_rd
+      ); -- i_tdp_mem
 
 end architecture synthesis;
 

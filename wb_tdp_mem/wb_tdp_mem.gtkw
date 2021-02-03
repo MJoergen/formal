@@ -1,0 +1,48 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Wed Feb  3 12:04:37 2021
+[*]
+[dumpfile] "/home/mike/git/MJoergen/formal/wb_tdp_mem/wb_tdp_mem_bmc/engine_0/trace.vcd"
+[dumpfile_mtime] "Wed Feb  3 12:02:08 2021"
+[dumpfile_size] 3099
+[savefile] "/home/mike/git/MJoergen/formal/wb_tdp_mem/wb_tdp_mem.gtkw"
+[timestart] 0
+[size] 1469 824
+[pos] -1 -1
+*-2.875245 17 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] wb_tdp_mem.
+[sst_width] 249
+[signals_width] 247
+[sst_expanded] 1
+[sst_vpaned_height] 83
+@28
+wb_tdp_mem.clk_i
+wb_tdp_mem.rst_i
+wb_tdp_mem.wb_a_cyc_i
+wb_tdp_mem.wb_a_stb_i
+wb_tdp_mem.wb_a_stall_o
+@22
+wb_tdp_mem.wb_a_addr_i[7:0]
+@28
+wb_tdp_mem.wb_a_we_i
+@22
+wb_tdp_mem.wb_a_data_i[7:0]
+@28
+wb_tdp_mem.wb_a_ack_o
+@22
+wb_tdp_mem.wb_a_data_o[7:0]
+@800200
+-tdp_ram
+@28
+wb_tdp_mem.i_tdp_ram.a_wr_en_i
+@22
+wb_tdp_mem.i_tdp_ram.a_wr_data_i[7:0]
+@28
+wb_tdp_mem.i_tdp_ram.a_rd_en_i
+@22
+wb_tdp_mem.i_tdp_ram.a_rd_data_o[7:0]
+wb_tdp_mem.i_tdp_ram.a_addr_i[7:0]
+@1000200
+-tdp_ram
+[pattern_trace] 1
+[pattern_trace] 0
