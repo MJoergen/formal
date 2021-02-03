@@ -2,7 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std_unsigned.all;
 
-entity tdp_ram is
+entity dp_ram is
    generic (
       G_RAM_STYLE : string := "block";
       G_ADDR_SIZE : integer;
@@ -19,9 +19,9 @@ entity tdp_ram is
       rd_addr_i     : in  std_logic_vector(G_ADDR_SIZE-1 downto 0);
       rd_data_o     : out std_logic_vector(G_DATA_SIZE-1 downto 0)
    );
-end entity tdp_ram;
+end entity dp_ram;
 
-architecture synthesis of tdp_ram is
+architecture synthesis of dp_ram is
 
    type mem_t is array (0 to 2**G_ADDR_SIZE-1) of std_logic_vector(G_DATA_SIZE-1 downto 0);
 

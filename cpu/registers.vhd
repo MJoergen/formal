@@ -51,7 +51,7 @@ begin
    wr_addr     <= sr(15 downto 8) & reg_addr_i(2 downto 0);
 
 
-   i_ram_lower_src : entity work.tdp_ram
+   i_ram_lower_src : entity work.dp_ram
       generic map (
          G_ADDR_SIZE => 11,
          G_DATA_SIZE => 16
@@ -67,7 +67,7 @@ begin
       ); -- i_ram_lower_src
 
 
-   i_ram_lower_dst : entity work.tdp_ram
+   i_ram_lower_dst : entity work.dp_ram
       generic map (
          G_ADDR_SIZE => 11,
          G_DATA_SIZE => 16
