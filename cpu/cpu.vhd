@@ -235,11 +235,11 @@ begin
    begin
       if rising_edge(clk_i) then
          if exe2reg_we = '1' then
-            report "REGISTER WRITE value : " & to_hstring(exe2reg_val) & " to register " & to_hstring(exe2reg_addr);
+            report "Write value 0x" & to_hstring(exe2reg_val) & " to register " & to_hstring(exe2reg_addr);
          end if;
 
          if wbd_stb_o = '1' and wbd_we_o = '1' and wbd_stall_i = '0' then
-            report "MEMORY   WRITE value : " & to_hstring(wbd_dat_o) & " to address " & to_hstring(wbd_addr_o);
+            report "Write value 0x" & to_hstring(wbd_dat_o) & " to memory 0x" & to_hstring(wbd_addr_o);
          end if;
       end if;
    end process p_debug;
