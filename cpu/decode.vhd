@@ -43,7 +43,7 @@ entity decode is
       -- To Execute stage
       exe_valid_o     : out std_logic;
       exe_ready_i     : in  std_logic;
-      exe_microop_o   : out std_logic_vector(5 downto 0);
+      exe_microop_o   : out std_logic_vector(7 downto 0);
       exe_opcode_o    : out std_logic_vector(3 downto 0);
       exe_ctrl_o      : out std_logic_vector(5 downto 0);
 
@@ -52,8 +52,10 @@ entity decode is
 
       exe_src_addr_o  : out std_logic_vector(3 downto 0);
       exe_src_val_o   : out std_logic_vector(15 downto 0);
+      exe_src_mode_o  : out std_logic_vector(1 downto 0);
       exe_dst_addr_o  : out std_logic_vector(3 downto 0);
       exe_dst_val_o   : out std_logic_vector(15 downto 0);
+      exe_dst_mode_o  : out std_logic_vector(1 downto 0);
       exe_reg_addr_o  : out std_logic_vector(3 downto 0)
    );
 end entity decode;
@@ -94,17 +96,21 @@ architecture synthesis of decode is
    subtype R_COUNT is natural range 1 downto 0;
 
    -- microcode value bitmap
-   -- bit 6 : last
+   -- bit 8 : last
+   -- bit 7 : update src reg
+   -- bit 6 : update dst reg
    -- bit 5 : mem to alu src
    -- bit 4 : mem to alu dst
    -- bit 3 : mem read to src
    -- bit 2 : mem read to dst
    -- bit 1 : mem write
    -- bit 0 : reg write
-   signal microcode_value : std_logic_vector(6 downto 0);
-   signal microcode_value_d : std_logic_vector(6 downto 0);
+   signal microcode_value : std_logic_vector(8 downto 0);
+   signal microcode_value_d : std_logic_vector(8 downto 0);
 
-   constant C_LAST         : integer := 6;
+   constant C_LAST         : integer := 8;
+   constant C_REG_MOD_SRC  : integer := 7;
+   constant C_REG_MOD_DST  : integer := 6;
    constant C_MEM_ALU_SRC  : integer := 5;
    constant C_MEM_ALU_DST  : integer := 4;
    constant C_MEM_READ_SRC : integer := 3;
@@ -237,6 +243,15 @@ begin
          exe_dst_addr_o    <= instruction(R_DST_REG);
          microcode_value_d <= microcode_value;
 
+         exe_src_mode_o    <= "00";
+         exe_dst_mode_o    <= "00";
+         if src_operand then
+            exe_src_mode_o <= instruction(R_SRC_MODE);
+         end if;
+         if dst_operand then
+            exe_dst_mode_o <= instruction(R_DST_MODE);
+         end if;
+
          if exe_ready_i = '1' then
             exe_valid_o    <= '0';
             exe_r14_we_o   <= '0';
@@ -253,7 +268,7 @@ begin
             exe_r14_o      <= reg_r14_i;
             exe_r14_we_o   <= '1';
             exe_reg_addr_o <= instruction(R_DST_REG);
-            exe_microop_o  <= microcode_value(5 downto 0);
+            exe_microop_o  <= microcode_value(7 downto 0);
             exe_valid_o    <= '1';
 
             -- Jump instructions are translated into simple register writes to R15.
@@ -314,10 +329,12 @@ begin
 
             if immediate_src = '1' then
                exe_microop_o(C_MEM_ALU_SRC) <= '0';
+               exe_src_mode_o <= "00";
             end if;
 
             if immediate_dst = '1' then
                exe_microop_o(C_MEM_ALU_DST) <= '0';
+               exe_dst_mode_o <= "00";
             end if;
          end if;
 

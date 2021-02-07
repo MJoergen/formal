@@ -21,21 +21,23 @@ use ieee.numeric_std_unsigned.all;
 entity microcode is
    port (
       addr_i  : in  std_logic_vector(5 downto 0);
-      value_o : out std_logic_vector(6 downto 0)
+      value_o : out std_logic_vector(8 downto 0)
    );
 end entity microcode;
 
 architecture synthesis of microcode is
 
-   constant C_LAST         : std_logic_vector(6 downto 0) := "1000000";
-   constant C_MEM_ALU_SRC  : std_logic_vector(6 downto 0) := "0100000";
-   constant C_MEM_ALU_DST  : std_logic_vector(6 downto 0) := "0010000";
-   constant C_MEM_READ_SRC : std_logic_vector(6 downto 0) := "0001000";
-   constant C_MEM_READ_DST : std_logic_vector(6 downto 0) := "0000100";
-   constant C_MEM_WRITE    : std_logic_vector(6 downto 0) := "0000010";
-   constant C_REG_WRITE    : std_logic_vector(6 downto 0) := "0000001";
+   constant C_LAST         : std_logic_vector(8 downto 0) := "100000000";
+   constant C_REG_MOD_SRC  : std_logic_vector(8 downto 0) := "010000000";
+   constant C_REG_MOD_DST  : std_logic_vector(8 downto 0) := "001000000";
+   constant C_MEM_ALU_SRC  : std_logic_vector(8 downto 0) := "000100000";
+   constant C_MEM_ALU_DST  : std_logic_vector(8 downto 0) := "000010000";
+   constant C_MEM_READ_SRC : std_logic_vector(8 downto 0) := "000001000";
+   constant C_MEM_READ_DST : std_logic_vector(8 downto 0) := "000000100";
+   constant C_MEM_WRITE    : std_logic_vector(8 downto 0) := "000000010";
+   constant C_REG_WRITE    : std_logic_vector(8 downto 0) := "000000001";
 
-   type microcode_t is array (0 to 63) of std_logic_vector(6 downto 0);
+   type microcode_t is array (0 to 63) of std_logic_vector(8 downto 0);
    constant C_MICROCODE : microcode_t := (
       -- JMP R, R
       C_LAST,
@@ -50,13 +52,13 @@ architecture synthesis of microcode is
       C_LAST,
 
       -- JMP @R, R
-      C_MEM_READ_SRC,
+      C_MEM_READ_SRC or C_REG_MOD_SRC,
       C_LAST,
       C_LAST,
       C_LAST,
 
       -- JMP @R, @R
-      C_MEM_READ_SRC,
+      C_MEM_READ_SRC or C_REG_MOD_SRC,
       C_LAST,
       C_LAST,
       C_LAST,
@@ -68,20 +70,20 @@ architecture synthesis of microcode is
       C_LAST,
 
       -- MOVE R, @R
-      C_LAST or C_MEM_WRITE,
+      C_LAST or C_MEM_WRITE or C_REG_MOD_DST,
       C_LAST,
       C_LAST,
       C_LAST,
 
       -- MOVE @R, R
-      C_MEM_READ_SRC,
+      C_MEM_READ_SRC or C_REG_MOD_SRC,
       C_LAST or C_MEM_ALU_SRC or C_REG_WRITE,
       C_LAST,
       C_LAST,
 
       -- MOVE @R, @R
-      C_MEM_READ_SRC,
-      C_LAST or C_MEM_ALU_SRC or C_MEM_WRITE,
+      C_MEM_READ_SRC or C_REG_MOD_SRC,
+      C_LAST or C_MEM_ALU_SRC or C_MEM_WRITE or C_REG_MOD_DST,
       C_LAST,
       C_LAST,
 
@@ -92,20 +94,20 @@ architecture synthesis of microcode is
       C_LAST,
 
       -- CMP R, @R
-      C_MEM_READ_DST,
+      C_MEM_READ_DST or C_REG_MOD_DST,
       C_LAST or C_MEM_ALU_DST,
       C_LAST,
       C_LAST,
 
       -- CMP @R, R
-      C_MEM_READ_SRC,
+      C_MEM_READ_SRC or C_REG_MOD_SRC,
       C_LAST or C_MEM_ALU_SRC,
       C_LAST,
       C_LAST,
 
       -- CMP @R, @R
-      C_MEM_READ_SRC,
-      C_MEM_READ_DST,
+      C_MEM_READ_SRC or C_REG_MOD_SRC,
+      C_MEM_READ_DST or C_REG_MOD_DST,
       C_LAST or C_MEM_ALU_SRC or C_MEM_ALU_DST,
       C_LAST,
 
@@ -117,20 +119,20 @@ architecture synthesis of microcode is
 
       -- ADD R, @R
       C_MEM_READ_DST,
-      C_LAST or C_MEM_ALU_DST or C_MEM_WRITE,
+      C_LAST or C_MEM_ALU_DST or C_MEM_WRITE or C_REG_MOD_DST,
       C_LAST,
       C_LAST,
 
       -- ADD @R, R
-      C_MEM_READ_SRC,
+      C_MEM_READ_SRC or C_REG_MOD_SRC,
       C_LAST or C_MEM_ALU_SRC or C_REG_WRITE,
       C_LAST,
       C_LAST,
 
       -- ADD @R, @R
-      C_MEM_READ_SRC,
+      C_MEM_READ_SRC or C_REG_MOD_SRC,
       C_MEM_READ_DST,
-      C_LAST or C_MEM_ALU_SRC or C_MEM_ALU_DST or C_MEM_WRITE,
+      C_LAST or C_MEM_ALU_SRC or C_MEM_ALU_DST or C_MEM_WRITE or C_REG_MOD_DST,
       C_LAST
    ); --  constant C_MICROCODE : microcode_t := (
 

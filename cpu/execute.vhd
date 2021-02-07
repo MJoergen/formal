@@ -25,15 +25,17 @@ entity execute is
       -- From decode
       dec_valid_i     : in  std_logic;
       dec_ready_o     : out std_logic;
-      dec_microop_i   : in  std_logic_vector(5 downto 0);
+      dec_microop_i   : in  std_logic_vector(7 downto 0);
       dec_opcode_i    : in  std_logic_vector(3 downto 0);
       dec_ctrl_i      : in  std_logic_vector(5 downto 0);
       dec_r14_i       : in  std_logic_vector(15 downto 0);
       dec_r14_we_i    : in  std_logic;
       dec_src_addr_i  : in  std_logic_vector(3 downto 0);
       dec_src_val_i   : in  std_logic_vector(15 downto 0);
+      dec_src_mode_i  : in  std_logic_vector(1 downto 0);
       dec_dst_addr_i  : in  std_logic_vector(3 downto 0);
       dec_dst_val_i   : in  std_logic_vector(15 downto 0);
+      dec_dst_mode_i  : in  std_logic_vector(1 downto 0);
       dec_reg_addr_i  : in  std_logic_vector(3 downto 0);
 
       -- Memory
@@ -60,6 +62,8 @@ end entity execute;
 
 architecture synthesis of execute is
 
+   constant C_REG_MOD_SRC  : integer := 7;
+   constant C_REG_MOD_DST  : integer := 6;
    constant C_MEM_ALU_SRC  : integer := 5;
    constant C_MEM_ALU_DST  : integer := 4;
    constant C_MEM_READ_SRC : integer := 3;
@@ -155,19 +159,67 @@ begin
       ); -- i_alu_flags
 
 
+   ------------------------------------------------------------
+   -- Update status register
+   ------------------------------------------------------------
+
    reg_r14_o      <= alu_res_flags + X"0100" when dec_opcode_i = C_OPCODE_CTRL and dec_ctrl_i = C_CTRL_INCRB else
                      alu_res_flags - X"0100" when dec_opcode_i = C_OPCODE_CTRL and dec_ctrl_i = C_CTRL_DECRB else
                      alu_res_flags;
    reg_r14_we_o   <= dec_r14_we_i and dec_valid_i and dec_ready_o;
 
-   reg_addr_o     <= dec_reg_addr_i;
-   reg_val_o      <= alu_res_data(15 downto 0);
-   reg_we_o       <= dec_valid_i and dec_ready_o and dec_microop_i(C_REG_WRITE);
+
+   ------------------------------------------------------------
+   -- Update register
+   ------------------------------------------------------------
+
+   p_reg : process (all)
+   begin
+      reg_addr_o <= (others => '0');
+      reg_val_o  <= (others => '0');
+      reg_we_o   <= '0';
+
+      if dec_valid_i and dec_ready_o then
+         if dec_src_mode_i(1) and dec_microop_i(C_REG_MOD_SRC) then
+            reg_addr_o <= dec_src_addr_i;
+            if dec_src_mode_i = C_MODE_POST then
+               reg_val_o <= dec_src_val + 1;
+            else
+               reg_val_o <= dec_src_val - 1;
+            end if;
+            reg_we_o   <= '1';
+         end if;
+
+         if dec_dst_mode_i(1) and dec_microop_i(C_REG_MOD_DST) then
+            reg_addr_o <= dec_dst_addr_i;
+            if dec_dst_mode_i = C_MODE_POST then
+               reg_val_o <= dec_dst_val + 1;
+            else
+               reg_val_o <= dec_dst_val - 1;
+            end if;
+            reg_we_o   <= '1';
+         end if;
+
+         if dec_microop_i(C_REG_WRITE) then
+            reg_addr_o <= dec_reg_addr_i;
+            reg_val_o  <= alu_res_data(15 downto 0);
+            reg_we_o   <= '1';
+         end if;
+      end if;
+   end process p_reg;
+
+
+   ------------------------------------------------------------
+   -- Update memory
+   ------------------------------------------------------------
 
    mem_valid_o    <= dec_valid_i and not (wait_for_mem_src or wait_for_mem_dst) and or(dec_microop_i(3 downto 1));
    mem_op_o       <= dec_microop_i(3 downto 1);
-   mem_addr_o     <= dec_src_val when dec_microop_i(3) = '1' else dec_dst_val;
    mem_wr_data_o  <= alu_res_data(15 downto 0);
+   mem_addr_o     <= dec_src_val-1 when dec_microop_i(3) = '1' and dec_src_mode_i = C_MODE_PRE else
+                     dec_src_val when dec_microop_i(3) = '1' else
+                     dec_dst_val-1 when dec_microop_i(3) = '0' and dec_dst_mode_i = C_MODE_PRE else
+                     dec_dst_val;
 
 end architecture synthesis;
 

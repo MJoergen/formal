@@ -50,15 +50,17 @@ architecture synthesis of cpu is
    -- Decode to execute
    signal dec2exe_valid       : std_logic;
    signal dec2exe_ready       : std_logic;
-   signal dec2exe_microop     : std_logic_vector(5 downto 0);
+   signal dec2exe_microop     : std_logic_vector(7 downto 0);
    signal dec2exe_opcode      : std_logic_vector(3 downto 0);
    signal dec2exe_ctrl        : std_logic_vector(5 downto 0);
    signal dec2exe_r14         : std_logic_vector(15 downto 0);
    signal dec2exe_r14_we      : std_logic;
    signal dec2exe_src_addr    : std_logic_vector(3 downto 0);
    signal dec2exe_src_val     : std_logic_vector(15 downto 0);
+   signal dec2exe_src_mode    : std_logic_vector(1 downto 0);
    signal dec2exe_dst_addr    : std_logic_vector(3 downto 0);
    signal dec2exe_dst_val     : std_logic_vector(15 downto 0);
+   signal dec2exe_dst_mode    : std_logic_vector(1 downto 0);
    signal dec2exe_reg_addr    : std_logic_vector(3 downto 0);
 
    -- Execute to memory
@@ -150,8 +152,10 @@ begin
          exe_r14_we_o    => dec2exe_r14_we,
          exe_src_addr_o  => dec2exe_src_addr,
          exe_src_val_o   => dec2exe_src_val,
+         exe_src_mode_o  => dec2exe_src_mode,
          exe_dst_addr_o  => dec2exe_dst_addr,
          exe_dst_val_o   => dec2exe_dst_val,
+         exe_dst_mode_o  => dec2exe_dst_mode,
          exe_reg_addr_o  => dec2exe_reg_addr
       ); -- i_decode
 
@@ -190,8 +194,10 @@ begin
          dec_r14_we_i    => dec2exe_r14_we,
          dec_src_addr_i  => dec2exe_src_addr,
          dec_src_val_i   => dec2exe_src_val,
+         dec_src_mode_i  => dec2exe_src_mode,
          dec_dst_addr_i  => dec2exe_dst_addr,
          dec_dst_val_i   => dec2exe_dst_val,
+         dec_dst_mode_i  => dec2exe_dst_mode,
          dec_reg_addr_i  => dec2exe_reg_addr,
          mem_valid_o     => exe2mem_valid,
          mem_ready_i     => exe2mem_ready,

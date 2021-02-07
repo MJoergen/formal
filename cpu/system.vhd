@@ -54,7 +54,7 @@ begin
       generic map (
          G_INIT_FILE => "../cpu/prog.rom",
          G_RAM_STYLE => "block",
-         G_ADDR_SIZE => 12,
+         G_ADDR_SIZE => 13,
          G_DATA_SIZE => 16
       )
       port map (
@@ -63,7 +63,7 @@ begin
          wb_a_cyc_i   => wbi_cyc,
          wb_a_stb_i   => wbi_stb,
          wb_a_stall_o => wbi_stall,
-         wb_a_addr_i  => wbi_addr(11 downto 0),
+         wb_a_addr_i  => wbi_addr(12 downto 0),
          wb_a_we_i    => '0',
          wb_a_data_i  => X"0000",
          wb_a_ack_o   => wbi_ack,
@@ -71,7 +71,7 @@ begin
          wb_b_cyc_i   => wbd_cyc,
          wb_b_stb_i   => wbd_stb,
          wb_b_stall_o => wbd_stall,
-         wb_b_addr_i  => wbd_addr(11 downto 0),
+         wb_b_addr_i  => wbd_addr(12 downto 0),
          wb_b_we_i    => wbd_we,
          wb_b_data_i  => wbd_data_wr,
          wb_b_ack_o   => wbd_ack,
