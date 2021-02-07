@@ -24,8 +24,8 @@ entity execute is
       dec_ready_o     : out std_logic;
       dec_microop_i   : in  std_logic_vector(5 downto 0);
       dec_opcode_i    : in  std_logic_vector(3 downto 0);
-      dec_flags_i     : in  std_logic_vector(15 downto 0);
-      dec_flags_we_i  : in  std_logic;
+      dec_r14_i       : in  std_logic_vector(15 downto 0);
+      dec_r14_we_i    : in  std_logic;
       dec_src_addr_i  : in  std_logic_vector(3 downto 0);
       dec_src_val_i   : in  std_logic_vector(15 downto 0);
       dec_dst_addr_i  : in  std_logic_vector(3 downto 0);
@@ -46,8 +46,8 @@ entity execute is
       mem_dst_data_i  : in  std_logic_vector(15 downto 0);
 
       -- Register file
-      reg_flags_we_o  : out std_logic;
-      reg_flags_o     : out std_logic_vector(15 downto 0);
+      reg_r14_we_o    : out std_logic;
+      reg_r14_o       : out std_logic_vector(15 downto 0);
       reg_we_o        : out std_logic;
       reg_addr_o      : out std_logic_vector(3 downto 0);
       reg_val_o       : out std_logic_vector(15 downto 0)
@@ -120,7 +120,7 @@ begin
    ------------------------------------------------------------
 
    alu_oper    <= dec_opcode_i;
-   alu_flags   <= dec_flags_i;
+   alu_flags   <= dec_r14_i;
    alu_src_val <= mem_src_data_i when dec_microop_i(C_MEM_ALU_SRC) = '1' else dec_src_val;
    alu_dst_val <= mem_dst_data_i when dec_microop_i(C_MEM_ALU_DST) = '1' else dec_dst_val;
 
@@ -148,8 +148,8 @@ begin
       ); -- i_alu_flags
 
 
-   reg_flags_o    <= alu_res_flags;
-   reg_flags_we_o <= dec_flags_we_i and dec_valid_i and dec_ready_o;
+   reg_r14_o      <= alu_res_flags;
+   reg_r14_we_o   <= dec_r14_we_i and dec_valid_i and dec_ready_o;
 
    reg_addr_o     <= dec_reg_addr_i;
    reg_val_o      <= alu_res_data(15 downto 0);

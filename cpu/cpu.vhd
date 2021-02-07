@@ -44,15 +44,16 @@ architecture synthesis of cpu is
    signal dec2reg_src_val     : std_logic_vector(15 downto 0);
    signal dec2reg_dst_reg     : std_logic_vector(3 downto 0);
    signal dec2reg_dst_val     : std_logic_vector(15 downto 0);
-   signal dec2reg_flags       : std_logic_vector(15 downto 0);
+   signal reg2dec_r13         : std_logic_vector(15 downto 0);
+   signal reg2dec_r14         : std_logic_vector(15 downto 0);
 
    -- Decode to execute
    signal dec2exe_valid       : std_logic;
    signal dec2exe_ready       : std_logic;
    signal dec2exe_microop     : std_logic_vector(5 downto 0);
    signal dec2exe_opcode      : std_logic_vector(3 downto 0);
-   signal dec2exe_flags       : std_logic_vector(15 downto 0);
-   signal dec2exe_flags_we    : std_logic;
+   signal dec2exe_r14         : std_logic_vector(15 downto 0);
+   signal dec2exe_r14_we      : std_logic;
    signal dec2exe_src_addr    : std_logic_vector(3 downto 0);
    signal dec2exe_src_val     : std_logic_vector(15 downto 0);
    signal dec2exe_dst_addr    : std_logic_vector(3 downto 0);
@@ -75,8 +76,8 @@ architecture synthesis of cpu is
    signal mem2exe_dst_data    : std_logic_vector(15 downto 0);
 
    -- Execute to registers
-   signal exe2reg_flags_we    : std_logic;
-   signal exe2reg_flags       : std_logic_vector(15 downto 0);
+   signal exe2reg_r14_we      : std_logic;
+   signal exe2reg_r14         : std_logic_vector(15 downto 0);
    signal exe2reg_we          : std_logic;
    signal exe2reg_addr        : std_logic_vector(3 downto 0);
    signal exe2reg_val         : std_logic_vector(15 downto 0);
@@ -137,13 +138,14 @@ begin
          reg_src_val_i   => dec2reg_src_val,
          reg_dst_addr_o  => dec2reg_dst_reg,
          reg_dst_val_i   => dec2reg_dst_val,
-         reg_flags_i     => dec2reg_flags,
+         reg_r13_i       => reg2dec_r13,
+         reg_r14_i       => reg2dec_r14,
          exe_valid_o     => dec2exe_valid,
          exe_ready_i     => dec2exe_ready,
          exe_microop_o   => dec2exe_microop,
          exe_opcode_o    => dec2exe_opcode,
-         exe_flags_o     => dec2exe_flags,
-         exe_flags_we_o  => dec2exe_flags_we,
+         exe_r14_o       => dec2exe_r14,
+         exe_r14_we_o    => dec2exe_r14_we,
          exe_src_addr_o  => dec2exe_src_addr,
          exe_src_val_o   => dec2exe_src_val,
          exe_dst_addr_o  => dec2exe_dst_addr,
@@ -160,9 +162,10 @@ begin
          src_val_o     => dec2reg_src_val,
          dst_reg_i     => dec2reg_dst_reg,
          dst_val_o     => dec2reg_dst_val,
-         flags_o       => dec2reg_flags,
-         flags_we_i    => exe2reg_flags_we,
-         flags_i       => exe2reg_flags,
+         r13_o         => reg2dec_r13,
+         r14_o         => reg2dec_r14,
+         r14_we_i      => exe2reg_r14_we,
+         r14_i         => exe2reg_r14,
          reg_we_i      => exe2reg_we,
          reg_addr_i    => exe2reg_addr,
          reg_val_i     => exe2reg_val
@@ -180,8 +183,8 @@ begin
          dec_ready_o     => dec2exe_ready,
          dec_microop_i   => dec2exe_microop,
          dec_opcode_i    => dec2exe_opcode,
-         dec_flags_i     => dec2exe_flags,
-         dec_flags_we_i  => dec2exe_flags_we,
+         dec_r14_i       => dec2exe_r14,
+         dec_r14_we_i    => dec2exe_r14_we,
          dec_src_addr_i  => dec2exe_src_addr,
          dec_src_val_i   => dec2exe_src_val,
          dec_dst_addr_i  => dec2exe_dst_addr,
@@ -198,8 +201,8 @@ begin
          mem_dst_valid_i => mem2exe_dst_valid,
          mem_dst_ready_o => mem2exe_dst_ready,
          mem_dst_data_i  => mem2exe_dst_data,
-         reg_flags_we_o  => exe2reg_flags_we,
-         reg_flags_o     => exe2reg_flags,
+         reg_r14_we_o    => exe2reg_r14_we,
+         reg_r14_o       => exe2reg_r14,
          reg_we_o        => exe2reg_we,
          reg_addr_o      => exe2reg_addr,
          reg_val_o       => exe2reg_val

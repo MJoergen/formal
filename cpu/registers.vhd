@@ -13,10 +13,11 @@ entity registers is
       src_val_o     : out std_logic_vector(15 downto 0);
       dst_reg_i     : in  std_logic_vector(3 downto 0);
       dst_val_o     : out std_logic_vector(15 downto 0);
-      flags_o       : out std_logic_vector(15 downto 0);
+      r13_o         : out std_logic_vector(15 downto 0);
+      r14_o         : out std_logic_vector(15 downto 0);
       -- Write interface
-      flags_we_i    : in  std_logic;
-      flags_i       : in  std_logic_vector(15 downto 0);
+      r14_we_i      : in  std_logic;
+      r14_i         : in  std_logic_vector(15 downto 0);
       reg_we_i      : in  std_logic;
       reg_addr_i    : in  std_logic_vector(3 downto 0);
       reg_val_i     : in  std_logic_vector(15 downto 0)
@@ -29,7 +30,8 @@ architecture synthesis of registers is
 
    signal upper_regs : upper_mem_t := (others => (others => '0'));
 
-   signal sr : std_logic_vector(15 downto 0);
+   signal r13 : std_logic_vector(15 downto 0) := (others => '0');
+   signal r14 : std_logic_vector(15 downto 0) := (others => '0');
 
    signal src_val_upper : std_logic_vector(15 downto 0);
    signal dst_val_upper : std_logic_vector(15 downto 0);
@@ -46,9 +48,9 @@ architecture synthesis of registers is
 
 begin
 
-   src_rd_addr <= sr(15 downto 8) & src_reg_i(2 downto 0);
-   dst_rd_addr <= sr(15 downto 8) & dst_reg_i(2 downto 0);
-   wr_addr     <= sr(15 downto 8) & reg_addr_i(2 downto 0);
+   src_rd_addr <= r14(15 downto 8) & src_reg_i(2 downto 0);
+   dst_rd_addr <= r14(15 downto 8) & dst_reg_i(2 downto 0);
+   wr_addr     <= r14(15 downto 8) & reg_addr_i(2 downto 0);
 
 
    i_ram_lower_src : entity work.dp_ram
@@ -120,30 +122,33 @@ begin
    end process p_read;
 
 
-   p_sr : process (clk_i)
+   p_r14 : process (clk_i)
    begin
       if rising_edge(clk_i) then
-         if flags_we_i = '1' then
-            sr <= flags_i or X"0001";
+         if r14_we_i = '1' then
+            r14 <= r14_i or X"0001";
          end if;
 
          if reg_we_i = '1' and reg_addr_i = C_REG_SR then
-            sr <= reg_val_i or X"0001";
+            r14 <= reg_val_i or X"0001";
          end if;
 
          if rst_i = '1' then
-            sr <= X"0001";
+            r14 <= X"0001";
          end if;
       end if;
-   end process p_sr;
+   end process p_r14;
 
 
-   flags_o <= sr;
+   r13_o <= r13;
+   r14_o <= r14;
 
-   src_val_o <= sr            when src_reg_r = C_REG_SR else
+   src_val_o <= r13           when src_reg_r = C_REG_SP else
+                r14           when src_reg_r = C_REG_SR else
                 src_val_upper when src_reg_r >= 8 else
                 src_val_lower;
-   dst_val_o <= sr            when dst_reg_r = C_REG_SR else
+   dst_val_o <= r13           when dst_reg_r = C_REG_SP else
+                r14           when dst_reg_r = C_REG_SR else
                 dst_val_upper when dst_reg_r >= 8 else
                 dst_val_lower;
 
