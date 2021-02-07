@@ -45,6 +45,7 @@ entity decode is
       exe_ready_i     : in  std_logic;
       exe_microop_o   : out std_logic_vector(5 downto 0);
       exe_opcode_o    : out std_logic_vector(3 downto 0);
+      exe_ctrl_o      : out std_logic_vector(5 downto 0);
 
       exe_r14_o       : out std_logic_vector(15 downto 0);
       exe_r14_we_o    : out std_logic;
@@ -241,12 +242,14 @@ begin
             exe_r14_we_o   <= '0';
             exe_microop_o  <= (others => '0');
             exe_opcode_o   <= (others => '0');
+            exe_ctrl_o     <= (others => '0');
             exe_reg_addr_o <= (others => '0');
          end if;
 
          if (count > 0 and exe_ready_i = '1' and wait_src_val = '0' and wait_dst_val = '0')
             or (fetch_valid_i = '1' and fetch_ready_o = '1') then
             exe_opcode_o   <= instruction(R_OPCODE);
+            exe_ctrl_o     <= instruction(R_CTRL_CMD);
             exe_r14_o      <= reg_r14_i;
             exe_r14_we_o   <= '1';
             exe_reg_addr_o <= instruction(R_DST_REG);

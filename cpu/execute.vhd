@@ -27,6 +27,7 @@ entity execute is
       dec_ready_o     : out std_logic;
       dec_microop_i   : in  std_logic_vector(5 downto 0);
       dec_opcode_i    : in  std_logic_vector(3 downto 0);
+      dec_ctrl_i      : in  std_logic_vector(5 downto 0);
       dec_r14_i       : in  std_logic_vector(15 downto 0);
       dec_r14_we_i    : in  std_logic;
       dec_src_addr_i  : in  std_logic_vector(3 downto 0);
@@ -154,7 +155,9 @@ begin
       ); -- i_alu_flags
 
 
-   reg_r14_o      <= alu_res_flags;
+   reg_r14_o      <= alu_res_flags + X"0100" when dec_opcode_i = C_OPCODE_CTRL and dec_ctrl_i = C_CTRL_INCRB else
+                     alu_res_flags - X"0100" when dec_opcode_i = C_OPCODE_CTRL and dec_ctrl_i = C_CTRL_DECRB else
+                     alu_res_flags;
    reg_r14_we_o   <= dec_r14_we_i and dec_valid_i and dec_ready_o;
 
    reg_addr_o     <= dec_reg_addr_i;
