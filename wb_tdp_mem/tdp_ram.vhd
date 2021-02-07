@@ -18,13 +18,13 @@ entity tdp_ram is
       a_wr_en_i     : in  std_logic;
       a_wr_data_i   : in  std_logic_vector(G_DATA_SIZE-1 downto 0);
       a_rd_en_i     : in  std_logic;
-      a_rd_data_o   : out std_logic_vector(G_DATA_SIZE-1 downto 0);
+      a_rd_data_o   : out std_logic_vector(G_DATA_SIZE-1 downto 0) := (others => '0');
       -- Port B
       b_addr_i      : in  std_logic_vector(G_ADDR_SIZE-1 downto 0);
       b_wr_en_i     : in  std_logic;
       b_wr_data_i   : in  std_logic_vector(G_DATA_SIZE-1 downto 0);
       b_rd_en_i     : in  std_logic;
-      b_rd_data_o   : out std_logic_vector(G_DATA_SIZE-1 downto 0)
+      b_rd_data_o   : out std_logic_vector(G_DATA_SIZE-1 downto 0) := (others => '0')
    );
 end entity tdp_ram;
 
