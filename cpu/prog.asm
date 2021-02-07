@@ -15,8 +15,12 @@
 
       MOVE 0x1234, R1   ; Write value 0x1234 to register 1
       ADD  0x2345, R1   ; Write value 0x3579 to register 1
+
       CMP  0x1234, R1
       CMP  R1, 0x2345
+
+      CMP  0x1234, @R1
+      CMP  @R1, 0x2345
 
       ABRA L_1, 1
       HALT
