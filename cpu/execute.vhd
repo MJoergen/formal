@@ -1,5 +1,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std_unsigned.all;
 
 -- Read src and dst register values and pass on to next stage
 -- Split out microops:
@@ -13,6 +14,8 @@ use ieee.std_logic_1164.all;
 -- * Destination register value
 
 -- Nearly all instructions update the status register (R14).
+
+use work.cpu_constants.all;
 
 entity execute is
    port (
@@ -69,6 +72,7 @@ architecture synthesis of execute is
    signal reg_val_d     : std_logic_vector(15 downto 0);
    signal dec_src_val   : std_logic_vector(15 downto 0);
    signal dec_dst_val   : std_logic_vector(15 downto 0);
+   signal dec_r14       : std_logic_vector(15 downto 0);
 
    -- ALU
    signal alu_oper      : std_logic_vector(3 downto 0);
@@ -113,6 +117,8 @@ begin
                   dec_src_val_i;
    dec_dst_val <= reg_val_d when reg_we_d = '1' and reg_addr_d = dec_dst_addr_i else
                   dec_dst_val_i;
+   dec_r14     <= reg_val_d when reg_we_d = '1' and reg_addr_d = C_REG_SR else
+                  dec_r14_i;
 
 
    ------------------------------------------------------------
@@ -120,7 +126,7 @@ begin
    ------------------------------------------------------------
 
    alu_oper    <= dec_opcode_i;
-   alu_flags   <= dec_r14_i;
+   alu_flags   <= dec_r14;
    alu_src_val <= mem_src_data_i when dec_microop_i(C_MEM_ALU_SRC) = '1' else dec_src_val;
    alu_dst_val <= mem_dst_data_i when dec_microop_i(C_MEM_ALU_DST) = '1' else dec_dst_val;
 

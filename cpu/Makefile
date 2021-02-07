@@ -43,7 +43,7 @@ show: $(WAVE)
 $(WAVE): $(SOURCES) $(TB_SRC) $(ROM)
 	ghdl -i --std=08 $(SOURCES) $(TB_SRC)
 	ghdl -m --std=08 -frelaxed $(TB)
-	ghdl -r --std=08 -frelaxed $(TB) --wave=$(WAVE) --stop-time=300us
+	ghdl -r --std=08 -frelaxed $(TB) --wave=$(WAVE) --stop-time=3000us
 
 $(ROM): $(ASM)
 	$(ASSEMBLER) $(ASM)

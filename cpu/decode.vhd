@@ -75,6 +75,9 @@ architecture synthesis of decode is
    signal wait_dst_val   : std_logic;
 
 
+   signal src_operand    : std_logic;
+   signal dst_operand    : std_logic;
+
    -- microcode address bitmap:
    -- bit  5   : read from dst
    -- bit  4   : write to dst
@@ -141,14 +144,19 @@ begin
    -- Microcode lookup (combinatorial)
    ------------------------------------------------------------
 
+   src_operand <= '0' when instruction(R_OPCODE) = C_OPCODE_CTRL else '1';
+   dst_operand <= '0' when instruction(R_OPCODE) = C_OPCODE_JMP  else '1';
+
    microcode_addr(C_READ_DST)  <= '0' when instruction(R_OPCODE) = C_OPCODE_MOVE or
                                            instruction(R_OPCODE) = C_OPCODE_SWAP or
                                            instruction(R_OPCODE) = C_OPCODE_NOT or
-                                           instruction(R_OPCODE) = C_OPCODE_JMP     else '1';
+                                           instruction(R_OPCODE) = C_OPCODE_CTRL or
+                                           instruction(R_OPCODE) = C_OPCODE_JMP     else dst_operand;
    microcode_addr(C_WRITE_DST) <= '0' when instruction(R_OPCODE) = C_OPCODE_CMP or
-                                           instruction(R_OPCODE) = C_OPCODE_JMP     else '1';
-   microcode_addr(C_MEM_SRC)   <= '0' when instruction(R_SRC_MODE) = C_MODE_REG     else '1';
-   microcode_addr(C_MEM_DST)   <= '0' when instruction(R_DST_MODE) = C_MODE_REG     else '1';
+                                           instruction(R_OPCODE) = C_OPCODE_CTRL or
+                                           instruction(R_OPCODE) = C_OPCODE_JMP     else dst_operand;
+   microcode_addr(C_MEM_SRC)   <= '0' when instruction(R_SRC_MODE) = C_MODE_REG     else src_operand;
+   microcode_addr(C_MEM_DST)   <= '0' when instruction(R_DST_MODE) = C_MODE_REG     else dst_operand;
    microcode_addr(R_COUNT)     <= count;
 
    i_microcode : entity work.microcode
@@ -227,7 +235,6 @@ begin
          exe_src_addr_o    <= instruction(R_SRC_REG);
          exe_dst_addr_o    <= instruction(R_DST_REG);
          microcode_value_d <= microcode_value;
-         exe_r14_o         <= reg_r14_i;
 
          if exe_ready_i = '1' then
             exe_valid_o    <= '0';
@@ -240,6 +247,7 @@ begin
          if (count > 0 and exe_ready_i = '1' and wait_src_val = '0' and wait_dst_val = '0')
             or (fetch_valid_i = '1' and fetch_ready_o = '1') then
             exe_opcode_o   <= instruction(R_OPCODE);
+            exe_r14_o      <= reg_r14_i;
             exe_r14_we_o   <= '1';
             exe_reg_addr_o <= instruction(R_DST_REG);
             exe_microop_o  <= microcode_value(5 downto 0);
@@ -259,7 +267,18 @@ begin
             end if;
 
             if instruction(R_OPCODE) = C_OPCODE_CTRL then
-               assert false report "CTRL instruction at address " & to_hstring(fetch_addr_i) severity failure;
+               case to_integer(instruction(R_CTRL_CMD)) is
+                  when C_CTRL_HALT  =>
+                     assert false report "HALT instruction at address " & to_hstring(fetch_addr_i)
+                        severity failure;
+--                  when C_CTRL_RTI   =>
+--                  when C_CTRL_INT   =>
+                  when C_CTRL_INCRB => null; -- Handled in EXECUTE
+                  when C_CTRL_DECRB => null; -- Handled in EXECUTE
+                  when others =>
+                     assert false report "Unhandled CTRL instruction at address " & to_hstring(fetch_addr_i)
+                        severity failure;
+               end case;
             end if;
 
             if microcode_value(C_LAST) = '1' then
