@@ -142,7 +142,7 @@ begin
       )
       port map (
          clk_i      => clk_i,
-         rst_i      => rst_i,
+         rst_i      => rst_i or dc_valid_i,
          s1_valid_i => tsf_out_addr_valid,
          s1_ready_o => tsf_out_addr_ready,
          s1_data_i  => tsf_out_addr_data,
