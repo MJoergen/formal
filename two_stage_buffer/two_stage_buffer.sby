@@ -1,11 +1,8 @@
 [tasks]
-bmc
 cover
 prove
 
 [options]
-bmc: mode bmc
-bmc: depth 10
 cover: mode cover
 prove: mode prove
 prove: depth 4
@@ -14,11 +11,13 @@ prove: depth 4
 smtbmc
 
 [script]
-ghdl --std=08 two_stage_buffer.vhd one_stage_buffer.vhd two_stage_buffer.psl -e two_stage_buffer
+ghdl --std=08 two_stage_buffer.vhd one_stage_buffer.vhd one_stage_buffer.psl two_stage_buffer.psl -e two_stage_buffer
 prep -top two_stage_buffer
+chformal -assume2assert two_stage_buffer/* %M
 
 [files]
 two_stage_buffer.psl
 two_stage_buffer.vhd
+../one_stage_buffer/one_stage_buffer.psl
 ../one_stage_buffer/one_stage_buffer.vhd
 
