@@ -9,6 +9,7 @@ entity alu_flags is
       clk_i      : in  std_logic;
       rst_i      : in  std_logic;
       opcode_i   : in  std_logic_vector(3 downto 0);
+      ctrl_i     : in  std_logic_vector(5 downto 0);
       src_data_i : in  std_logic_vector(15 downto 0);
       dst_data_i : in  std_logic_vector(15 downto 0);
       sr_i       : in  std_logic_vector(15 downto 0);
@@ -67,7 +68,12 @@ begin
          when C_OPCODE_XOR  =>                           sr_o(C_SR_N) <= negative; sr_o(C_SR_Z) <= zero;
          when C_OPCODE_CMP  => sr_o(C_SR_V) <= cmp_v;    sr_o(C_SR_N) <= cmp_n;    sr_o(C_SR_Z) <= cmp_z;
          when C_OPCODE_RES  => null; -- No status bits are changed
-         when C_OPCODE_CTRL => null; -- No status bits are changed
+         when C_OPCODE_CTRL =>
+            case to_integer(unsigned(ctrl_i)) is
+               when C_CTRL_INCRB => sr_o <= std_logic_vector(unsigned(sr_i or X"0001") + X"0100");
+               when C_CTRL_DECRB => sr_o <= std_logic_vector(unsigned(sr_i or X"0001") - X"0100");
+               when others       => null;
+            end case;
          when C_OPCODE_JMP  => null; -- No status bits are changed
          when others    => null;
       end case;

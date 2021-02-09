@@ -86,6 +86,7 @@ architecture synthesis of execute is
 
    -- ALU
    signal alu_oper      : std_logic_vector(3 downto 0);
+   signal alu_ctrl      : std_logic_vector(5 downto 0);
    signal alu_flags     : std_logic_vector(15 downto 0);
    signal alu_src_val   : std_logic_vector(15 downto 0);
    signal alu_dst_val   : std_logic_vector(15 downto 0);
@@ -139,6 +140,7 @@ begin
    ------------------------------------------------------------
 
    alu_oper    <= dec_opcode_i;
+   alu_ctrl    <= dec_ctrl_i;
    alu_flags   <= dec_r14;
    alu_src_val <= mem_src_data_i when dec_microop_i(C_MEM_ALU_SRC) = '1' else dec_src_val;
    alu_dst_val <= mem_dst_data_i when dec_microop_i(C_MEM_ALU_DST) = '1' else dec_dst_val;
@@ -159,6 +161,7 @@ begin
          clk_i      => clk_i,
          rst_i      => rst_i,
          opcode_i   => alu_oper,
+         ctrl_i     => alu_ctrl,
          sr_i       => alu_flags,
          src_data_i => alu_src_val,
          dst_data_i => alu_dst_val,
@@ -175,11 +178,8 @@ begin
    -- Update status register
    ------------------------------------------------------------
 
-   -- TBD: Move conditional to alu_flags
-   reg_r14_o      <= alu_res_flags + X"0100" when dec_opcode_i = C_OPCODE_CTRL and dec_ctrl_i = C_CTRL_INCRB else
-                     alu_res_flags - X"0100" when dec_opcode_i = C_OPCODE_CTRL and dec_ctrl_i = C_CTRL_DECRB else
-                     alu_res_flags;
-   reg_r14_we_o   <= dec_r14_we_i and dec_valid_i and dec_ready_o;
+   reg_r14_o    <= alu_res_flags;
+   reg_r14_we_o <= dec_r14_we_i and dec_valid_i and dec_ready_o;
 
 
    ------------------------------------------------------------
