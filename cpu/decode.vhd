@@ -45,6 +45,9 @@ entity decode is
       exe_ready_i     : in  std_logic;
       exe_microop_o   : out std_logic_vector(7 downto 0);
       exe_opcode_o    : out std_logic_vector(3 downto 0);
+      exe_jmp_mode_o  : out std_logic_vector(1 downto 0);
+      exe_jmp_cond_o  : out std_logic_vector(2 downto 0);
+      exe_jmp_neg_o   : out std_logic;
       exe_ctrl_o      : out std_logic_vector(5 downto 0);
 
       exe_r14_o       : out std_logic_vector(15 downto 0);
@@ -260,12 +263,10 @@ begin
    ------------------------------------------------------------
 
    p_output2exe : process (clk_i)
-      variable take_jump_v : std_logic;
    begin
       if rising_edge(clk_i) then
          exe_src_addr_o    <= instruction(R_SRC_REG);
          exe_dst_addr_o    <= instruction(R_DST_REG);
-         microcode_value_d <= microcode_value;
 
          exe_src_mode_o    <= "00";
          exe_dst_mode_o    <= "00";
@@ -281,6 +282,9 @@ begin
             exe_r14_we_o   <= '0';
             exe_microop_o  <= (others => '0');
             exe_opcode_o   <= (others => '0');
+            exe_jmp_mode_o <= (others => '0');
+            exe_jmp_cond_o <= (others => '0');
+            exe_jmp_neg_o  <= '0';
             exe_ctrl_o     <= (others => '0');
             exe_reg_addr_o <= (others => '0');
          end if;
@@ -288,6 +292,9 @@ begin
          if (count > 0 and exe_ready_i = '1' and wait_src_val = '0' and wait_dst_val = '0')
             or (fetch_valid_i = '1' and fetch_ready_o = '1') then
             exe_opcode_o   <= instruction(R_OPCODE);
+            exe_jmp_mode_o <= instruction(R_JMP_MODE);
+            exe_jmp_cond_o <= instruction(R_JMP_COND);
+            exe_jmp_neg_o  <= instruction(R_JMP_NEG);
             exe_ctrl_o     <= instruction(R_CTRL_CMD);
             exe_r14_o      <= reg_r14_i;
             exe_r14_we_o   <= '1';
@@ -296,41 +303,25 @@ begin
             exe_valid_o    <= '1';
 
             -- Jump instructions are translated into simple register writes to R15.
-            if instruction(R_OPCODE) = C_OPCODE_JMP then
-               take_jump_v := reg_r14_i(to_integer(instruction(R_JMP_COND))) xor instruction(R_JMP_NEG);
-               exe_microop_o(C_REG_MOD_SRC) <= take_jump_v and microcode_value(C_REG_MOD_SRC);
-
-               if microcode_value(C_LAST) = '1' then
-                  exe_microop_o(C_REG_WRITE)   <= take_jump_v;
-                  exe_reg_addr_o <= "1111"; -- R15 = PC
-                  exe_r14_we_o   <= '0';
-
-                  if instruction(R_JMP_MODE) = C_JMP_RBRA or instruction(R_JMP_MODE) = C_JMP_RSUB then
-                     exe_opcode_o <= to_stdlogicvector(C_OPCODE_ADDC, 4);
-                     exe_r14_o(C_FLAGS_CARRY) <= '1';
-                  end if;
-               end if;
-            end if;
-
-            if instruction(R_OPCODE) = C_OPCODE_CTRL then
-               case to_integer(instruction(R_CTRL_CMD)) is
-                  when C_CTRL_HALT  =>
-                     assert false report "HALT instruction at address " & to_hstring(fetch_addr_i)
-                        severity failure;
---                  when C_CTRL_RTI   =>
---                  when C_CTRL_INT   =>
-                  when C_CTRL_INCRB => null; -- Handled in EXECUTE
-                  when C_CTRL_DECRB => null; -- Handled in EXECUTE
-                  when others =>
-                     assert false report "Unhandled CTRL instruction at address " & to_hstring(fetch_addr_i)
-                        severity failure;
-               end case;
+            if instruction(R_OPCODE) = C_OPCODE_JMP and microcode_value(C_LAST) = '1' and
+                  (count = 0 or microcode_value_d(C_LAST) = '0') then
+               exe_microop_o(C_REG_WRITE) <= '1';
+               exe_reg_addr_o <= to_stdlogicvector(C_REG_PC, 4);
+               exe_r14_we_o   <= '0';
             end if;
 
             if microcode_value(C_LAST) = '1' then
                count <= "00";
             else
                count <= count + 1;
+            end if;
+
+            -- Artifically introduce a NOP in case of a JMP.
+            if instruction(R_OPCODE) = C_OPCODE_JMP then
+               microcode_value_d <= microcode_value;
+               if count = 0 or microcode_value_d(C_LAST) = '0' then
+                  count <= count + 1;
+               end if;
             end if;
 
             if microcode_value(C_MEM_READ_SRC) = '1' and immediate_src = '1' then

@@ -52,6 +52,9 @@ architecture synthesis of cpu is
    signal dec2exe_ready       : std_logic;
    signal dec2exe_microop     : std_logic_vector(7 downto 0);
    signal dec2exe_opcode      : std_logic_vector(3 downto 0);
+   signal dec2exe_jmp_mode    : std_logic_vector(1 downto 0);
+   signal dec2exe_jmp_cond    : std_logic_vector(2 downto 0);
+   signal dec2exe_jmp_neg     : std_logic;
    signal dec2exe_ctrl        : std_logic_vector(5 downto 0);
    signal dec2exe_r14         : std_logic_vector(15 downto 0);
    signal dec2exe_r14_we      : std_logic;
@@ -147,6 +150,9 @@ begin
          exe_ready_i     => dec2exe_ready,
          exe_microop_o   => dec2exe_microop,
          exe_opcode_o    => dec2exe_opcode,
+         exe_jmp_mode_o  => dec2exe_jmp_mode,
+         exe_jmp_cond_o  => dec2exe_jmp_cond,
+         exe_jmp_neg_o   => dec2exe_jmp_neg,
          exe_ctrl_o      => dec2exe_ctrl,
          exe_r14_o       => dec2exe_r14,
          exe_r14_we_o    => dec2exe_r14_we,
@@ -189,6 +195,9 @@ begin
          dec_ready_o     => dec2exe_ready,
          dec_microop_i   => dec2exe_microop,
          dec_opcode_i    => dec2exe_opcode,
+         dec_jmp_mode_i  => dec2exe_jmp_mode,
+         dec_jmp_cond_i  => dec2exe_jmp_cond,
+         dec_jmp_neg_i   => dec2exe_jmp_neg,
          dec_ctrl_i      => dec2exe_ctrl,
          dec_r14_i       => dec2exe_r14,
          dec_r14_we_i    => dec2exe_r14_we,

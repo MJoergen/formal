@@ -27,6 +27,9 @@ entity execute is
       dec_ready_o     : out std_logic;
       dec_microop_i   : in  std_logic_vector(7 downto 0);
       dec_opcode_i    : in  std_logic_vector(3 downto 0);
+      dec_jmp_mode_i  : in  std_logic_vector(1 downto 0);
+      dec_jmp_cond_i  : in  std_logic_vector(2 downto 0);
+      dec_jmp_neg_i   : in  std_logic;
       dec_ctrl_i      : in  std_logic_vector(5 downto 0);
       dec_r14_i       : in  std_logic_vector(15 downto 0);
       dec_r14_we_i    : in  std_logic;
@@ -72,6 +75,8 @@ architecture synthesis of execute is
    constant C_REG_WRITE    : integer := 0;
 
    -- Bypass logic
+   signal reg_r14_we_d  : std_logic;
+   signal reg_r14_d     : std_logic_vector(15 downto 0);
    signal reg_we_d      : std_logic;
    signal reg_addr_d    : std_logic_vector(3 downto 0);
    signal reg_val_d     : std_logic_vector(15 downto 0);
@@ -112,9 +117,11 @@ begin
    p_delay : process (clk_i)
    begin
       if rising_edge(clk_i) then
-         reg_val_d  <= reg_val_o;
-         reg_we_d   <= reg_we_o;
-         reg_addr_d <= reg_addr_o;
+         reg_r14_we_d <= reg_r14_we_o;
+         reg_r14_d    <= reg_r14_o;
+         reg_val_d    <= reg_val_o;
+         reg_we_d     <= reg_we_o;
+         reg_addr_d   <= reg_addr_o;
       end if;
    end process p_delay;
 
@@ -123,6 +130,7 @@ begin
    dec_dst_val <= reg_val_d when reg_we_d = '1' and reg_addr_d = dec_dst_addr_i else
                   dec_dst_val_i;
    dec_r14     <= reg_val_d when reg_we_d = '1' and reg_addr_d = C_REG_SR else
+                  reg_r14_d when reg_r14_we_d = '1' else
                   dec_r14_i;
 
 
@@ -159,10 +167,15 @@ begin
       ); -- i_alu_flags
 
 
+   assert not (dec_opcode_i = C_OPCODE_CTRL and dec_ctrl_i = C_CTRL_HALT)
+      report "HALT instruction." severity failure;
+
+
    ------------------------------------------------------------
    -- Update status register
    ------------------------------------------------------------
 
+   -- TBD: Move conditional to alu_flags
    reg_r14_o      <= alu_res_flags + X"0100" when dec_opcode_i = C_OPCODE_CTRL and dec_ctrl_i = C_CTRL_INCRB else
                      alu_res_flags - X"0100" when dec_opcode_i = C_OPCODE_CTRL and dec_ctrl_i = C_CTRL_DECRB else
                      alu_res_flags;
@@ -174,13 +187,25 @@ begin
    ------------------------------------------------------------
 
    p_reg : process (all)
+      variable update_reg_v : std_logic;
+      variable update_val_v : std_logic_vector(15 downto 0);
    begin
       reg_addr_o <= (others => '0');
       reg_val_o  <= (others => '0');
       reg_we_o   <= '0';
 
       if dec_valid_i and dec_ready_o then
-         if dec_src_mode_i(1) and dec_microop_i(C_REG_MOD_SRC) then
+         -- Jump instructions are translated into simple register writes to R15.
+         update_reg_v := '1';
+         update_val_v := alu_res_data(15 downto 0);
+         if dec_opcode_i = C_OPCODE_JMP then
+            update_reg_v := dec_r14(to_integer(dec_jmp_cond_i)) xor dec_jmp_neg_i;
+            if dec_jmp_mode_i = C_JMP_RBRA or dec_jmp_mode_i = C_JMP_RSUB then
+               update_val_v := alu_src_val + alu_dst_val + 1;
+            end if;
+         end if;
+
+         if dec_src_mode_i(1) and dec_microop_i(C_REG_MOD_SRC) and update_reg_v then
             reg_addr_o <= dec_src_addr_i;
             if dec_src_mode_i = C_MODE_POST then
                reg_val_o <= dec_src_val + 1;
@@ -190,7 +215,7 @@ begin
             reg_we_o   <= '1';
          end if;
 
-         if dec_dst_mode_i(1) and dec_microop_i(C_REG_MOD_DST) then
+         if dec_dst_mode_i(1) and dec_microop_i(C_REG_MOD_DST) and update_reg_v then
             reg_addr_o <= dec_dst_addr_i;
             if dec_dst_mode_i = C_MODE_POST then
                reg_val_o <= dec_dst_val + 1;
@@ -200,9 +225,9 @@ begin
             reg_we_o   <= '1';
          end if;
 
-         if dec_microop_i(C_REG_WRITE) then
+         if dec_microop_i(C_REG_WRITE) and update_reg_v then
             reg_addr_o <= dec_reg_addr_i;
-            reg_val_o  <= alu_res_data(15 downto 0);
+            reg_val_o  <= update_val_v;
             reg_we_o   <= '1';
          end if;
       end if;
