@@ -68,7 +68,6 @@ architecture synthesis of decode is
 
    signal instruction_d  : std_logic_vector(15 downto 0);
    signal fetch_addr_d   : std_logic_vector(15 downto 0);
-   signal fetch_data_d   : std_logic_vector(15 downto 0);
    signal wait_src_val_d : std_logic;
    signal wait_dst_val_d : std_logic;
 
@@ -124,6 +123,12 @@ architecture synthesis of decode is
    constant C_FLAGS_ZERO  : integer := 3;
    constant C_FLAGS_NEG   : integer := 4;
    constant C_FLAGS_OVERF : integer := 5;
+
+   signal osf_in_valid  : std_logic;
+   signal osf_in_data   : std_logic_vector(16 downto 0);
+   signal osf_out_ready : std_logic;
+   signal osf_out_valid : std_logic;
+   signal osf_out_data  : std_logic_vector(16 downto 0);
 
 begin
 
@@ -185,12 +190,12 @@ begin
    -- Generate operand values (combinatorial)
    ------------------------------------------------------------
 
-   exe_src_val_o <= fetch_data_d when wait_src_val_d = '1' and wait_src_val = '0' else
+   exe_src_val_o <= osf_out_data(15 downto 0) when osf_out_valid and osf_out_data(16) else
                     fetch_addr_i when exe_src_addr_o = 15 else
                     reg_src_val_i;
    exe_dst_val_o <= fetch_addr_d when instruction_d(R_OPCODE) = C_OPCODE_JMP and
                                      (instruction_d(R_JMP_MODE) = C_JMP_RBRA or instruction_d(R_JMP_MODE) = C_JMP_RSUB) else
-                    fetch_data_d when wait_dst_val_d = '1' and wait_dst_val = '0' else
+                    osf_out_data(15 downto 0) when osf_out_valid and not osf_out_data(16) else
                     fetch_addr_i when exe_dst_addr_o = 15 else
                     reg_dst_val_i;
 
@@ -198,12 +203,30 @@ begin
    begin
       if rising_edge(clk_i) then
          instruction_d  <= instruction;
-         fetch_data_d   <= fetch_data_i;
          fetch_addr_d   <= fetch_addr_i;
          wait_src_val_d <= wait_src_val;
          wait_dst_val_d <= wait_dst_val;
       end if;
    end process p_delay;
+
+   osf_in_valid <= wait_src_val or wait_dst_val;
+   osf_in_data  <= wait_src_val & fetch_data_i;
+   osf_out_ready <= '1' when count = 0 else '0';   -- Clear when new instruction begins.
+
+   i_one_stage_fifo : entity work.one_stage_fifo
+      generic map (
+         G_DATA_SIZE => 17
+      )
+      port map (
+         clk_i     => clk_i,
+         rst_i     => rst_i,
+         s_valid_i => osf_in_valid,
+         s_ready_o => open, -- ignore
+         s_data_i  => osf_in_data,
+         m_valid_o => osf_out_valid,
+         m_ready_i => osf_out_ready,
+         m_data_o  => osf_out_data
+      ); -- i_one_stage_fifo
 
 
    ------------------------------------------------------------
@@ -237,6 +260,7 @@ begin
    ------------------------------------------------------------
 
    p_output2exe : process (clk_i)
+      variable take_jump_v : std_logic;
    begin
       if rising_edge(clk_i) then
          exe_src_addr_o    <= instruction(R_SRC_REG);
@@ -273,14 +297,18 @@ begin
 
             -- Jump instructions are translated into simple register writes to R15.
             if instruction(R_OPCODE) = C_OPCODE_JMP then
-               exe_microop_o <= (others => '0');
-               exe_microop_o(C_REG_WRITE) <= reg_r14_i(to_integer(instruction(R_JMP_COND))) xor instruction(R_JMP_NEG);
-               exe_reg_addr_o <= "1111"; -- R15 = PC
-               exe_r14_we_o   <= '0';
+               take_jump_v := reg_r14_i(to_integer(instruction(R_JMP_COND))) xor instruction(R_JMP_NEG);
+               exe_microop_o(C_REG_MOD_SRC) <= take_jump_v and microcode_value(C_REG_MOD_SRC);
 
-               if instruction(R_JMP_MODE) = C_JMP_RBRA or instruction(R_JMP_MODE) = C_JMP_RSUB then
-                  exe_opcode_o <= to_stdlogicvector(C_OPCODE_ADDC, 4);
-                  exe_r14_o(C_FLAGS_CARRY) <= '1';
+               if microcode_value(C_LAST) = '1' then
+                  exe_microop_o(C_REG_WRITE)   <= take_jump_v;
+                  exe_reg_addr_o <= "1111"; -- R15 = PC
+                  exe_r14_we_o   <= '0';
+
+                  if instruction(R_JMP_MODE) = C_JMP_RBRA or instruction(R_JMP_MODE) = C_JMP_RSUB then
+                     exe_opcode_o <= to_stdlogicvector(C_OPCODE_ADDC, 4);
+                     exe_r14_o(C_FLAGS_CARRY) <= '1';
+                  end if;
                end if;
             end if;
 

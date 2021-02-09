@@ -4,6 +4,7 @@
 Two optimizations:
 1. Let the FETCH module present two (or three) words to the DECODE module, so the latter doesn't have to wait.
 2. Eliminate the NOP cycle from the CMP @R1, @PC++ instruction.
+3. Optimize conditional jumps, so they don't execute superfluous microoperations.
 
 ## Block diagram
 ![Block Diagram](cpu.png)

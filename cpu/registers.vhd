@@ -143,12 +143,10 @@ begin
    r13_o <= r13;
    r14_o <= r14;
 
-   src_val_o <= r13           when src_reg_r = C_REG_SP else
-                r14           when src_reg_r = C_REG_SR else
+   src_val_o <= r14           when src_reg_r = C_REG_SR else
                 src_val_upper when src_reg_r >= 8 else
                 src_val_lower;
-   dst_val_o <= r13           when dst_reg_r = C_REG_SP else
-                r14           when dst_reg_r = C_REG_SR else
+   dst_val_o <= r14           when dst_reg_r = C_REG_SR else
                 dst_val_upper when dst_reg_r >= 8 else
                 dst_val_lower;
 
