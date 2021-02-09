@@ -321,6 +321,16 @@ begin
                microcode_value_d <= microcode_value;
                if count = 0 or microcode_value_d(C_LAST) = '0' then
                   count <= count + 1;
+               else
+                  exe_valid_o    <= '0';
+                  exe_r14_we_o   <= '0';
+                  exe_microop_o  <= (others => '0');
+                  exe_opcode_o   <= (others => '0');
+                  exe_jmp_mode_o <= (others => '0');
+                  exe_jmp_cond_o <= (others => '0');
+                  exe_jmp_neg_o  <= '0';
+                  exe_ctrl_o     <= (others => '0');
+                  exe_reg_addr_o <= (others => '0');
                end if;
             end if;
 

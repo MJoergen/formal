@@ -97,6 +97,8 @@ architecture synthesis of execute is
    signal wait_for_mem_src    : std_logic;
    signal wait_for_mem_dst    : std_logic;
 
+   signal jmp_relative : std_logic;
+
 begin
 
    dec_ready_o <= not (wait_for_mem_src or wait_for_mem_dst or wait_for_mem_access);
@@ -139,11 +141,17 @@ begin
    -- ALU
    ------------------------------------------------------------
 
-   alu_oper    <= dec_opcode_i;
+   jmp_relative <= '1' when dec_opcode_i = C_OPCODE_JMP and (dec_jmp_mode_i = C_JMP_RBRA or dec_jmp_mode_i = C_JMP_RSUB) else
+                   '0';
+
+   alu_oper    <= to_stdlogicvector(C_OPCODE_ADDC, 4) when jmp_relative = '1' else
+                  dec_opcode_i;
    alu_ctrl    <= dec_ctrl_i;
-   alu_flags   <= dec_r14;
+   alu_flags   <= dec_r14 or X"0004" when jmp_relative = '1' else
+                  dec_r14;
    alu_src_val <= mem_src_data_i when dec_microop_i(C_MEM_ALU_SRC) = '1' else dec_src_val;
    alu_dst_val <= mem_dst_data_i when dec_microop_i(C_MEM_ALU_DST) = '1' else dec_dst_val;
+
 
    i_alu_data : entity work.alu_data
       port map (
@@ -188,23 +196,20 @@ begin
 
    p_reg : process (all)
       variable update_reg_v : std_logic;
-      variable update_val_v : std_logic_vector(15 downto 0);
    begin
       reg_addr_o <= (others => '0');
       reg_val_o  <= (others => '0');
       reg_we_o   <= '0';
 
       if dec_valid_i and dec_ready_o then
-         -- Jump instructions are translated into simple register writes to R15.
+         -- Conditional jump instructions are handled here.
          update_reg_v := '1';
-         update_val_v := alu_res_data(15 downto 0);
          if dec_opcode_i = C_OPCODE_JMP then
+            -- Only update register if branch is taken.
             update_reg_v := dec_r14(to_integer(dec_jmp_cond_i)) xor dec_jmp_neg_i;
-            if dec_jmp_mode_i = C_JMP_RBRA or dec_jmp_mode_i = C_JMP_RSUB then
-               update_val_v := alu_src_val + alu_dst_val + 1;
-            end if;
          end if;
 
+         -- Handle pre- and post increment here.
          if dec_src_mode_i(1) and dec_microop_i(C_REG_MOD_SRC) and update_reg_v then
             reg_addr_o <= dec_src_addr_i;
             if dec_src_mode_i = C_MODE_POST then
@@ -225,9 +230,10 @@ begin
             reg_we_o   <= '1';
          end if;
 
+         -- Handle ordinary register writes here.
          if dec_microop_i(C_REG_WRITE) and update_reg_v then
             reg_addr_o <= dec_reg_addr_i;
-            reg_val_o  <= update_val_v;
+            reg_val_o  <= alu_res_data(15 downto 0);
             reg_we_o   <= '1';
          end if;
       end if;
