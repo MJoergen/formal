@@ -1152,7 +1152,7 @@ E_RB_R14_05     HALT
 E_RB_R14_06     HALT
 E_RB_R14_07     HALT
 E_RB_R14_08     HALT
-L_RB_R14_01
+L_RB_R14_01     MOVE    0, R14                  ; Reset register bank
 
 
 ; ---------------------------------------------------------------------------
