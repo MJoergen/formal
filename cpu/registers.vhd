@@ -13,7 +13,6 @@ entity registers is
       src_val_o     : out std_logic_vector(15 downto 0);
       dst_reg_i     : in  std_logic_vector(3 downto 0);
       dst_val_o     : out std_logic_vector(15 downto 0);
-      r13_o         : out std_logic_vector(15 downto 0);
       r14_o         : out std_logic_vector(15 downto 0);
       -- Write interface
       r14_we_i      : in  std_logic;
@@ -30,7 +29,6 @@ architecture synthesis of registers is
 
    signal upper_regs : upper_mem_t := (others => (others => '0'));
 
-   signal r13 : std_logic_vector(15 downto 0) := (others => '0');
    signal r14 : std_logic_vector(15 downto 0) := (others => '0');
 
    signal src_val_upper : std_logic_vector(15 downto 0);
@@ -140,7 +138,6 @@ begin
    end process p_r14;
 
 
-   r13_o <= r13;
    r14_o <= r14;
 
    src_val_o <= r14           when src_reg_r = C_REG_SR else

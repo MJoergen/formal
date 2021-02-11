@@ -37,7 +37,6 @@ entity decode is
       reg_dst_addr_o  : out std_logic_vector(3 downto 0);
       reg_src_val_i   : in  std_logic_vector(15 downto 0);
       reg_dst_val_i   : in  std_logic_vector(15 downto 0);
-      reg_r13_i       : in  std_logic_vector(15 downto 0);
       reg_r14_i       : in  std_logic_vector(15 downto 0);
 
       -- To Execute stage
@@ -186,20 +185,30 @@ begin
    ------------------------------------------------------------
 
    reg_src_addr_o <= instruction(R_SRC_REG);
-   reg_dst_addr_o <= instruction(R_DST_REG);
+   reg_dst_addr_o <= to_stdlogicvector(C_REG_SP, 4) when count > 0 and
+                                                         microcode_value_d(C_LAST) = '1' and
+                                                         instruction_d(R_OPCODE) = C_OPCODE_JMP and
+                                                         (instruction_d(R_JMP_MODE) = C_JMP_ASUB or instruction_d(R_JMP_MODE) = C_JMP_RSUB) else
+                     instruction(R_DST_REG);
 
 
    ------------------------------------------------------------
    -- Generate operand values (combinatorial)
    ------------------------------------------------------------
 
-   exe_src_val_o <= osf_out_data(15 downto 0) when osf_out_valid and osf_out_data(16) else
-                    fetch_addr_i when exe_src_addr_o = 15 else
+   exe_src_val_o <= fetch_addr_d when instruction_d(R_OPCODE) = C_OPCODE_JMP and
+                                     (instruction_d(R_JMP_MODE) = C_JMP_ASUB or instruction_d(R_JMP_MODE) = C_JMP_RSUB) and
+                                      count = 0 else
+                    osf_out_data(15 downto 0) when osf_out_valid and osf_out_data(16) else
+                    fetch_addr_i when exe_src_addr_o = C_REG_PC else
                     reg_src_val_i;
-   exe_dst_val_o <= fetch_addr_d when instruction_d(R_OPCODE) = C_OPCODE_JMP and
-                                     (instruction_d(R_JMP_MODE) = C_JMP_RBRA or instruction_d(R_JMP_MODE) = C_JMP_RSUB) else
+
+   exe_dst_val_o <= fetch_addr_i when exe_reg_addr_o = C_REG_PC and exe_microop_o(C_REG_WRITE) = '1' else
+                    fetch_addr_d when instruction_d(R_OPCODE) = C_OPCODE_JMP and
+                                     (instruction_d(R_JMP_MODE) = C_JMP_RBRA or instruction_d(R_JMP_MODE) = C_JMP_RSUB) and
+                                      count > 0 and
+                                      microcode_value_d(C_LAST) = '1' else
                     osf_out_data(15 downto 0) when osf_out_valid and not osf_out_data(16) else
-                    fetch_addr_i when exe_dst_addr_o = 15 else
                     reg_dst_val_i;
 
    p_delay : process (clk_i)
@@ -265,6 +274,23 @@ begin
    p_output2exe : process (clk_i)
    begin
       if rising_edge(clk_i) then
+         if exe_ready_i = '1' then
+            exe_valid_o    <= '0';
+            exe_microop_o  <= (others => '0');
+            exe_opcode_o   <= (others => '0');
+            exe_jmp_mode_o <= (others => '0');
+            exe_jmp_cond_o <= (others => '0');
+            exe_jmp_neg_o  <= '0';
+            exe_ctrl_o     <= (others => '0');
+            exe_r14_o      <= (others => '0');
+            exe_r14_we_o   <= '0';
+            exe_src_addr_o <= (others => '0');
+            exe_src_mode_o <= (others => '0');
+            exe_dst_addr_o <= (others => '0');
+            exe_dst_mode_o <= (others => '0');
+            exe_reg_addr_o <= (others => '0');
+         end if;
+
          exe_src_addr_o    <= instruction(R_SRC_REG);
          exe_dst_addr_o    <= instruction(R_DST_REG);
 
@@ -275,18 +301,6 @@ begin
          end if;
          if dst_operand then
             exe_dst_mode_o <= instruction(R_DST_MODE);
-         end if;
-
-         if exe_ready_i = '1' then
-            exe_valid_o    <= '0';
-            exe_r14_we_o   <= '0';
-            exe_microop_o  <= (others => '0');
-            exe_opcode_o   <= (others => '0');
-            exe_jmp_mode_o <= (others => '0');
-            exe_jmp_cond_o <= (others => '0');
-            exe_jmp_neg_o  <= '0';
-            exe_ctrl_o     <= (others => '0');
-            exe_reg_addr_o <= (others => '0');
          end if;
 
          if (count > 0 and exe_ready_i = '1' and wait_src_val = '0' and wait_dst_val = '0')
@@ -323,22 +337,55 @@ begin
                   count <= count + 1;
                else
                   exe_valid_o    <= '0';
-                  exe_r14_we_o   <= '0';
                   exe_microop_o  <= (others => '0');
                   exe_opcode_o   <= (others => '0');
                   exe_jmp_mode_o <= (others => '0');
                   exe_jmp_cond_o <= (others => '0');
                   exe_jmp_neg_o  <= '0';
                   exe_ctrl_o     <= (others => '0');
+                  exe_r14_o      <= (others => '0');
+                  exe_r14_we_o   <= '0';
+                  exe_src_addr_o <= (others => '0');
+                  exe_src_mode_o <= (others => '0');
+                  exe_dst_addr_o <= (others => '0');
+                  exe_dst_mode_o <= (others => '0');
                   exe_reg_addr_o <= (others => '0');
+
+                  -- Subroutine calls are special.
+                  -- Artifically introduce a MOVE R15, @--R13
+                  if instruction(R_JMP_MODE) = C_JMP_ASUB or
+                     instruction(R_JMP_MODE) = C_JMP_RSUB then
+
+                     exe_valid_o    <= '1';
+                     exe_r14_o      <= reg_r14_i;
+                     exe_r14_we_o   <= '0';
+                     exe_microop_o  <= "01000010"; -- C_MEM_WRITE or C_REG_MOD_DST;
+                     exe_opcode_o   <= to_stdlogicvector(C_OPCODE_JMP, 4);
+                     exe_jmp_mode_o <= instruction(R_JMP_MODE);
+                     exe_jmp_cond_o <= instruction(R_JMP_COND);
+                     exe_jmp_neg_o  <= instruction(R_JMP_NEG);
+                     exe_ctrl_o     <= instruction(R_CTRL_CMD);
+                     exe_dst_addr_o <= to_stdlogicvector(C_REG_SP, 4);
+                     exe_dst_mode_o <= to_stdlogicvector(C_MODE_PRE, 2);
+                     exe_reg_addr_o <= to_stdlogicvector(C_REG_SP, 4);
+                  end if;
                end if;
             end if;
 
             if microcode_value(C_MEM_READ_SRC) = '1' and immediate_src = '1' then
                exe_valid_o    <= '0';
-               exe_r14_we_o   <= '0';
                exe_microop_o  <= (others => '0');
                exe_opcode_o   <= (others => '0');
+               exe_jmp_mode_o <= (others => '0');
+               exe_jmp_cond_o <= (others => '0');
+               exe_jmp_neg_o  <= '0';
+               exe_ctrl_o     <= (others => '0');
+               exe_r14_o      <= (others => '0');
+               exe_r14_we_o   <= '0';
+               exe_src_addr_o <= (others => '0');
+               exe_src_mode_o <= (others => '0');
+               exe_dst_addr_o <= (others => '0');
+               exe_dst_mode_o <= (others => '0');
                exe_reg_addr_o <= (others => '0');
                wait_src_val   <= '1';
             elsif wait_src_val = '1' then
@@ -347,9 +394,18 @@ begin
 
             if microcode_value(C_MEM_READ_DST) = '1' and immediate_dst = '1' then
                exe_valid_o    <= '0';
-               exe_r14_we_o   <= '0';
                exe_microop_o  <= (others => '0');
                exe_opcode_o   <= (others => '0');
+               exe_jmp_mode_o <= (others => '0');
+               exe_jmp_cond_o <= (others => '0');
+               exe_jmp_neg_o  <= '0';
+               exe_ctrl_o     <= (others => '0');
+               exe_r14_o      <= (others => '0');
+               exe_r14_we_o   <= '0';
+               exe_src_addr_o <= (others => '0');
+               exe_src_mode_o <= (others => '0');
+               exe_dst_addr_o <= (others => '0');
+               exe_dst_mode_o <= (others => '0');
                exe_reg_addr_o <= (others => '0');
                wait_dst_val   <= '1';
             elsif wait_dst_val = '1' then
@@ -372,9 +428,18 @@ begin
             wait_dst_val   <= '0';
             count          <= (others => '0');
             exe_valid_o    <= '0';
-            exe_r14_we_o   <= '0';
             exe_microop_o  <= (others => '0');
             exe_opcode_o   <= (others => '0');
+            exe_jmp_mode_o <= (others => '0');
+            exe_jmp_cond_o <= (others => '0');
+            exe_jmp_neg_o  <= '0';
+            exe_ctrl_o     <= (others => '0');
+            exe_r14_o      <= (others => '0');
+            exe_r14_we_o   <= '0';
+            exe_src_addr_o <= (others => '0');
+            exe_src_mode_o <= (others => '0');
+            exe_dst_addr_o <= (others => '0');
+            exe_dst_mode_o <= (others => '0');
             exe_reg_addr_o <= (others => '0');
          end if;
       end if;

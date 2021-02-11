@@ -44,7 +44,6 @@ architecture synthesis of cpu is
    signal dec2reg_src_val     : std_logic_vector(15 downto 0);
    signal dec2reg_dst_reg     : std_logic_vector(3 downto 0);
    signal dec2reg_dst_val     : std_logic_vector(15 downto 0);
-   signal reg2dec_r13         : std_logic_vector(15 downto 0);
    signal reg2dec_r14         : std_logic_vector(15 downto 0);
 
    -- Decode to execute
@@ -144,7 +143,6 @@ begin
          reg_src_val_i   => dec2reg_src_val,
          reg_dst_addr_o  => dec2reg_dst_reg,
          reg_dst_val_i   => dec2reg_dst_val,
-         reg_r13_i       => reg2dec_r13,
          reg_r14_i       => reg2dec_r14,
          exe_valid_o     => dec2exe_valid,
          exe_ready_i     => dec2exe_ready,
@@ -174,7 +172,6 @@ begin
          src_val_o     => dec2reg_src_val,
          dst_reg_i     => dec2reg_dst_reg,
          dst_val_o     => dec2reg_dst_val,
-         r13_o         => reg2dec_r13,
          r14_o         => reg2dec_r14,
          r14_we_i      => exe2reg_r14_we,
          r14_i         => exe2reg_r14,
