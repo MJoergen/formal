@@ -1,0 +1,20 @@
+[tasks]
+cover
+prove
+
+[options]
+cover: mode cover
+prove: mode prove
+prove: depth 4
+
+[engines]
+smtbmc
+
+[script]
+ghdl --std=08 -gram_width=8 -gram_depth=8 axi_fifo.vhd axi_fifo.psl -e axi_fifo
+prep -top axi_fifo
+
+[files]
+axi_fifo.psl
+axi_fifo.vhd
+

@@ -1,0 +1,67 @@
+vunit i_axi_fifo(axi_fifo(rtl))
+{
+   -- Additional signals used during formal verification
+   signal f_count : integer range 0 to 3 := 0;
+
+
+   -- set all declarations to run on clk
+   default clock is rising_edge(clk);
+
+
+   -----------------------------
+   -- ASSERTIONS ABOUT OUTPUTS
+   -----------------------------
+
+   -- FIFO must be empty after reset
+   f_after_reset_empty : assert always {rst} |=> not out_valid;
+
+   -- FIFO must be ready after reset
+   f_after_reset_ready : assert always {rst} |=> in_ready;
+
+   -- Output must be stable until accepted
+   f_output_stable : assert always {out_valid and not out_ready and not rst} |=> {stable(out_valid) and stable(out_data)};
+
+   -- Ready must be stable until new data
+   f_ready_stable : assert always {in_ready and not in_valid and not rst} |=> {stable(in_ready)};
+
+   -- Keep track of amount of data flowing into and out of the FIFO
+   p_count : process (clk)
+   begin
+      if rising_edge(clk) then
+         -- Data flowing in, but not out.
+         if in_valid and in_ready and not (out_valid and out_ready) then
+            f_count <= f_count + 1;
+         end if;
+
+         -- Data flowing out, but not in.
+         if out_valid and out_ready and not (in_valid and in_ready) then
+            f_count <= f_count - 1;
+         end if;
+
+         if rst then
+            f_count <= 0;
+         end if;
+      end if;
+   end process p_count;
+
+   -- The FIFO size is limited to 2.
+   f_size : assert always {0 <= f_count and f_count <= 2};
+
+
+   -----------------------------
+   -- ASSUMPTIONS ABOUT INPUTS
+   -----------------------------
+
+   -- Require reset at startup.
+   f_reset : assume {rst};
+
+
+   --------------------------------------------
+   -- COVER STATEMENTS TO VERIFY REACHABILITY
+   --------------------------------------------
+
+   -- Make sure FIFO can transition from full to empty.
+   f_full_to_empty : cover {f_count = 2; f_count = 1; f_count = 0};
+
+} -- vunit i_two_stage_fifo(two_stage_fifo(synthesis))
+
