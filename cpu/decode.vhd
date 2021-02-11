@@ -132,6 +132,28 @@ architecture synthesis of decode is
    signal osf_out_valid : std_logic;
    signal osf_out_data  : std_logic_vector(16 downto 0);
 
+   constant C_HAS_SRC_OPERAND : std_logic_vector(15 downto 0) := (
+      C_OPCODE_CTRL => '0',
+      others        => '1');
+
+   constant C_HAS_DST_OPERAND : std_logic_vector(15 downto 0) := (
+      C_OPCODE_JMP  => '0',
+      others        => '1');
+
+   constant C_READS_FROM_DST : std_logic_vector(15 downto 0) := (
+      C_OPCODE_MOVE => '0',
+      C_OPCODE_SWAP => '0',
+      C_OPCODE_NOT  => '0',
+      C_OPCODE_CTRL => '0',
+      C_OPCODE_JMP  => '0',
+      others        => '1');
+
+   constant C_WRITES_TO_DST : std_logic_vector(15 downto 0) := (
+      C_OPCODE_CMP  => '0',
+      C_OPCODE_CTRL => '0',
+      C_OPCODE_JMP  => '0',
+      others        => '1');
+
 begin
 
    fetch_ready_o <= exe_ready_i when count = 0
@@ -155,22 +177,21 @@ begin
 
 
    ------------------------------------------------------------
+   -- Instruction format decoding
+   ------------------------------------------------------------
+
+   src_operand <= C_HAS_SRC_OPERAND(to_integer(instruction(R_OPCODE)));
+   dst_operand <= C_HAS_DST_OPERAND(to_integer(instruction(R_OPCODE)));
+
+
+   ------------------------------------------------------------
    -- Microcode lookup (combinatorial)
    ------------------------------------------------------------
 
-   src_operand <= '0' when instruction(R_OPCODE) = C_OPCODE_CTRL else '1';
-   dst_operand <= '0' when instruction(R_OPCODE) = C_OPCODE_JMP  else '1';
-
-   microcode_addr(C_READ_DST)  <= '0' when instruction(R_OPCODE) = C_OPCODE_MOVE or
-                                           instruction(R_OPCODE) = C_OPCODE_SWAP or
-                                           instruction(R_OPCODE) = C_OPCODE_NOT or
-                                           instruction(R_OPCODE) = C_OPCODE_CTRL or
-                                           instruction(R_OPCODE) = C_OPCODE_JMP     else dst_operand;
-   microcode_addr(C_WRITE_DST) <= '0' when instruction(R_OPCODE) = C_OPCODE_CMP or
-                                           instruction(R_OPCODE) = C_OPCODE_CTRL or
-                                           instruction(R_OPCODE) = C_OPCODE_JMP     else dst_operand;
-   microcode_addr(C_MEM_SRC)   <= '0' when instruction(R_SRC_MODE) = C_MODE_REG     else src_operand;
-   microcode_addr(C_MEM_DST)   <= '0' when instruction(R_DST_MODE) = C_MODE_REG     else dst_operand;
+   microcode_addr(C_READ_DST)  <= C_READS_FROM_DST(to_integer(instruction(R_OPCODE)));
+   microcode_addr(C_WRITE_DST) <= C_WRITES_TO_DST(to_integer(instruction(R_OPCODE)));
+   microcode_addr(C_MEM_SRC)   <= '0' when instruction(R_SRC_MODE) = C_MODE_REG else src_operand;
+   microcode_addr(C_MEM_DST)   <= '0' when instruction(R_DST_MODE) = C_MODE_REG else dst_operand;
    microcode_addr(R_COUNT)     <= count;
 
    i_microcode : entity work.microcode
