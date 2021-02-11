@@ -13,6 +13,9 @@
       CMP @R4, R8
       CMP @R5, @R8
 
+      MOVE L_4, R13     ; Initialize stack pointer
+      ASUB L_3, 1
+
       MOVE 0x1234, R1   ; Write value 0x1234 to register 1
       ADD  0x2345, R1   ; Write value 0x3579 to register 1
 
@@ -30,3 +33,9 @@ L_1   RBRA L_2, 1
 
 L_2   HALT
 
+L_3   MOVE    @R13++, R15
+      .DW 0x0000
+      .DW 0x0000
+      .DW 0x0000
+      .DW 0x0000
+L_4
