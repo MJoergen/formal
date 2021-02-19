@@ -1,129 +1,139 @@
 vunit i_axi_fifo(axi_fifo(rtl))
 {
-   -- Additional signals used during formal verification
-   signal f_count : natural range 0 to 3 := 0;
-
-   -- Keep track of amount of data flowing into and out of the FIFO
-   p_count : process (clk)
-   begin
-      if rising_edge(clk) then
-         -- Data flowing in, but not out.
-         if in_valid and in_ready and not (out_valid and out_ready) then
-            f_count <= f_count + 1;
-         end if;
-
-         -- Data flowing out, but not in.
-         if out_valid and out_ready and not (in_valid and in_ready) then
-            f_count <= f_count - 1;
-         end if;
-
-         if rst then
-            f_count <= 0;
-         end if;
-      end if;
-   end process p_count;
-
-
    -- set all declarations to run on clk
    default clock is rising_edge(clk);
 
 
-   -----------------------------
+   ----------------------------------------------------
    -- RESET HANDLING
-   -----------------------------
+   ----------------------------------------------------
 
-   -- Assume reset at startup.
+   -- Assume reset (one clock cycle) at startup.
    f_reset : assume {rst};
 
-   -- FIFO must be empty after reset.
-   f_after_reset_empty : assert always {rst} |=> not out_valid;
+   -- FIFO must be empty after any reset.
+   f_after_reset_valid : assert always {rst} |=> not out_valid;
+   f_after_reset_ready : assert always {rst} |=> in_ready;
    f_after_reset_head  : assert always {rst} |=> {head = 0};
    f_after_reset_tail  : assert always {rst} |=> {tail = 0};
 
-   -- FIFO must be ready after reset.
-   f_after_reset_ready : assert always {rst} |=> in_ready;
 
-
-   -----------------------------
+   ----------------------------------------------------
    -- AXI PROTOCOL
-   -----------------------------
+   ----------------------------------------------------
 
-   -- Output must be stable until accepted.
-   f_output_stable : assert always {out_valid and not out_ready and not rst} |=> {stable(out_valid) and stable(out_data)};
+   -- Input valid/data must be stable until accepted.
+   f_in_data_stable   : assume always {in_valid  and not in_ready  and not rst} |=> {stable(in_valid) and stable(in_data)};
 
-   -- Ready must be stable until new data.
-   f_ready_stable : assert always {in_ready and not in_valid and not rst} |=> {stable(in_ready)};
+   -- Output ready must be stable until new data.
+   f_out_ready_stable : assume always {out_ready and not out_valid and not rst} |=> {stable(out_ready)};
 
+   -- Output valid/data must be stable until accepted.
+   f_out_data_stable  : assert always {out_valid and not out_ready and not rst} |=> {stable(out_valid) and stable(out_data)};
 
-
-   -----------------------------
-   -- FIFO OPERATION
-   -----------------------------
-
-   -- Two random values inserted back-to-back into FIFO
-   signal f_const_first : std_logic_vector(ram_width - 1 downto 0);
-   signal f_const_next : std_logic_vector(ram_width - 1 downto 0);
-   attribute anyconst of f_const_first: signal is true;
-   attribute anyconst of f_const_next: signal is true;
+   -- Input ready must be stable until new data.
+   f_in_ready_stable  : assert always {in_ready  and not in_valid  and not rst} |=> {stable(in_ready)};
 
 
-   -- Addresses in FIFO of the two values
-   signal f_const_addr : natural range 0 to ram_depth - 1;
+   ----------------------------------------------------
+   -- FIFO ORDERING
+   ----------------------------------------------------
+
+   -- Two random values to be pushed into the FIFO
+   signal f_value_d1 : std_logic_vector(ram_width - 1 downto 0);
+   signal f_value_d2 : std_logic_vector(ram_width - 1 downto 0);
    attribute anyconst : boolean;
-   attribute anyconst of f_const_addr : signal is true;
-   attribute keep : boolean;
-   attribute keep of f_const_addr : signal is true;
+   attribute anyconst of f_value_d1 : signal is true;
+   attribute anyconst of f_value_d2 : signal is true;
 
-   signal f_const_next_addr : natural range 0 to ram_depth - 1;
-   f_const_next_addr <= f_const_addr + 1 when f_const_addr < ram_depth - 1 else 0;
-   attribute keep of f_const_next_addr : signal is true;
-   
+   -- Control signals to determine if the values have entered and/or left the FIFO
+   signal sampled_in_d1  : std_logic := '0';
+   signal sampled_in_d2  : std_logic := '0';
+   signal sampled_out_d1 : std_logic := '0';
+   signal sampled_out_d2 : std_logic := '0';
 
-   -- Indicate whether the address locations are currently part of the FIFO
-   signal f_addr_valid : std_logic;
-   signal f_next_valid : std_logic;
+--   -- Make sure d1 enters before d2.
+--   f_fifo_assume : assume always {not sampled_in_d1} |-> {not sampled_in_d2};
+   -- Make sure d2 enters after d1.
+   f_fifo_assume : assume always {sampled_in_d2} |-> {sampled_in_d1};
 
-   f_addr_valid <= '1' when head > tail and (tail <= f_const_addr and f_const_addr < head) else
-                   '1' when head < tail and (tail <= f_const_addr or  f_const_addr < head) else
-                   '0';
+   -- Verify the FIFO preserves ordering, i.e. d2 leaves after d1.
+--   f_fifo_ordering : assert always {sampled_in_d1 and sampled_in_d2 and not sampled_out_d1} |-> {not sampled_out_d2};
+--   f_fifo_ordering : assert always {sampled_in_d1 and sampled_in_d2 and sampled_out_d2} |-> {sampled_out_d1};
+   f_fifo_ordering : assert always {sampled_in_d1 and sampled_in_d2 and sampled_out_d2} |-> {sampled_out_d1};
 
-   f_next_valid <= '1' when head > tail and (tail <= f_const_next_addr and f_const_next_addr < head) else
-                   '1' when head < tail and (tail <= f_const_next_addr or  f_const_next_addr < head) else
-                   '0';
+   -- Constrain inputs to FIFO.
+--   f_fifo_diff   : assume always f_value_d1 /= f_value_d2;
+
+   p_sampled : process (clk)
+   begin
+      if rising_edge(clk) then
+         if in_valid then
+            if in_data = f_value_d1 then
+               sampled_in_d1 <= '1';
+            end if;
+            if in_data = f_value_d2 then
+               sampled_in_d2 <= '1';
+            end if;
+         end if;
+
+         if out_valid then
+            if out_data = f_value_d1 then
+               sampled_out_d1 <= '1';
+            end if;
+            if out_data = f_value_d2 then
+               sampled_out_d2 <= '1';
+            end if;
+         end if;
+
+         if rst = '1' then
+            sampled_in_d1  <= '0';
+            sampled_in_d2  <= '0';
+            sampled_out_d1 <= '0';
+            sampled_out_d2 <= '0';
+         end if;
+      end if;
+   end process p_sampled;
 
 
-   -- Indicate whether the FIFO contains the two values
-   signal f_first_in_fifo  : std_logic;
-   signal f_second_in_fifo : std_logic;
-   signal f_both_in_fifo   : std_logic;
-
-   f_first_in_fifo  <= f_addr_valid when ram(f_const_addr)      = f_const_first else '0';
-   f_second_in_fifo <= f_next_valid when ram(f_const_next_addr) = f_const_next  else '0';
-   f_both_in_fifo   <= f_first_in_fifo and f_second_in_fifo;
-
-
-   signal f_wait_for_first_read  : std_logic;
-   signal f_read_first           : std_logic;
-   signal f_wait_for_second_read : std_logic;
-   signal f_read_second          : std_logic;
-
-   f_wait_for_first_read <= f_both_in_fifo when f_const_addr /= tail else '0';
-   f_read_first <= f_both_in_fifo and out_valid and out_ready when out_data = f_const_first and f_const_addr = tail else '0';
-
-   f_wait_for_second_read <= f_second_in_fifo when f_const_next_addr = tail else '0';
-   f_read_second <= f_second_in_fifo and out_valid and out_ready when out_data = f_const_next and f_const_next_addr = tail else '0';
-
-
-   -- The assert proves that the two values are read out in the correct order.
-   f_fifo : assert always {f_both_in_fifo and not rst} |-> {f_wait_for_first_read[*]; f_read_first; f_wait_for_second_read[*]; f_read_second} abort rst;
-
-
-   --------------------------------------------
+   ----------------------------------------------------
    -- COVER STATEMENTS TO VERIFY REACHABILITY
-   --------------------------------------------
+   ----------------------------------------------------
+
+   signal f_fill : natural range 0 to ram_depth;
+
+   f_fill <= head - tail when head >= tail else ram_depth - (tail - head);
+
+--   -- Current filling level of FIFO
+--   signal f_count : natural range 0 to ram_depth := 0;
+--
+--   -- Keep track of amount of data flowing into and out of the FIFO
+--   p_count : process (clk)
+--   begin
+--      if rising_edge(clk) then
+--         -- Data flowing in, but not out.
+--         if in_valid and in_ready and not (out_valid and out_ready) then
+--            f_count <= f_count + 1;
+--         end if;
+--
+--         -- Data flowing out, but not in.
+--         if out_valid and out_ready and not (in_valid and in_ready) then
+--            f_count <= f_count - 1;
+--         end if;
+--
+--         if rst then
+--            f_count <= 0;
+--         end if;
+--      end if;
+--   end process p_count;
+--   
+--   -- Make sure filling level is correct
+--   f_count : assert always {head + f_count = tail};
 
    -- Make sure FIFO can transition from full to empty.
-   f_full_to_empty : cover {f_count = 2; f_count = 1; f_count = 0};
+   f_full_to_empty : cover {rst; [*]; f_fill = ram_depth-1 and rst = '0'; (not rst)[*]; f_fill = 0};
+--   f_full_to_empty : cover {rst; f_fill = ram_depth-1};
+--   f_full_to_empty : cover {rst; [*]; f_fill = 1};
 
 } -- vunit i_axi_fifo(axi_fifo(rtl))
 

@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Thu Feb 11 20:53:20 2021
+[*] Fri Feb 19 11:21:55 2021
 [*]
-[dumpfile] "/home/mike/git/MJoergen/formal/axi_fifo/axi_fifo_prove/engine_0/trace_induct.vcd"
-[dumpfile_mtime] "Thu Feb 11 20:50:50 2021"
-[dumpfile_size] 3514
+[dumpfile] "/home/mike/git/MJoergen/formal/axi_fifo/axi_fifo_cover/engine_0/trace2.vcd"
+[dumpfile_mtime] "Fri Feb 19 11:21:03 2021"
+[dumpfile_size] 1654
 [savefile] "/home/mike/git/MJoergen/formal/axi_fifo/axi_fifo.gtkw"
 [timestart] 0
 [size] 1920 1132
-[pos] -1921 -12
-*-4.284575 66 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[pos] 0 25
+*-4.284575 34 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] axi_fifo.
 [sst_width] 370
 [signals_width] 317
@@ -31,23 +31,7 @@ axi_fifo.out_valid
 axi_fifo.out_ready
 @22
 axi_fifo.out_data[7:0]
-@28
-axi_fifo.head[2:0]
-axi_fifo.tail[2:0]
-axi_fifo.i_axi_fifo.f_count[1:0]
-axi_fifo.i_axi_fifo.f_const_addr[2:0]
-@22
-axi_fifo.i_axi_fifo.f_const_first[7:0]
-axi_fifo.i_axi_fifo.f_const_next[7:0]
-@28
-axi_fifo.i_axi_fifo.f_addr_valid
-axi_fifo.i_axi_fifo.f_next_valid
-axi_fifo.i_axi_fifo.f_first_in_fifo
-axi_fifo.i_axi_fifo.f_second_in_fifo
-axi_fifo.i_axi_fifo.f_both_in_fifo
-axi_fifo.i_axi_fifo.f_wait_for_first_read
-axi_fifo.i_axi_fifo.f_read_first
-axi_fifo.i_axi_fifo.f_wait_for_second_read
-axi_fifo.i_axi_fifo.f_read_second
+@23
+axi_fifo.i_axi_fifo.f_fill[3:0]
 [pattern_trace] 1
 [pattern_trace] 0

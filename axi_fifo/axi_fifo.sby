@@ -1,17 +1,17 @@
 [tasks]
 cover
-prove
+bmc
 
 [options]
 cover: mode cover
-prove: mode prove
-prove: depth 6
+bmc: mode bmc
+bmc: depth 10
 
 [engines]
 smtbmc
 
 [script]
-ghdl --std=08 -gram_width=8 -gram_depth=8 axi_fifo.vhd axi_fifo.psl -e axi_fifo
+ghdl --std=08 -gram_width=4 -gram_depth=8 axi_fifo.vhd axi_fifo.psl -e axi_fifo
 prep -top axi_fifo
 
 [files]

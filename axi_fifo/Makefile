@@ -10,7 +10,7 @@ SRC += $(DUT).vhd
 #######################
 
 .PHONY: formal
-formal: $(DUT)_cover/PASS $(DUT)_prove/PASS
+formal: $(DUT)_cover/PASS $(DUT)_bmc/PASS
 $(DUT)_cover/PASS: $(DUT).sby $(DUT).psl $(SRC)
 	# This is the main command line to run the formal verification
 	sby --yosys "yosys -m ghdl" -f $(DUT).sby
@@ -26,6 +26,6 @@ show_prove:
 .PHONY: clean
 clean:
 	rm -rf $(DUT)_cover/
-	rm -rf $(DUT)_prove/
+	rm -rf $(DUT)_bmc/
 	rm -rf work-obj08.cf
 
