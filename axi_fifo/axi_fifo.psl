@@ -60,6 +60,14 @@ vunit i_axi_fifo(axi_fifo(rtl))
    -- FIFO OPERATION
    -----------------------------
 
+   -- Two random values inserted back-to-back into FIFO
+   signal f_const_first : std_logic_vector(ram_width - 1 downto 0);
+   signal f_const_next : std_logic_vector(ram_width - 1 downto 0);
+   attribute anyconst of f_const_first: signal is true;
+   attribute anyconst of f_const_next: signal is true;
+
+
+   -- Addresses in FIFO of the two values
    signal f_const_addr : natural range 0 to ram_depth - 1;
    attribute anyconst : boolean;
    attribute anyconst of f_const_addr : signal is true;
@@ -70,30 +78,21 @@ vunit i_axi_fifo(axi_fifo(rtl))
    f_const_next_addr <= f_const_addr + 1 when f_const_addr < ram_depth - 1 else 0;
    attribute keep of f_const_next_addr : signal is true;
    
-   signal f_const_first : std_logic_vector(ram_width - 1 downto 0);
-   signal f_const_next : std_logic_vector(ram_width - 1 downto 0);
-   attribute anyconst of f_const_first: signal is true;
-   attribute anyconst of f_const_next: signal is true;
 
-   f_diff : assume always f_const_first /= f_const_next;
-
-   signal f_front : std_logic;
-   signal f_back  : std_logic;
-
-   f_front <= '1' when head > tail else '0';
-   f_back  <= '1' when head < tail else '0';
-
+   -- Indicate whether the address locations are currently part of the FIFO
    signal f_addr_valid : std_logic;
    signal f_next_valid : std_logic;
 
-   f_addr_valid <= '1' when f_front = '1' and (tail <= f_const_addr and f_const_addr < head) else
-                   '1' when f_back = '1'  and (tail <= f_const_addr or  f_const_addr < head) else
+   f_addr_valid <= '1' when head > tail and (tail <= f_const_addr and f_const_addr < head) else
+                   '1' when head < tail and (tail <= f_const_addr or  f_const_addr < head) else
                    '0';
 
-   f_next_valid <= '1' when f_front = '1' and (tail <= f_const_next_addr and f_const_next_addr < head) else
-                   '1' when f_back = '1'  and (tail <= f_const_next_addr or  f_const_next_addr < head) else
+   f_next_valid <= '1' when head > tail and (tail <= f_const_next_addr and f_const_next_addr < head) else
+                   '1' when head < tail and (tail <= f_const_next_addr or  f_const_next_addr < head) else
                    '0';
 
+
+   -- Indicate whether the FIFO contains the two values
    signal f_first_in_fifo  : std_logic;
    signal f_second_in_fifo : std_logic;
    signal f_both_in_fifo   : std_logic;
@@ -101,6 +100,7 @@ vunit i_axi_fifo(axi_fifo(rtl))
    f_first_in_fifo  <= f_addr_valid when ram(f_const_addr)      = f_const_first else '0';
    f_second_in_fifo <= f_next_valid when ram(f_const_next_addr) = f_const_next  else '0';
    f_both_in_fifo   <= f_first_in_fifo and f_second_in_fifo;
+
 
    signal f_wait_for_first_read  : std_logic;
    signal f_read_first           : std_logic;
@@ -110,9 +110,11 @@ vunit i_axi_fifo(axi_fifo(rtl))
    f_wait_for_first_read <= f_both_in_fifo when f_const_addr /= tail else '0';
    f_read_first <= f_both_in_fifo and out_valid and out_ready when out_data = f_const_first and f_const_addr = tail else '0';
 
-   f_wait_for_second_read <= f_second_in_fifo and not out_ready when f_const_next_addr = tail else '0';
+   f_wait_for_second_read <= f_second_in_fifo when f_const_next_addr = tail else '0';
    f_read_second <= f_second_in_fifo and out_valid and out_ready when out_data = f_const_next and f_const_next_addr = tail else '0';
 
+
+   -- The assert proves that the two values are read out in the correct order.
    f_fifo : assert always {f_both_in_fifo and not rst} |-> {f_wait_for_first_read[*]; f_read_first; f_wait_for_second_read[*]; f_read_second} abort rst;
 
 
