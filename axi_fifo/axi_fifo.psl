@@ -36,9 +36,9 @@ vunit i_axi_fifo(axi_fifo(rtl))
    -- Make sure FIFO can transition from full to empty.
    f_full_to_empty : cover {
       rst = '1';
-      (rst = '0')[*];
+      rst = '0'[*];
       rst = '0' and count = ram_depth-1;
-      (rst = '0')[*];
+      rst = '0'[*];
       rst = '0' and count = 0};
 
 
@@ -71,6 +71,19 @@ vunit i_axi_fifo(axi_fifo(rtl))
    -- FIFO ORDERING
    ----------------------------------------------------
 
+   -- Control signals to determine if the values have entered and/or left the FIFO
+   signal f_sampled_in_d1  : std_logic := '0';
+   signal f_sampled_in_d2  : std_logic := '0';
+   signal f_sampled_out_d1 : std_logic := '0';
+   signal f_sampled_out_d2 : std_logic := '0';
+
+   -- Make sure d2 enters after d1.
+   f_fifo_ordering_in : assume always {f_sampled_in_d2} |-> {f_sampled_in_d1};
+
+   -- Verify the FIFO preserves ordering, i.e. d2 leaves after d1.
+   f_fifo_ordering_out : assert always {f_sampled_out_d2} |-> {f_sampled_out_d1};
+
+
    -- Two random values to be pushed into the FIFO
    signal f_value_d1 : std_logic_vector(ram_width - 1 downto 0);
    signal f_value_d2 : std_logic_vector(ram_width - 1 downto 0);
@@ -78,44 +91,32 @@ vunit i_axi_fifo(axi_fifo(rtl))
    attribute anyconst of f_value_d1 : signal is true;
    attribute anyconst of f_value_d2 : signal is true;
 
-   -- Control signals to determine if the values have entered and/or left the FIFO
-   signal sampled_in_d1  : std_logic := '0';
-   signal sampled_in_d2  : std_logic := '0';
-   signal sampled_out_d1 : std_logic := '0';
-   signal sampled_out_d2 : std_logic := '0';
-
-   -- Make sure d2 enters after d1.
-   f_fifo_assume : assume always {sampled_in_d2} |-> {sampled_in_d1};
-
-   -- Verify the FIFO preserves ordering, i.e. d2 leaves after d1.
-   f_fifo_ordering : assert always {sampled_in_d1 and sampled_in_d2 and sampled_out_d2} |-> {sampled_out_d1};
-
    p_sampled : process (clk)
    begin
       if rising_edge(clk) then
          if in_valid then
             if in_data = f_value_d1 then
-               sampled_in_d1 <= '1';
+               f_sampled_in_d1 <= '1';
             end if;
             if in_data = f_value_d2 then
-               sampled_in_d2 <= '1';
+               f_sampled_in_d2 <= '1';
             end if;
          end if;
 
          if out_valid then
             if out_data = f_value_d1 then
-               sampled_out_d1 <= '1';
+               f_sampled_out_d1 <= '1';
             end if;
             if out_data = f_value_d2 then
-               sampled_out_d2 <= '1';
+               f_sampled_out_d2 <= '1';
             end if;
          end if;
 
          if rst = '1' then
-            sampled_in_d1  <= '0';
-            sampled_in_d2  <= '0';
-            sampled_out_d1 <= '0';
-            sampled_out_d2 <= '0';
+            f_sampled_in_d1  <= '0';
+            f_sampled_in_d2  <= '0';
+            f_sampled_out_d1 <= '0';
+            f_sampled_out_d2 <= '0';
          end if;
       end if;
    end process p_sampled;
