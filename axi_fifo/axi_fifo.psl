@@ -12,8 +12,8 @@ vunit i_axi_fifo(axi_fifo(rtl))
    f_reset : assume {rst};
 
    -- FIFO must be empty after any reset.
-   f_after_reset_valid : assert always {rst} |=> not out_valid;
-   f_after_reset_ready : assert always {rst} |=> in_ready;
+   f_after_reset_valid : assert always {rst} |=> {not out_valid};
+   f_after_reset_ready : assert always {rst} |=> {in_ready};
    f_after_reset_head  : assert always {rst} |=> {head = 0};
    f_after_reset_tail  : assert always {rst} |=> {tail = 0};
 
@@ -36,6 +36,16 @@ vunit i_axi_fifo(axi_fifo(rtl))
 
 
    ----------------------------------------------------
+   -- Full and empty
+   ----------------------------------------------------
+
+   -- Check FIFO empty
+   f_empty : assert always {count = 0} |-> {not out_valid};
+
+   -- Check FIFO full
+   f_full : assert always {count = ram_depth-1} |-> {not in_ready};
+
+   ----------------------------------------------------
    -- FIFO ORDERING
    ----------------------------------------------------
 
@@ -52,18 +62,11 @@ vunit i_axi_fifo(axi_fifo(rtl))
    signal sampled_out_d1 : std_logic := '0';
    signal sampled_out_d2 : std_logic := '0';
 
---   -- Make sure d1 enters before d2.
---   f_fifo_assume : assume always {not sampled_in_d1} |-> {not sampled_in_d2};
    -- Make sure d2 enters after d1.
    f_fifo_assume : assume always {sampled_in_d2} |-> {sampled_in_d1};
 
    -- Verify the FIFO preserves ordering, i.e. d2 leaves after d1.
---   f_fifo_ordering : assert always {sampled_in_d1 and sampled_in_d2 and not sampled_out_d1} |-> {not sampled_out_d2};
---   f_fifo_ordering : assert always {sampled_in_d1 and sampled_in_d2 and sampled_out_d2} |-> {sampled_out_d1};
    f_fifo_ordering : assert always {sampled_in_d1 and sampled_in_d2 and sampled_out_d2} |-> {sampled_out_d1};
-
-   -- Constrain inputs to FIFO.
---   f_fifo_diff   : assume always f_value_d1 /= f_value_d2;
 
    p_sampled : process (clk)
    begin
@@ -100,40 +103,13 @@ vunit i_axi_fifo(axi_fifo(rtl))
    -- COVER STATEMENTS TO VERIFY REACHABILITY
    ----------------------------------------------------
 
-   signal f_fill : natural range 0 to ram_depth;
-
-   f_fill <= head - tail when head >= tail else ram_depth - (tail - head);
-
---   -- Current filling level of FIFO
---   signal f_count : natural range 0 to ram_depth := 0;
---
---   -- Keep track of amount of data flowing into and out of the FIFO
---   p_count : process (clk)
---   begin
---      if rising_edge(clk) then
---         -- Data flowing in, but not out.
---         if in_valid and in_ready and not (out_valid and out_ready) then
---            f_count <= f_count + 1;
---         end if;
---
---         -- Data flowing out, but not in.
---         if out_valid and out_ready and not (in_valid and in_ready) then
---            f_count <= f_count - 1;
---         end if;
---
---         if rst then
---            f_count <= 0;
---         end if;
---      end if;
---   end process p_count;
---   
---   -- Make sure filling level is correct
---   f_count : assert always {head + f_count = tail};
-
    -- Make sure FIFO can transition from full to empty.
-   f_full_to_empty : cover {rst; [*]; f_fill = ram_depth-1 and rst = '0'; (not rst)[*]; f_fill = 0};
---   f_full_to_empty : cover {rst; f_fill = ram_depth-1};
---   f_full_to_empty : cover {rst; [*]; f_fill = 1};
+   f_full_to_empty : cover {
+      rst = '1';
+      (rst = '0')[*];
+      rst = '0' and count = ram_depth-1;
+      (rst = '0')[*];
+      rst = '0' and count = 0};
 
 } -- vunit i_axi_fifo(axi_fifo(rtl))
 
