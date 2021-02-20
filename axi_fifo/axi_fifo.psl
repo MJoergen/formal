@@ -19,24 +19,7 @@ vunit i_axi_fifo(axi_fifo(rtl))
 
 
    ----------------------------------------------------
-   -- AXI PROTOCOL
-   ----------------------------------------------------
-
-   -- Input valid/data must be stable until accepted.
-   f_in_data_stable   : assume always {in_valid  and not in_ready  and not rst} |=> {stable(in_valid) and stable(in_data)};
-
-   -- Output ready must be stable until new data.
-   f_out_ready_stable : assume always {out_ready and not out_valid and not rst} |=> {stable(out_ready)};
-
-   -- Output valid/data must be stable until accepted.
-   f_out_data_stable  : assert always {out_valid and not out_ready and not rst} |=> {stable(out_valid) and stable(out_data)};
-
-   -- Input ready must be stable until new data.
-   f_in_ready_stable  : assert always {in_ready  and not in_valid  and not rst} |=> {stable(in_ready)};
-
-
-   ----------------------------------------------------
-   -- Full and empty
+   -- FIFO full and empty signalling
    ----------------------------------------------------
 
    -- Check FIFO empty
@@ -44,6 +27,45 @@ vunit i_axi_fifo(axi_fifo(rtl))
 
    -- Check FIFO full
    f_full : assert always {count = ram_depth-1} |-> {not in_ready};
+
+
+   ----------------------------------------------------
+   -- COVER STATEMENTS TO VERIFY REACHABILITY
+   ----------------------------------------------------
+
+   -- Make sure FIFO can transition from full to empty.
+   f_full_to_empty : cover {
+      rst = '1';
+      (rst = '0')[*];
+      rst = '0' and count = ram_depth-1;
+      (rst = '0')[*];
+      rst = '0' and count = 0};
+
+
+   ----------------------------------------------------
+   -- AXI PROTOCOL
+   ----------------------------------------------------
+
+   -- Input valid/data must be stable until accepted.
+   f_in_data_stable : assume always
+      {in_valid and not in_ready and not rst} |=>
+      {stable(in_valid) and stable(in_data)};
+
+   -- Output ready must be stable until new data.
+   f_out_ready_stable : assume always
+      {out_ready and not out_valid and not rst} |=>
+      {stable(out_ready)};
+
+   -- Output valid/data must be stable until accepted.
+   f_out_data_stable : assert always
+      {out_valid and not out_ready and not rst} |=>
+      {stable(out_valid) and stable(out_data)};
+
+   -- Input ready must be stable until new data.
+   f_in_ready_stable : assert always
+      {in_ready and not in_valid and not rst} |=>
+      {stable(in_ready)};
+
 
    ----------------------------------------------------
    -- FIFO ORDERING
@@ -98,18 +120,6 @@ vunit i_axi_fifo(axi_fifo(rtl))
       end if;
    end process p_sampled;
 
-
-   ----------------------------------------------------
-   -- COVER STATEMENTS TO VERIFY REACHABILITY
-   ----------------------------------------------------
-
-   -- Make sure FIFO can transition from full to empty.
-   f_full_to_empty : cover {
-      rst = '1';
-      (rst = '0')[*];
-      rst = '0' and count = ram_depth-1;
-      (rst = '0')[*];
-      rst = '0' and count = 0};
 
 } -- vunit i_axi_fifo(axi_fifo(rtl))
 
