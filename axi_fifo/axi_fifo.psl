@@ -30,19 +30,6 @@ vunit i_axi_fifo(axi_fifo(rtl))
 
 
    ----------------------------------------------------
-   -- COVER STATEMENTS TO VERIFY REACHABILITY
-   ----------------------------------------------------
-
-   -- Make sure FIFO can transition from full to empty.
-   f_full_to_empty : cover {
-      rst = '1';
-      rst = '0'[*];
-      rst = '0' and count = ram_depth-1;
-      rst = '0'[*];
-      rst = '0' and count = 0};
-
-
-   ----------------------------------------------------
    -- AXI PROTOCOL
    ----------------------------------------------------
 
@@ -120,6 +107,19 @@ vunit i_axi_fifo(axi_fifo(rtl))
          end if;
       end if;
    end process p_sampled;
+
+
+   ----------------------------------------------------
+   -- COVER STATEMENTS TO VERIFY REACHABILITY
+   ----------------------------------------------------
+
+   -- Make sure FIFO can transition from full to empty.
+   f_full_to_empty : cover {
+      rst = '1';
+      rst = '0'[*];
+      rst = '0' and count = ram_depth-1;
+      rst = '0'[*];
+      rst = '0' and count = 0};
 
 
 } -- vunit i_axi_fifo(axi_fifo(rtl))

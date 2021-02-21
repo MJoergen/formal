@@ -1,10 +1,10 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Sat Feb 20 08:25:50 2021
+[*] Sun Feb 21 07:37:52 2021
 [*]
-[dumpfile] "/home/mike/git/MJoergen/formal/axi_fifo/axi_fifo_cover/engine_0/trace5.vcd"
-[dumpfile_mtime] "Sat Feb 20 08:15:47 2021"
-[dumpfile_size] 6000
+[dumpfile] "/home/mike/git/MJoergen/formal/axi_fifo/axi_fifo_bmc/engine_0/trace.vcd"
+[dumpfile_mtime] "Sun Feb 21 07:35:49 2021"
+[dumpfile_size] 2556
 [savefile] "/home/mike/git/MJoergen/formal/axi_fifo/axi_fifo.gtkw"
 [timestart] 0
 [size] 1920 1132
@@ -31,9 +31,21 @@ axi_fifo.out_valid
 axi_fifo.out_ready
 @22
 axi_fifo.out_data[3:0]
+@200
+-
 @24
 axi_fifo.head[2:0]
 axi_fifo.tail[2:0]
 axi_fifo.count[2:0]
+@200
+-
+@22
+axi_fifo.i_axi_fifo.f_value_d1[3:0]
+axi_fifo.i_axi_fifo.f_value_d2[3:0]
+@28
+axi_fifo.i_axi_fifo.f_sampled_in_d1
+axi_fifo.i_axi_fifo.f_sampled_in_d2
+axi_fifo.i_axi_fifo.f_sampled_out_d1
+axi_fifo.i_axi_fifo.f_sampled_out_d2
 [pattern_trace] 1
 [pattern_trace] 0
