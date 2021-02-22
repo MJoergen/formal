@@ -14,8 +14,7 @@ vunit i_axi_fifo(axi_fifo(rtl))
    -- FIFO must be empty after any reset.
    f_after_reset_valid : assert always {rst} |=> {not out_valid};
    f_after_reset_ready : assert always {rst} |=> {in_ready};
-   f_after_reset_head  : assert always {rst} |=> {head = 0};
-   f_after_reset_tail  : assert always {rst} |=> {tail = 0};
+   f_after_reset_head  : assert always {rst} |=> {count = 0};
 
 
    ----------------------------------------------------
